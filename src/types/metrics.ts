@@ -39,6 +39,14 @@ export interface WebsiteMetrics {
   } | null;
 }
 
+export interface SEOIssue {
+  category: 'technical' | 'content' | 'social' | 'performance';
+  severity: 'high' | 'medium' | 'low';
+  issue: string;
+  impact: string;
+  solution: string;
+}
+
 export interface SEOMetrics {
   score: number | null;
   titleTag: {
@@ -66,8 +74,23 @@ export interface SEOMetrics {
   sitemap: boolean;
   mobileFriendly: boolean;
   indexable: boolean;
+  // Enhanced SEO fields
+  openGraph: {
+    hasTitle: boolean;
+    hasDescription: boolean;
+    hasImage: boolean;
+  };
+  twitterCard: {
+    present: boolean;
+    type: string | null;
+  };
+  structuredData: boolean;
+  language: string | null;
+  favicon: boolean;
+  compression: boolean;
   issues: string[];
   recommendations: string[];
+  enhancedIssues: SEOIssue[];
 }
 
 export interface MonitoringResult {

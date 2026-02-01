@@ -39,8 +39,15 @@ const initialSEOMetrics: SEOMetrics = {
   sitemap: false,
   mobileFriendly: false,
   indexable: false,
+  openGraph: { hasTitle: false, hasDescription: false, hasImage: false },
+  twitterCard: { present: false, type: null },
+  structuredData: false,
+  language: null,
+  favicon: false,
+  compression: false,
   issues: [],
   recommendations: [],
+  enhancedIssues: [],
 };
 
 export function useMonitoring() {

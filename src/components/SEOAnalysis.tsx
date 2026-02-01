@@ -1,8 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScoreGauge } from './ScoreGauge';
-import { Check, X, AlertTriangle, Search, FileText, Image, Globe, Bot } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Check, X, AlertTriangle, Search, FileText, Globe, ChevronDown, Share2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { SEOMetrics } from '@/types/metrics';
+import { useState } from 'react';
+import type { SEOMetrics, SEOIssue } from '@/types/metrics';
 
 interface SEOAnalysisProps {
   data: SEOMetrics;
@@ -29,7 +32,84 @@ function CheckItem({ passed, label, description }: { passed: boolean; label: str
   );
 }
 
+function SeverityBadge({ severity }: { severity: 'high' | 'medium' | 'low' }) {
+  const config = {
+    high: { label: 'High', className: 'bg-status-down/10 text-status-down border-status-down/20' },
+    medium: { label: 'Medium', className: 'bg-status-degraded/10 text-status-degraded border-status-degraded/20' },
+    low: { label: 'Low', className: 'bg-chart-1/10 text-chart-1 border-chart-1/20' },
+  };
+
+  return (
+    <Badge variant="outline" className={cn('text-xs font-medium', config[severity].className)}>
+      {config[severity].label}
+    </Badge>
+  );
+}
+
+function CategoryIcon({ category }: { category: SEOIssue['category'] }) {
+  const icons = {
+    technical: Globe,
+    content: FileText,
+    social: Share2,
+    performance: Zap,
+  };
+  const Icon = icons[category];
+  return <Icon className="h-4 w-4" />;
+}
+
+function EnhancedIssueCard({ issue }: { issue: SEOIssue }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="w-full">
+        <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors text-left">
+          <div className="flex-shrink-0 mt-0.5">
+            <CategoryIcon category={issue.category} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium">{issue.issue}</span>
+              <SeverityBadge severity={issue.severity} />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 capitalize">{issue.category}</p>
+          </div>
+          <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', isOpen && 'rotate-180')} />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="pl-10 pr-3 pb-3 space-y-2">
+          <div>
+            <p className="text-xs font-medium text-muted-foreground">Impact</p>
+            <p className="text-sm">{issue.impact}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-muted-foreground">Solution</p>
+            <p className="text-sm text-chart-1">{issue.solution}</p>
+          </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export function SEOAnalysis({ data }: SEOAnalysisProps) {
+  // Sort enhanced issues by severity
+  const sortedIssues = [...(data.enhancedIssues || [])].sort((a, b) => {
+    const order = { high: 0, medium: 1, low: 2 };
+    return order[a.severity] - order[b.severity];
+  });
+
+  const issuesByCategory = sortedIssues.reduce((acc, issue) => {
+    if (!acc[issue.category]) acc[issue.category] = [];
+    acc[issue.category].push(issue);
+    return acc;
+  }, {} as Record<string, SEOIssue[]>);
+
+  const highCount = sortedIssues.filter(i => i.severity === 'high').length;
+  const mediumCount = sortedIssues.filter(i => i.severity === 'medium').length;
+  const lowCount = sortedIssues.filter(i => i.severity === 'low').length;
+
   return (
     <div className="space-y-6">
       {/* SEO Score Overview */}
@@ -43,7 +123,7 @@ export function SEOAnalysis({ data }: SEOAnalysisProps) {
         <CardContent>
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <ScoreGauge score={data.score} label="SEO Score" size="lg" />
-            <div className="flex-1 grid grid-cols-2 gap-4">
+            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="text-center sm:text-left">
                 <p className="text-2xl font-bold">{data.headings.h1Count}</p>
                 <p className="text-xs text-muted-foreground">H1 Tags</p>
@@ -62,6 +142,31 @@ export function SEOAnalysis({ data }: SEOAnalysisProps) {
               </div>
             </div>
           </div>
+
+          {/* Issue Summary */}
+          {sortedIssues.length > 0 && (
+            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
+              <span className="text-sm text-muted-foreground">Issues:</span>
+              {highCount > 0 && (
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-status-down" />
+                  <span className="text-sm font-medium">{highCount} High</span>
+                </div>
+              )}
+              {mediumCount > 0 && (
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-status-degraded" />
+                  <span className="text-sm font-medium">{mediumCount} Medium</span>
+                </div>
+              )}
+              {lowCount > 0 && (
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-chart-1" />
+                  <span className="text-sm font-medium">{lowCount} Low</span>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -119,51 +224,60 @@ export function SEOAnalysis({ data }: SEOAnalysisProps) {
         </Card>
       </div>
 
-      {/* Issues & Recommendations */}
-      {(data.issues.length > 0 || data.recommendations.length > 0) && (
-        <div className="grid gap-4 md:grid-cols-2">
-          {data.issues.length > 0 && (
-            <Card className="chart-animate border-l-4 border-l-status-down">
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-status-down" />
-                  <CardTitle className="text-base font-medium">Issues Found</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {data.issues.map((issue, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm">
-                      <X className="h-4 w-4 text-status-down flex-shrink-0 mt-0.5" />
-                      <span>{issue}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
+      {/* Enhanced Checks */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="chart-animate">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Share2 className="h-5 w-5 text-chart-2" />
+              <CardTitle className="text-base font-medium">Social & Sharing</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="divide-y divide-border">
+              <CheckItem passed={data.openGraph?.hasTitle ?? false} label="Open Graph Title" />
+              <CheckItem passed={data.openGraph?.hasDescription ?? false} label="Open Graph Description" />
+              <CheckItem passed={data.openGraph?.hasImage ?? false} label="Open Graph Image" />
+              <CheckItem passed={data.twitterCard?.present ?? false} label="Twitter Card" description={data.twitterCard?.type ?? undefined} />
+            </div>
+          </CardContent>
+        </Card>
 
-          {data.recommendations.length > 0 && (
-            <Card className="chart-animate border-l-4 border-l-status-degraded">
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  <Bot className="h-5 w-5 text-status-degraded" />
-                  <CardTitle className="text-base font-medium">Recommendations</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {data.recommendations.map((rec, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm">
-                      <AlertTriangle className="h-4 w-4 text-status-degraded flex-shrink-0 mt-0.5" />
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        <Card className="chart-animate">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-chart-5" />
+              <CardTitle className="text-base font-medium">Advanced</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="divide-y divide-border">
+              <CheckItem passed={data.structuredData ?? false} label="Structured Data (JSON-LD)" />
+              <CheckItem passed={!!data.language} label="Language Tag" description={data.language ?? undefined} />
+              <CheckItem passed={data.favicon ?? false} label="Favicon" />
+              <CheckItem passed={data.compression ?? false} label="Compression (gzip/brotli)" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Enhanced Issues with Expandable Details */}
+      {sortedIssues.length > 0 && (
+        <Card className="chart-animate">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-status-degraded" />
+              <CardTitle className="text-base font-medium">Issues & Recommendations</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="divide-y divide-border">
+              {sortedIssues.map((issue, index) => (
+                <EnhancedIssueCard key={index} issue={issue} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
