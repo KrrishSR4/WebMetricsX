@@ -9,6 +9,10 @@ interface PDFColors {
   muted: [number, number, number];
   background: [number, number, number];
   text: [number, number, number];
+  border: [number, number, number];
+  purple: [number, number, number];
+  teal: [number, number, number];
+  orange: [number, number, number];
 }
 
 const colors: PDFColors = {
@@ -16,9 +20,13 @@ const colors: PDFColors = {
   success: [34, 197, 94],
   warning: [245, 158, 11],
   error: [239, 68, 68],
-  muted: [148, 163, 184],
+  muted: [100, 116, 139],
   background: [248, 250, 252],
   text: [15, 23, 42],
+  border: [226, 232, 240],
+  purple: [139, 92, 246],
+  teal: [20, 184, 166],
+  orange: [249, 115, 22],
 };
 
 function getStatusColor(status: string): [number, number, number] {
@@ -38,6 +46,168 @@ function getSeverityColor(severity: 'high' | 'medium' | 'low'): [number, number,
   }
 }
 
+function drawBorderedBox(pdf: jsPDF, x: number, y: number, w: number, h: number, fillColor?: [number, number, number]): void {
+  if (fillColor) {
+    pdf.setFillColor(...fillColor);
+    pdf.roundedRect(x, y, w, h, 2, 2, 'F');
+  }
+  pdf.setDrawColor(...colors.border);
+  pdf.setLineWidth(0.3);
+  pdf.roundedRect(x, y, w, h, 2, 2, 'S');
+}
+
+function drawResponseTimeChart(
+  pdf: jsPDF,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  data: Array<{ timestamp: string; value: number }>
+): void {
+  if (!data || data.length === 0) {
+    pdf.setTextColor(...colors.muted);
+    pdf.setFontSize(10);
+    pdf.text('No response time data available', x + width / 2, y + height / 2, { align: 'center' });
+    return;
+  }
+
+  const chartX = x + 15;
+  const chartY = y + 5;
+  const chartWidth = width - 25;
+  const chartHeight = height - 25;
+
+  // Calculate min/max values
+  const values = data.map(d => d.value);
+  const maxValue = Math.max(...values) * 1.2;
+  const minValue = 0;
+
+  // Draw background grid
+  pdf.setDrawColor(230, 230, 230);
+  pdf.setLineWidth(0.2);
+
+  // Horizontal grid lines (5 lines)
+  for (let i = 0; i <= 4; i++) {
+    const lineY = chartY + (chartHeight * i) / 4;
+    pdf.line(chartX, lineY, chartX + chartWidth, lineY);
+    
+    // Y-axis labels
+    const labelValue = Math.round(maxValue - (maxValue * i) / 4);
+    pdf.setTextColor(...colors.muted);
+    pdf.setFontSize(7);
+    pdf.text(`${labelValue}ms`, chartX - 2, lineY + 1, { align: 'right' });
+  }
+
+  // Vertical grid lines
+  const xStep = chartWidth / Math.max(data.length - 1, 1);
+  for (let i = 0; i < data.length; i++) {
+    const lineX = chartX + (i * xStep);
+    pdf.setDrawColor(240, 240, 240);
+    pdf.line(lineX, chartY, lineX, chartY + chartHeight);
+  }
+
+  // Draw gradient fill area
+  const points: [number, number][] = [];
+  data.forEach((point, i) => {
+    const px = chartX + (i * xStep);
+    const py = chartY + chartHeight - ((point.value - minValue) / (maxValue - minValue)) * chartHeight;
+    points.push([px, py]);
+  });
+
+  // Fill area under the line
+  if (points.length > 1) {
+    pdf.setFillColor(59, 130, 246, 0.2);
+    for (let i = 0; i < points.length - 1; i++) {
+      pdf.triangle(
+        points[i][0], points[i][1],
+        points[i + 1][0], points[i + 1][1],
+        points[i][0], chartY + chartHeight,
+        'F'
+      );
+      pdf.triangle(
+        points[i + 1][0], points[i + 1][1],
+        points[i][0], chartY + chartHeight,
+        points[i + 1][0], chartY + chartHeight,
+        'F'
+      );
+    }
+  }
+
+  // Draw the line
+  pdf.setDrawColor(...colors.primary);
+  pdf.setLineWidth(0.8);
+  for (let i = 0; i < points.length - 1; i++) {
+    pdf.line(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]);
+  }
+
+  // Draw data points
+  pdf.setFillColor(...colors.primary);
+  points.forEach(([px, py]) => {
+    pdf.circle(px, py, 1, 'F');
+  });
+
+  // X-axis labels (show first, middle, last)
+  pdf.setTextColor(...colors.muted);
+  pdf.setFontSize(6);
+  const labelIndices = [0, Math.floor(data.length / 2), data.length - 1];
+  labelIndices.forEach(i => {
+    if (data[i]) {
+      const time = new Date(data[i].timestamp).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      const labelX = chartX + (i * xStep);
+      pdf.text(time, labelX, chartY + chartHeight + 5, { align: 'center' });
+    }
+  });
+
+  // Chart title
+  pdf.setTextColor(...colors.text);
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Response Time (ms)', x + width / 2, y - 2, { align: 'center' });
+}
+
+function drawBarChart(
+  pdf: jsPDF,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  data: Array<{ label: string; value: number; color: [number, number, number] }>
+): void {
+  if (!data || data.length === 0) return;
+
+  const barHeight = 12;
+  const gap = 4;
+  const maxValue = Math.max(...data.map(d => d.value), 1);
+  const labelWidth = 50;
+  const barWidth = width - labelWidth - 30;
+
+  data.forEach((item, i) => {
+    const barY = y + i * (barHeight + gap);
+    
+    // Label
+    pdf.setTextColor(...colors.text);
+    pdf.setFontSize(8);
+    pdf.text(item.label, x, barY + barHeight / 2 + 1);
+    
+    // Background bar
+    pdf.setFillColor(240, 240, 240);
+    pdf.roundedRect(x + labelWidth, barY, barWidth, barHeight, 2, 2, 'F');
+    
+    // Value bar
+    const valueWidth = (item.value / maxValue) * barWidth;
+    pdf.setFillColor(...item.color);
+    pdf.roundedRect(x + labelWidth, barY, valueWidth, barHeight, 2, 2, 'F');
+    
+    // Value label
+    pdf.setTextColor(...colors.text);
+    pdf.setFontSize(7);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`${item.value}ms`, x + labelWidth + barWidth + 3, barY + barHeight / 2 + 1);
+  });
+}
+
 function drawPieChart(
   pdf: jsPDF,
   x: number,
@@ -48,37 +218,14 @@ function drawPieChart(
   const total = data.reduce((sum, item) => sum + item.value, 0);
   if (total === 0) return;
 
-  let startAngle = -Math.PI / 2; // Start at top
+  let startAngle = -Math.PI / 2;
 
   data.forEach((item) => {
     const sliceAngle = (item.value / total) * 2 * Math.PI;
-    const endAngle = startAngle + sliceAngle;
-
-    // Draw pie slice
+    
     pdf.setFillColor(...item.color);
     
-    // Draw arc using lines
     const segments = 30;
-    const points: [number, number][] = [[x, y]];
-    
-    for (let i = 0; i <= segments; i++) {
-      const angle = startAngle + (sliceAngle * i) / segments;
-      points.push([
-        x + radius * Math.cos(angle),
-        y + radius * Math.sin(angle),
-      ]);
-    }
-    points.push([x, y]);
-
-    // Draw filled polygon
-    pdf.setDrawColor(...item.color);
-    let path = `M ${points[0][0]} ${points[0][1]}`;
-    for (let i = 1; i < points.length; i++) {
-      path += ` L ${points[i][0]} ${points[i][1]}`;
-    }
-    path += ' Z';
-
-    // Use triangle approach for each segment
     for (let i = 0; i <= segments; i++) {
       const angle1 = startAngle + (sliceAngle * i) / segments;
       const angle2 = startAngle + (sliceAngle * (i + 1)) / segments;
@@ -91,12 +238,16 @@ function drawPieChart(
       );
     }
 
-    startAngle = endAngle;
+    startAngle += sliceAngle;
   });
+
+  // Inner circle for donut effect
+  pdf.setFillColor(255, 255, 255);
+  pdf.circle(x, y, radius * 0.55, 'F');
 }
 
 function drawScoreGauge(pdf: jsPDF, x: number, y: number, score: number, label: string): void {
-  const radius = 25;
+  const radius = 18;
   const scoreColor = score >= 90 ? colors.success : score >= 50 ? colors.warning : colors.error;
   
   // Background circle
@@ -121,19 +272,19 @@ function drawScoreGauge(pdf: jsPDF, x: number, y: number, score: number, label: 
   
   // Inner white circle
   pdf.setFillColor(255, 255, 255);
-  pdf.circle(x, y, radius - 8, 'F');
+  pdf.circle(x, y, radius - 5, 'F');
   
   // Score text
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(14);
+  pdf.setTextColor(...scoreColor);
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.text(score.toString(), x, y + 2, { align: 'center' });
   
   // Label
-  pdf.setFontSize(8);
+  pdf.setFontSize(7);
   pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(...colors.muted);
-  pdf.text(label, x, y + radius + 8, { align: 'center' });
+  pdf.setTextColor(...colors.text);
+  pdf.text(label, x, y + radius + 6, { align: 'center' });
 }
 
 export function generatePDFReport(data: MonitoringResult): void {
@@ -144,237 +295,392 @@ export function generatePDFReport(data: MonitoringResult): void {
   });
 
   const pageWidth = pdf.internal.pageSize.getWidth();
-  const margin = 15;
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 12;
   let yPos = margin;
 
   const { website, seo } = data;
 
-  // ============ HEADER ============
+  // ============ PAGE 1: PERFORMANCE METRICS ============
+  
+  // Header
   pdf.setFillColor(...colors.primary);
-  pdf.rect(0, 0, pageWidth, 35, 'F');
+  pdf.rect(0, 0, pageWidth, 32, 'F');
   
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(20);
+  pdf.setFontSize(18);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('WEBSITE ANALYTICS REPORT', margin, 18);
+  pdf.text('WEBSITE ANALYTICS REPORT', margin, 15);
   
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
-  
-  // Clickable URL
   const hostname = new URL(website.url).hostname;
-  pdf.textWithLink(hostname, margin, 26, { url: website.url });
+  pdf.textWithLink(hostname, margin, 23, { url: website.url });
   
-  // Timestamp
-  pdf.text(`Generated: ${new Date(data.lastChecked).toLocaleString()}`, pageWidth - margin, 26, { align: 'right' });
+  pdf.text(`Generated: ${new Date(data.lastChecked).toLocaleString()}`, pageWidth - margin, 23, { align: 'right' });
   
-  yPos = 45;
+  yPos = 40;
 
-  // ============ QUICK STATS ============
-  pdf.setFillColor(...colors.background);
-  pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 25, 3, 3, 'F');
-  
-  const statsWidth = (pageWidth - 2 * margin) / 4;
-  const statsY = yPos + 10;
-  
-  // Status
-  pdf.setTextColor(...getStatusColor(website.status));
-  pdf.setFontSize(14);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(website.status.toUpperCase(), margin + statsWidth * 0.5, statsY, { align: 'center' });
-  pdf.setTextColor(...colors.muted);
-  pdf.setFontSize(8);
-  pdf.text('Status', margin + statsWidth * 0.5, statsY + 6, { align: 'center' });
-  
-  // Response Time
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(14);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(`${website.responseTime ?? '—'}ms`, margin + statsWidth * 1.5, statsY, { align: 'center' });
-  pdf.setTextColor(...colors.muted);
-  pdf.setFontSize(8);
-  pdf.text('Response Time', margin + statsWidth * 1.5, statsY + 6, { align: 'center' });
-  
-  // HTTP Status
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(14);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(`${website.httpStatusCode ?? '—'}`, margin + statsWidth * 2.5, statsY, { align: 'center' });
-  pdf.setTextColor(...colors.muted);
-  pdf.setFontSize(8);
-  pdf.text('HTTP Status', margin + statsWidth * 2.5, statsY + 6, { align: 'center' });
-  
-  // Performance Score
-  const perfColor = (website.performanceScore ?? 0) >= 90 ? colors.success : (website.performanceScore ?? 0) >= 50 ? colors.warning : colors.error;
-  pdf.setTextColor(...perfColor);
-  pdf.setFontSize(14);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(`${website.performanceScore ?? '—'}`, margin + statsWidth * 3.5, statsY, { align: 'center' });
-  pdf.setTextColor(...colors.muted);
-  pdf.setFontSize(8);
-  pdf.text('Performance', margin + statsWidth * 3.5, statsY + 6, { align: 'center' });
-  
-  yPos += 35;
+  // Quick Stats Row
+  const statsBoxWidth = (pageWidth - 2 * margin - 9) / 4;
+  const statsData = [
+    { label: 'Status', value: website.status.toUpperCase(), color: getStatusColor(website.status) },
+    { label: 'Response Time', value: `${website.responseTime ?? '—'}ms`, color: colors.primary },
+    { label: 'HTTP Status', value: `${website.httpStatusCode ?? '—'}`, color: colors.text },
+    { label: 'Performance', value: `${website.performanceScore ?? '—'}`, color: (website.performanceScore ?? 0) >= 90 ? colors.success : (website.performanceScore ?? 0) >= 50 ? colors.warning : colors.error },
+  ];
 
-  // ============ CORE WEB VITALS ============
+  statsData.forEach((stat, i) => {
+    const boxX = margin + i * (statsBoxWidth + 3);
+    drawBorderedBox(pdf, boxX, yPos, statsBoxWidth, 22, colors.background);
+    
+    pdf.setTextColor(...stat.color);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(stat.value, boxX + statsBoxWidth / 2, yPos + 10, { align: 'center' });
+    
+    pdf.setTextColor(...colors.muted);
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(stat.label, boxX + statsBoxWidth / 2, yPos + 17, { align: 'center' });
+  });
+
+  yPos += 30;
+
+  // Core Web Vitals Section
   pdf.setTextColor(...colors.text);
-  pdf.setFontSize(12);
+  pdf.setFontSize(11);
   pdf.setFont('helvetica', 'bold');
   pdf.text('Core Web Vitals', margin, yPos);
-  yPos += 8;
-  
-  const cwvWidth = (pageWidth - 2 * margin) / 3;
+  yPos += 5;
+
+  drawBorderedBox(pdf, margin, yPos, pageWidth - 2 * margin, 28);
   
   if (website.coreWebVitals) {
     const vitals = [
-      { label: 'LCP', value: website.coreWebVitals.lcp, unit: 'ms', good: 2500 },
-      { label: 'FID', value: website.coreWebVitals.fid, unit: 'ms', good: 100 },
-      { label: 'CLS', value: website.coreWebVitals.cls, unit: '', good: 0.1 },
+      { label: 'LCP', value: website.coreWebVitals.lcp, unit: 'ms', good: 2500, desc: 'Largest Contentful Paint' },
+      { label: 'FID', value: website.coreWebVitals.fid, unit: 'ms', good: 100, desc: 'First Input Delay' },
+      { label: 'CLS', value: website.coreWebVitals.cls, unit: '', good: 0.1, desc: 'Cumulative Layout Shift' },
     ];
     
+    const vitalWidth = (pageWidth - 2 * margin) / 3;
     vitals.forEach((vital, i) => {
-      const x = margin + cwvWidth * (i + 0.5);
+      const vx = margin + vitalWidth * i + vitalWidth / 2;
       const isGood = vital.value !== null && vital.value <= vital.good;
+      const vColor = isGood ? colors.success : colors.warning;
       
-      pdf.setFillColor(...(isGood ? colors.success : colors.warning));
-      pdf.roundedRect(margin + cwvWidth * i + 2, yPos, cwvWidth - 4, 20, 2, 2, 'F');
-      
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(10);
+      pdf.setTextColor(...vColor);
+      pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(vital.label, x, yPos + 8, { align: 'center' });
-      
-      pdf.setFontSize(12);
       const displayValue = vital.value !== null 
         ? (vital.label === 'CLS' ? vital.value.toFixed(3) : `${Math.round(vital.value)}${vital.unit}`)
         : '—';
-      pdf.text(displayValue, x, yPos + 16, { align: 'center' });
-    });
-  }
-  
-  yPos += 30;
-
-  // ============ TIMING BREAKDOWN ============
-  pdf.setTextColor(...colors.text);
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Timing Breakdown', margin, yPos);
-  yPos += 5;
-  
-  if (website.performanceBreakdown) {
-    const pieData = [
-      { value: website.performanceBreakdown.dns || 0, color: [59, 130, 246] as [number, number, number], label: 'DNS' },
-      { value: website.performanceBreakdown.connect || 0, color: [34, 197, 94] as [number, number, number], label: 'TCP' },
-      { value: website.tlsHandshakeTime || 0, color: [168, 85, 247] as [number, number, number], label: 'TLS' },
-      { value: website.performanceBreakdown.ttfb || 0, color: [249, 115, 22] as [number, number, number], label: 'TTFB' },
-      { value: website.performanceBreakdown.download || 0, color: [20, 184, 166] as [number, number, number], label: 'Download' },
-    ].filter(d => d.value > 0);
-    
-    const chartX = margin + 30;
-    const chartY = yPos + 25;
-    drawPieChart(pdf, chartX, chartY, 20, pieData);
-    
-    // Legend
-    let legendX = margin + 65;
-    pieData.forEach((item) => {
-      pdf.setFillColor(...item.color);
-      pdf.rect(legendX, yPos + 10, 8, 4, 'F');
+      pdf.text(displayValue, vx, yPos + 12, { align: 'center' });
       
       pdf.setTextColor(...colors.text);
-      pdf.setFontSize(8);
-      pdf.text(`${item.label}: ${item.value}ms`, legendX + 10, yPos + 13);
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(vital.label, vx, yPos + 19, { align: 'center' });
       
-      yPos += 8;
+      pdf.setTextColor(...colors.muted);
+      pdf.setFontSize(6);
+      pdf.text(vital.desc, vx, yPos + 24, { align: 'center' });
     });
-    
-    yPos += 15;
   }
 
-  // ============ SEO ANALYSIS ============
-  yPos += 10;
+  yPos += 35;
+
+  // Response Time History Chart
   pdf.setTextColor(...colors.text);
-  pdf.setFontSize(12);
+  pdf.setFontSize(11);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('SEO Analysis', margin, yPos);
-  yPos += 8;
-  
-  // SEO Score gauge
-  if (seo.score !== null) {
-    drawScoreGauge(pdf, margin + 30, yPos + 20, seo.score, 'SEO Score');
+  pdf.text('Response Time History', margin, yPos);
+  yPos += 3;
+
+  drawBorderedBox(pdf, margin, yPos, pageWidth - 2 * margin, 50);
+  drawResponseTimeChart(pdf, margin + 5, yPos + 8, pageWidth - 2 * margin - 10, 40, website.responseTimeHistory || []);
+
+  yPos += 58;
+
+  // Two columns: Performance Breakdown (Bar) + Timing Distribution (Pie)
+  const colWidth = (pageWidth - 2 * margin - 5) / 2;
+
+  // Performance Breakdown - Bar Chart
+  pdf.setTextColor(...colors.text);
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Performance Breakdown', margin, yPos);
+  yPos += 3;
+
+  drawBorderedBox(pdf, margin, yPos, colWidth, 55);
+
+  if (website.performanceBreakdown) {
+    const barData = [
+      { label: 'DNS Lookup', value: website.performanceBreakdown.dns || 0, color: colors.primary },
+      { label: 'TCP Connect', value: website.performanceBreakdown.connect || 0, color: colors.success },
+      { label: 'TTFB', value: website.performanceBreakdown.ttfb || 0, color: colors.orange },
+      { label: 'Download', value: website.performanceBreakdown.download || 0, color: colors.teal },
+    ];
+    drawBarChart(pdf, margin + 5, yPos + 5, colWidth - 10, 45, barData);
   }
+
+  // Timing Distribution - Pie Chart
+  const pieX = margin + colWidth + 5;
+  pdf.setTextColor(...colors.text);
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Timing Distribution', pieX, yPos - 3);
+
+  drawBorderedBox(pdf, pieX, yPos, colWidth, 55);
+
+  if (website.performanceBreakdown) {
+    const pieData = [
+      { value: website.performanceBreakdown.dns || 0, color: colors.primary, label: 'DNS' },
+      { value: website.performanceBreakdown.connect || 0, color: colors.success, label: 'TCP' },
+      { value: website.tlsHandshakeTime || 0, color: colors.purple, label: 'TLS' },
+      { value: website.performanceBreakdown.ttfb || 0, color: colors.orange, label: 'TTFB' },
+      { value: website.performanceBreakdown.download || 0, color: colors.teal, label: 'Download' },
+    ].filter(d => d.value > 0);
+
+    const chartCenterX = pieX + 30;
+    const chartCenterY = yPos + 28;
+    drawPieChart(pdf, chartCenterX, chartCenterY, 18, pieData);
+
+    // Legend
+    let legendY = yPos + 8;
+    pieData.forEach((item) => {
+      pdf.setFillColor(...item.color);
+      pdf.rect(pieX + 55, legendY, 6, 4, 'F');
+      
+      pdf.setTextColor(...colors.text);
+      pdf.setFontSize(7);
+      pdf.text(`${item.label}: ${item.value}ms`, pieX + 63, legendY + 3);
+      legendY += 7;
+    });
+  }
+
+  // Page 1 Footer
+  pdf.setDrawColor(...colors.border);
+  pdf.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
+  pdf.setTextColor(...colors.muted);
+  pdf.setFontSize(8);
+  pdf.text('WebMetrics Report', margin, pageHeight - 7);
+  pdf.text('Page 1 of 2', pageWidth - margin, pageHeight - 7, { align: 'right' });
+
+  // ============ PAGE 2: SEO ANALYSIS ============
+  pdf.addPage();
+  yPos = margin;
+
+  // Header
+  pdf.setFillColor(...colors.primary);
+  pdf.rect(0, 0, pageWidth, 25, 'F');
   
-  // SEO Checks
-  const checksX = margin + 70;
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFontSize(16);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('SEO ANALYSIS & RECOMMENDATIONS', margin, 15);
+  
+  pdf.setFontSize(9);
+  pdf.text(hostname, pageWidth - margin, 15, { align: 'right' });
+
+  yPos = 32;
+
+  // SEO Score Section
+  pdf.setTextColor(...colors.text);
+  pdf.setFontSize(11);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('SEO Overview', margin, yPos);
+  yPos += 3;
+
+  drawBorderedBox(pdf, margin, yPos, pageWidth - 2 * margin, 45);
+
+  // Score gauge
+  if (seo.score !== null) {
+    drawScoreGauge(pdf, margin + 25, yPos + 22, seo.score, 'SEO Score');
+  }
+
+  // SEO Checks grid
+  const checksStartX = margin + 55;
+  const checkColWidth = (pageWidth - checksStartX - margin) / 2;
+  
   const checks = [
-    { label: 'Title Tag', passed: seo.titleTag.present },
-    { label: 'Meta Description', passed: seo.metaDescription.present },
-    { label: 'H1 Heading', passed: seo.headings.h1Count === 1 },
-    { label: 'Canonical Tag', passed: seo.canonicalTag },
-    { label: 'Robots.txt', passed: seo.robotsTxt },
-    { label: 'Sitemap', passed: seo.sitemap },
-    { label: 'Mobile Friendly', passed: seo.mobileFriendly },
+    { label: 'Title Tag', passed: seo.titleTag.present, detail: seo.titleTag.length ? `${seo.titleTag.length} chars` : '' },
+    { label: 'Meta Description', passed: seo.metaDescription.present, detail: seo.metaDescription.length ? `${seo.metaDescription.length} chars` : '' },
+    { label: 'H1 Heading', passed: seo.headings.h1Count === 1, detail: `${seo.headings.h1Count} found` },
+    { label: 'Canonical Tag', passed: seo.canonicalTag, detail: '' },
+    { label: 'Robots.txt', passed: seo.robotsTxt, detail: '' },
+    { label: 'Sitemap', passed: seo.sitemap, detail: '' },
+    { label: 'Mobile Friendly', passed: seo.mobileFriendly, detail: '' },
+    { label: 'Indexable', passed: seo.indexable, detail: '' },
   ];
-  
+
   checks.forEach((check, i) => {
-    const checkY = yPos + 5 + i * 6;
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const checkX = checksStartX + col * checkColWidth;
+    const checkY = yPos + 8 + row * 9;
+    
+    // Icon
     pdf.setFillColor(...(check.passed ? colors.success : colors.error));
-    pdf.circle(checksX, checkY, 1.5, 'F');
+    pdf.circle(checkX + 2, checkY, 2, 'F');
+    
+    // Label
+    pdf.setTextColor(...colors.text);
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(check.label, checkX + 6, checkY + 1);
+    
+    // Status
+    pdf.setTextColor(...(check.passed ? colors.success : colors.error));
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(check.passed ? '✓' : '✗', checkX + checkColWidth - 10, checkY + 1);
+  });
+
+  yPos += 52;
+
+  // Advanced SEO Checks
+  pdf.setTextColor(...colors.text);
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Advanced SEO Checks', margin, yPos);
+  yPos += 3;
+
+  drawBorderedBox(pdf, margin, yPos, pageWidth - 2 * margin, 28);
+
+  const advancedChecks = [
+    { label: 'Open Graph', passed: seo.openGraph?.hasTitle && seo.openGraph?.hasDescription },
+    { label: 'Twitter Card', passed: seo.twitterCard?.present },
+    { label: 'Structured Data', passed: seo.structuredData },
+    { label: 'Favicon', passed: seo.favicon },
+    { label: 'Compression', passed: seo.compression },
+    { label: 'Language Tag', passed: !!seo.language },
+  ];
+
+  const advColWidth = (pageWidth - 2 * margin) / 3;
+  advancedChecks.forEach((check, i) => {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const checkX = margin + col * advColWidth + 5;
+    const checkY = yPos + 8 + row * 11;
+    
+    pdf.setFillColor(...(check.passed ? colors.success : colors.error));
+    pdf.circle(checkX + 2, checkY, 2, 'F');
     
     pdf.setTextColor(...colors.text);
     pdf.setFontSize(8);
-    pdf.text(check.label, checksX + 5, checkY + 1);
+    pdf.text(check.label, checkX + 6, checkY + 1);
     
     pdf.setTextColor(...(check.passed ? colors.success : colors.error));
-    pdf.text(check.passed ? '✓' : '✗', checksX + 45, checkY + 1);
-  });
-  
-  yPos += 55;
-
-  // ============ ISSUES & RECOMMENDATIONS ============
-  if (seo.enhancedIssues && seo.enhancedIssues.length > 0) {
-    pdf.setTextColor(...colors.text);
-    pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Issues & Recommendations', margin, yPos);
-    yPos += 8;
+    pdf.text(check.passed ? 'Yes' : 'No', checkX + advColWidth - 20, checkY + 1);
+  });
+
+  yPos += 35;
+
+  // Issues & Recommendations
+  pdf.setTextColor(...colors.text);
+  pdf.setFontSize(11);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Issues & Recommendations', margin, yPos);
+  yPos += 3;
+
+  if (seo.enhancedIssues && seo.enhancedIssues.length > 0) {
+    const issueBoxHeight = Math.min(seo.enhancedIssues.length * 22 + 5, 110);
+    drawBorderedBox(pdf, margin, yPos, pageWidth - 2 * margin, issueBoxHeight);
     
+    let issueY = yPos + 6;
     seo.enhancedIssues.slice(0, 5).forEach((issue) => {
       // Severity badge
-      pdf.setFillColor(...getSeverityColor(issue.severity));
-      pdf.roundedRect(margin, yPos, 15, 5, 1, 1, 'F');
+      const badgeColor = getSeverityColor(issue.severity);
+      pdf.setFillColor(...badgeColor);
+      pdf.roundedRect(margin + 3, issueY - 2, 16, 6, 1, 1, 'F');
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(6);
-      pdf.text(issue.severity.toUpperCase(), margin + 7.5, yPos + 3.5, { align: 'center' });
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(issue.severity.toUpperCase(), margin + 11, issueY + 2, { align: 'center' });
       
-      // Issue text
+      // Category badge
+      pdf.setFillColor(...colors.muted);
+      pdf.roundedRect(margin + 21, issueY - 2, 20, 6, 1, 1, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(5);
+      pdf.text(issue.category.toUpperCase(), margin + 31, issueY + 2, { align: 'center' });
+      
+      // Issue title
       pdf.setTextColor(...colors.text);
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(issue.issue, margin + 18, yPos + 3.5);
+      pdf.text(issue.issue, margin + 44, issueY + 2);
       
-      yPos += 7;
+      issueY += 8;
       
-      // Solution
+      // Impact
       pdf.setTextColor(...colors.muted);
       pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'italic');
+      const impactText = pdf.splitTextToSize(`Impact: ${issue.impact}`, pageWidth - 2 * margin - 10);
+      pdf.text(impactText[0], margin + 5, issueY);
+      
+      issueY += 5;
+      
+      // Solution
+      pdf.setTextColor(...colors.success);
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
-      const solution = pdf.splitTextToSize(`→ ${issue.solution}`, pageWidth - 2 * margin - 18);
-      pdf.text(solution, margin + 18, yPos);
-      yPos += solution.length * 4 + 3;
+      const solutionText = pdf.splitTextToSize(`→ ${issue.solution}`, pageWidth - 2 * margin - 10);
+      pdf.text(solutionText[0], margin + 5, issueY);
+      
+      issueY += 9;
+    });
+
+    yPos += issueBoxHeight + 5;
+  } else {
+    drawBorderedBox(pdf, margin, yPos, pageWidth - 2 * margin, 20);
+    pdf.setTextColor(...colors.success);
+    pdf.setFontSize(10);
+    pdf.text('✓ No major issues found', margin + 5, yPos + 12);
+    yPos += 25;
+  }
+
+  // Images Analysis
+  if (seo.images) {
+    pdf.setTextColor(...colors.text);
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Images Analysis', margin, yPos);
+    yPos += 3;
+
+    drawBorderedBox(pdf, margin, yPos, pageWidth - 2 * margin, 18);
+    
+    const imgStatWidth = (pageWidth - 2 * margin) / 3;
+    const imgStats = [
+      { label: 'Total Images', value: seo.images.total, color: colors.primary },
+      { label: 'With Alt Text', value: seo.images.withAlt, color: colors.success },
+      { label: 'Missing Alt', value: seo.images.missingAlt, color: seo.images.missingAlt > 0 ? colors.error : colors.success },
+    ];
+
+    imgStats.forEach((stat, i) => {
+      const statX = margin + imgStatWidth * i + imgStatWidth / 2;
+      pdf.setTextColor(...stat.color);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(stat.value.toString(), statX, yPos + 9, { align: 'center' });
+      
+      pdf.setTextColor(...colors.muted);
+      pdf.setFontSize(7);
+      pdf.text(stat.label, statX, yPos + 14, { align: 'center' });
     });
   }
 
-  // ============ FOOTER ============
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  pdf.setDrawColor(...colors.muted);
-  pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
-  
+  // Page 2 Footer
+  pdf.setDrawColor(...colors.border);
+  pdf.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
   pdf.setTextColor(...colors.muted);
   pdf.setFontSize(8);
-  pdf.text('Generated by WebMetrics', margin, pageHeight - 10);
-  pdf.text(`Page 1 of 1`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+  pdf.text('WebMetrics Report', margin, pageHeight - 7);
+  pdf.text('Page 2 of 2', pageWidth - margin, pageHeight - 7, { align: 'right' });
 
   // Save
-  const filename = `webmetrics-report-${new URL(website.url).hostname}-${new Date().toISOString().split('T')[0]}.pdf`;
+  const filename = `webmetrics-report-${hostname}-${new Date().toISOString().split('T')[0]}.pdf`;
   pdf.save(filename);
 }
