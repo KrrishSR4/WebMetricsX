@@ -33,7 +33,7 @@ const Index = () => {
         responseTime: metrics.website.responseTime,
       });
     }
-  }, [isMonitoring, metrics.website.url, metrics.website.status, metrics.lastChecked, addToHistory]);
+  }, [isMonitoring, metrics.website.url, metrics.website.status, metrics.website.responseTime, metrics.lastChecked, addToHistory]);
 
   const handleSelectFromHistory = (url: string) => {
     startMonitoring(url);
@@ -42,7 +42,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container py-8 space-y-8">
         {/* Hero Section */}
         {!isMonitoring && (
@@ -54,7 +54,7 @@ const Index = () => {
                 <span className="text-chart-1">In Real-Time</span>
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Professional website monitoring with live metrics, performance analysis, 
+                Professional website monitoring with live metrics, performance analysis,
                 SSL validation, and SEO insights. Updated every 5 seconds.
               </p>
             </div>

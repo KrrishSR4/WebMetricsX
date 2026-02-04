@@ -72,7 +72,7 @@ export function PerformanceBreakdown({ data }: PerformanceBreakdownProps) {
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
                 }}
-                formatter={(value: number, name: string, props: any) => [`${value}ms`, props.payload.label]}
+                formatter={(value: number, _name: string, props: { payload: { label: string } }) => [`${value}ms`, props.payload.label]}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                 {chartData.map((entry, index) => (
