@@ -1,12 +1,11 @@
-import { useRef } from 'react';
 import { MetricCard } from './MetricCard';
 import { StatusBadge } from './StatusBadge';
 import { ResponseTimeChart } from './ResponseTimeChart';
 import { PerformanceBreakdown } from './PerformanceBreakdown';
-import { SSLCertificateCard } from './SSLCertificateCard';
 import { CoreWebVitals } from './CoreWebVitals';
 import { SEOAnalysis } from './SEOAnalysis';
 import { PDFExportButton } from './PDFExportButton';
+import { PieChartCard } from './PieChartCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Activity,
@@ -31,7 +30,6 @@ interface DashboardProps {
 }
 
 export function Dashboard({ data }: DashboardProps) {
-  const dashboardRef = useRef<HTMLDivElement>(null);
   const { website, seo } = data;
 
   const getResponseTimeStatus = (time: number | null): 'good' | 'warning' | 'error' | 'neutral' => {
@@ -66,13 +64,13 @@ export function Dashboard({ data }: DashboardProps) {
           </div>
         </div>
         <PDFExportButton
-          targetRef={dashboardRef}
+          data={data}
           url={website.url}
           disabled={!data.isMonitoring}
         />
       </div>
 
-      <div ref={dashboardRef} className="space-y-6">
+      <div className="space-y-6">
         {/* Tabs */}
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-3 max-w-md">
@@ -158,10 +156,10 @@ export function Dashboard({ data }: DashboardProps) {
             {/* Response Time Chart */}
             <ResponseTimeChart data={website.responseTimeHistory} />
 
-            {/* Performance Breakdown & SSL */}
+            {/* Performance Breakdown & Pie Chart */}
             <div className="grid gap-4 lg:grid-cols-2">
               <PerformanceBreakdown data={website.performanceBreakdown} />
-              <SSLCertificateCard data={website.sslCertificate} />
+              <PieChartCard data={website.performanceBreakdown} />
             </div>
           </TabsContent>
 

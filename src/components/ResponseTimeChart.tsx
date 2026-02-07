@@ -52,18 +52,13 @@ export function ResponseTimeChart({ data }: ResponseTimeChartProps) {
   }
 
   return (
-    <Card className="chart-animate">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-chart-1" />
-            <CardTitle className="text-base font-medium">Response Time History</CardTitle>
-          </div>
-          <span className="text-xs text-muted-foreground live-pulse">● Live</span>
-        </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Response Time History</CardTitle>
+        <Activity className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="h-64">
+        <div id="response-time-chart" className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>

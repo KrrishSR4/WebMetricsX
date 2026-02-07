@@ -51,7 +51,7 @@ export function PerformanceBreakdown({ data }: PerformanceBreakdownProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-48">
+        <div id="performance-breakdown-chart" className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 50, bottom: 5 }}>
               <XAxis

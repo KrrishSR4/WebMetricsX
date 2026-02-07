@@ -41,7 +41,7 @@ export function SEOAnalysis({ data }: SEOAnalysisProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div id="seo-analysis-chart" className="space-y-6 flex-col sm:flex-row items-center gap-6">
             <ScoreGauge score={data.score} label="SEO Score" size="lg" />
             <div className="flex-1 grid grid-cols-2 gap-4">
               <div className="text-center sm:text-left">
