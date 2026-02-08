@@ -3,6 +3,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Globe, Loader2, StopCircle, Search, History, X, Clock, Trash2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useNotifications } from '@/hooks/useNotifications';
+import { Bell, BellOff } from 'lucide-react';
 import type { HistoryItem } from '@/hooks/useUrlHistory';
 
 interface UrlInputProps {
@@ -16,10 +18,10 @@ interface UrlInputProps {
   onClearHistory?: () => void;
 }
 
-export function UrlInput({ 
-  onSubmit, 
-  onStop, 
-  isMonitoring, 
+export function UrlInput({
+  onSubmit,
+  onStop,
+  isMonitoring,
   isLoading,
   history = [],
   onSelectHistory,
@@ -28,6 +30,10 @@ export function UrlInput({
 }: UrlInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
+  const { token, enableNotifications, isSupported } = useNotifications();
+
+  // REPLACE THIS WITH ACTUAL VAPID KEY FROM USER
+  const VAPID_KEY = "BBoovMWQMAx1yoUjgIr8ym1RyPJEBTdKNM5tkQj77chTcs6uKDJsz7SAaQRYorthEJHLmi26XRGqy5lf3Ung3Wc";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +55,7 @@ export function UrlInput({
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     const diffHours = Math.floor(diffMins / 60);
@@ -185,19 +191,33 @@ export function UrlInput({
           )}
         </div>
       </form>
-      
-      {/* Quick Help Text */}
-      <p className="text-center text-xs text-muted-foreground">
-        {isMonitoring ? (
-          <>
-            📊 Monitoring active • Click <span className="font-medium text-destructive">Stop Monitoring</span> to analyze a different URL
-          </>
-        ) : (
-          <>
-            💡 Enter any URL to start • Metrics update every 5s • Click <History className="inline h-3 w-3" /> for recent URLs
-          </>
+
+      {/* Quick Help Text & Notifications */}
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-center text-xs text-muted-foreground">
+          {isMonitoring ? (
+            <>
+              📊 Monitoring active • Click <span className="font-medium text-destructive">Stop Monitoring</span> to analyze a different URL
+            </>
+          ) : (
+            <>
+              💡 Enter any URL to start • Metrics update every 5s • Click <History className="inline h-3 w-3" /> for recent URLs
+            </>
+          )}
+        </p>
+
+        {isSupported && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`text-xs gap-2 ${token ? 'text-green-500' : 'text-muted-foreground'}`}
+            onClick={() => enableNotifications(VAPID_KEY)}
+          >
+            {token ? <Bell className="h-3 w-3" /> : <BellOff className="h-3 w-3" />}
+            {token ? 'Notifications Enabled' : 'Enable Downtime Alerts'}
+          </Button>
         )}
-      </p>
+      </div>
     </div>
   );
 }
