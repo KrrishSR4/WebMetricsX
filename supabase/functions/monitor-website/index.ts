@@ -23,7 +23,14 @@ interface SSLInfo {
   issuer: string | null;
 }
 
-<<<<<<< HEAD
+interface SEOIssue {
+  category: 'technical' | 'content' | 'social' | 'performance';
+  severity: 'high' | 'medium' | 'low';
+  issue: string;
+  impact: string;
+  solution: string;
+}
+
 interface PageSpeedResult {
   performanceScore: number | null;
   mobileScore: number | null;
@@ -44,36 +51,30 @@ async function fetchPageSpeedInsights(url: string): Promise<PageSpeedResult | nu
       return null;
     }
 
-    const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${PAGESPEED_API_KEY}&category=performance&category=accessibility&category=best-practices&strategy=mobile&strategy=desktop`;
+    const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${PAGESPEED_API_KEY}&category=performance&category=accessibility&category=best-practices&strategy=mobile`;
 
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, { signal: AbortSignal.timeout(30000) });
     if (!response.ok) {
       console.warn('PageSpeed API request failed:', response.status);
       return null;
     }
 
     const data = await response.json();
-
-    // Extract metrics from PageSpeed API response
     const lighthouse = data.lighthouseResult;
-    const loadingExperience = data.loadingExperience;
-
-    // Core Web Vitals from Lighthouse
     const audits = lighthouse?.audits || {};
+
     const coreWebVitals = {
       lcp: audits['largest-contentful-paint']?.numericValue ? Math.round(audits['largest-contentful-paint'].numericValue) : null,
       fid: audits['max-potential-fid']?.numericValue ? Math.round(audits['max-potential-fid'].numericValue) : null,
       cls: audits['cumulative-layout-shift']?.numericValue ? Math.round(audits['cumulative-layout-shift'].numericValue * 1000) / 1000 : null,
     };
 
-    // Scores from different categories
     const performanceScore = Math.round(lighthouse?.categories?.performance?.score * 100) || null;
     const accessibilityScore = Math.round(lighthouse?.categories?.accessibility?.score * 100) || null;
     const bestPracticesScore = Math.round(lighthouse?.categories?.['best-practices']?.score * 100) || null;
 
-    // Mobile and Desktop scores (we'll use the same performance score for both strategies)
     const mobileScore = performanceScore;
-    const desktopScore = performanceScore;
+    const desktopScore = performanceScore ? Math.round(performanceScore * 1.1) : null;
 
     return {
       performanceScore,
@@ -87,14 +88,6 @@ async function fetchPageSpeedInsights(url: string): Promise<PageSpeedResult | nu
     console.error('PageSpeed API error:', error);
     return null;
   }
-=======
-interface SEOIssue {
-  category: 'technical' | 'content' | 'social' | 'performance';
-  severity: 'high' | 'medium' | 'low';
-  issue: string;
-  impact: string;
-  solution: string;
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
 }
 
 interface SEOAnalysis {
@@ -119,68 +112,9 @@ interface SEOAnalysis {
   enhancedIssues: SEOIssue[];
 }
 
-<<<<<<< HEAD
-async function fetchWithTiming(url: string): Promise<{ response: Response; timing: TimingMetrics; body: string }> {
-  const startTime = performance.now();
-
-  // DNS/Connection timing estimation (Deno doesn't expose detailed timing)
-  const dnsStart = performance.now();
-
-=======
-interface PageSpeedResult {
-  performanceScore: number | null;
-  accessibilityScore: number | null;
-  bestPracticesScore: number | null;
-  seoScore: number | null;
-  coreWebVitals: {
-    lcp: number | null;
-    fid: number | null;
-    cls: number | null;
-  };
-}
-
-async function fetchPageSpeedInsights(url: string): Promise<PageSpeedResult | null> {
-  const apiKey = Deno.env.get('GOOGLE_PAGESPEED_API_KEY');
-  
-  if (!apiKey) {
-    console.log('PageSpeed API key not configured, using estimated scores');
-    return null;
-  }
-
-  try {
-    const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${apiKey}&category=performance&category=accessibility&category=best-practices&category=seo`;
-    
-    const response = await fetch(apiUrl, { signal: AbortSignal.timeout(30000) });
-    
-    if (!response.ok) {
-      console.log('PageSpeed API error:', response.status);
-      return null;
-    }
-
-    const data = await response.json();
-    const lighthouse = data.lighthouseResult;
-
-    return {
-      performanceScore: lighthouse?.categories?.performance?.score ? Math.round(lighthouse.categories.performance.score * 100) : null,
-      accessibilityScore: lighthouse?.categories?.accessibility?.score ? Math.round(lighthouse.categories.accessibility.score * 100) : null,
-      bestPracticesScore: lighthouse?.categories?.['best-practices']?.score ? Math.round(lighthouse.categories['best-practices'].score * 100) : null,
-      seoScore: lighthouse?.categories?.seo?.score ? Math.round(lighthouse.categories.seo.score * 100) : null,
-      coreWebVitals: {
-        lcp: lighthouse?.audits?.['largest-contentful-paint']?.numericValue ?? null,
-        fid: lighthouse?.audits?.['max-potential-fid']?.numericValue ?? null,
-        cls: lighthouse?.audits?.['cumulative-layout-shift']?.numericValue ?? null,
-      },
-    };
-  } catch (error) {
-    console.log('PageSpeed API fetch failed:', error);
-    return null;
-  }
-}
-
 async function fetchWithTiming(url: string): Promise<{ response: Response; timing: TimingMetrics; body: string; headers: Headers }> {
   const startTime = performance.now();
-  
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
+
   const response = await fetch(url, {
     redirect: 'follow',
     headers: {
@@ -198,20 +132,11 @@ async function fetchWithTiming(url: string): Promise<{ response: Response; timin
   const total = Math.round(endTime - startTime);
   const ttfb = Math.round(ttfbTime - startTime);
   const download = Math.round(endTime - ttfbTime);
-<<<<<<< HEAD
 
-  // Estimate timing breakdown based on total time
-  const dnsLookup = Math.round(total * 0.05); // ~5% for DNS
-  const tcpConnect = Math.round(total * 0.1); // ~10% for TCP
-  const tlsHandshake = url.startsWith('https') ? Math.round(total * 0.15) : 0; // ~15% for TLS
-
-=======
-  
   const dnsLookup = Math.round(total * 0.05);
   const tcpConnect = Math.round(total * 0.1);
   const tlsHandshake = url.startsWith('https') ? Math.round(total * 0.15) : 0;
-  
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
+
   return {
     response,
     body,
@@ -234,20 +159,10 @@ async function checkSSL(url: string): Promise<SSLInfo> {
     if (parsedUrl.protocol !== 'https:') {
       return { valid: false, expiryDate: null, daysUntilExpiry: null, issuer: null };
     }
-<<<<<<< HEAD
 
-    // For HTTPS URLs, check if connection succeeds (basic SSL validation)
     const response = await fetch(url, { method: 'HEAD' });
 
-    // Estimate SSL expiry based on common patterns (30-365 days typical)
-    // In real production, you'd use a certificate API or native TLS inspection
-    const validDays = 90 + Math.floor(Math.random() * 275); // Simulated realistic range
-=======
-    
-    const response = await fetch(url, { method: 'HEAD' });
-    
     const validDays = 90 + Math.floor(Math.random() * 275);
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + validDays);
 
@@ -283,12 +198,8 @@ async function checkSitemap(baseUrl: string): Promise<boolean> {
 function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
   const issues: string[] = [];
   const recommendations: string[] = [];
-<<<<<<< HEAD
-
-=======
   const enhancedIssues: SEOIssue[] = [];
-  
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
+
   // Title tag analysis
   const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
   const titleContent = titleMatch ? titleMatch[1].trim() : null;
@@ -299,15 +210,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
   };
 
   if (!titleTag.present) {
-<<<<<<< HEAD
-    issues.push('Missing title tag - Critical for SEO');
-    recommendations.push('Add a descriptive title tag (50-60 characters) including primary keywords');
-  } else if (titleTag.length && titleTag.length > 60) {
-    issues.push('Title tag too long (>60 characters) - May be truncated in search results');
-    recommendations.push('Shorten title to 50-60 characters for optimal display');
-  } else if (titleTag.length && titleTag.length < 30) {
-    recommendations.push('Consider expanding title tag (currently <30 characters) for better SEO');
-=======
     issues.push('Missing title tag');
     enhancedIssues.push({
       category: 'content',
@@ -334,7 +236,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
       impact: 'Missing opportunity to include more relevant keywords',
       solution: 'Expand title to 50-60 characters with descriptive keywords',
     });
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
   }
 
   // Check for keyword stuffing in title
@@ -363,15 +264,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
   };
 
   if (!metaDescription.present) {
-<<<<<<< HEAD
-    issues.push('Missing meta description - Important for click-through rates');
-    recommendations.push('Add a compelling meta description (150-160 characters) with call-to-action');
-  } else if (metaDescription.length && metaDescription.length > 160) {
-    issues.push('Meta description too long (>160 characters) - Will be truncated');
-    recommendations.push('Reduce meta description to 150-160 characters');
-  } else if (metaDescription.length && metaDescription.length < 120) {
-    recommendations.push('Consider expanding meta description for better engagement (currently <120 characters)');
-=======
     issues.push('Missing meta description');
     enhancedIssues.push({
       category: 'content',
@@ -389,7 +281,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
       impact: 'Description will be truncated in search results',
       solution: 'Shorten to 150-160 characters with a clear call-to-action',
     });
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
   }
 
   // Check for duplicate meta description patterns
@@ -408,13 +299,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
   };
 
   if (headings.h1Count === 0) {
-<<<<<<< HEAD
-    issues.push('No H1 tag found - Critical for SEO and accessibility');
-    recommendations.push('Add exactly one H1 tag describing the main page content');
-  } else if (headings.h1Count > 1) {
-    issues.push('Multiple H1 tags detected - Can confuse search engines');
-    recommendations.push('Use only one H1 tag per page, use H2-H6 for subheadings');
-=======
     issues.push('No H1 tag found');
     enhancedIssues.push({
       category: 'content',
@@ -432,7 +316,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
       impact: 'Confuses search engines about the primary topic',
       solution: 'Keep only one H1 tag and convert others to H2 or H3',
     });
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
   }
 
   if (headings.h2Count === 0) {
@@ -454,10 +337,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
   };
 
   if (images.missingAlt > 0) {
-<<<<<<< HEAD
-    issues.push(`${images.missingAlt} images missing ALT attributes - Accessibility and SEO issue`);
-    recommendations.push('Add descriptive ALT text to all images for accessibility and SEO');
-=======
     issues.push(`${images.missingAlt} images missing ALT attributes`);
     enhancedIssues.push({
       category: 'content',
@@ -466,7 +345,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
       impact: 'Poor accessibility and missed image SEO opportunities',
       solution: 'Add descriptive ALT text to all images',
     });
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
   }
 
   if (imgWithEmptyAlt > 0 && imgWithEmptyAlt < 3) {
@@ -482,10 +360,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
   // Canonical tag check
   const canonicalTag = /<link[^>]*rel=["']canonical["']/i.test(html);
   if (!canonicalTag) {
-<<<<<<< HEAD
-    issues.push('Missing canonical tag - Can cause duplicate content issues');
-    recommendations.push('Add canonical tag to prevent duplicate content problems');
-=======
     recommendations.push('Consider adding a canonical tag');
     enhancedIssues.push({
       category: 'technical',
@@ -494,7 +368,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
       impact: 'Risk of duplicate content issues',
       solution: 'Add <link rel="canonical" href="..."> pointing to the preferred URL',
     });
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
   }
 
   // Check for multiple canonical tags
@@ -509,10 +382,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
   const mobileFriendly = hasViewport;
 
   if (!mobileFriendly) {
-<<<<<<< HEAD
-    issues.push('Missing viewport meta tag - Mobile usability issue');
-    recommendations.push('Add viewport meta tag: <meta name="viewport" content="width=device-width, initial-scale=1">');
-=======
     issues.push('Missing viewport meta tag for mobile devices');
     enhancedIssues.push({
       category: 'technical',
@@ -521,7 +390,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
       impact: 'Poor mobile experience and lower mobile search rankings',
       solution: 'Add <meta name="viewport" content="width=device-width, initial-scale=1">',
     });
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
   }
 
   // Check for responsive design indicators
@@ -538,65 +406,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
     recommendations.push('Page is marked as noindex - Ensure this is intentional');
   }
 
-<<<<<<< HEAD
-  // Check for robots meta tag
-  const robotsMeta = html.match(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i);
-  if (robotsMeta) {
-    const robotsContent = robotsMeta[1].toLowerCase();
-    if (robotsContent.includes('nofollow')) {
-      recommendations.push('Page has nofollow directive - Ensure this is intentional');
-    }
-  }
-
-  // Structured data check
-  const hasStructuredData = /application\/ld\+json/i.test(html) || /itemtype/i.test(html);
-  if (!hasStructuredData) {
-    recommendations.push('Consider adding structured data (JSON-LD) for enhanced search results');
-  }
-
-  // Open Graph tags check
-  const hasOGTitle = /<meta[^>]*property=["']og:title["']/i.test(html);
-  const hasOGDescription = /<meta[^>]*property=["']og:description["']/i.test(html);
-  const hasOGImage = /<meta[^>]*property=["']og:image["']/i.test(html);
-
-  if (!hasOGTitle || !hasOGDescription || !hasOGImage) {
-    recommendations.push('Add Open Graph tags for better social media sharing');
-  }
-
-  // Twitter Card tags check
-  const hasTwitterCard = /<meta[^>]*name=["']twitter:card["']/i.test(html);
-  if (!hasTwitterCard) {
-    recommendations.push('Add Twitter Card tags for better Twitter sharing');
-  }
-
-  // Language declaration check
-  const hasLangAttr = /<html[^>]*lang=/i.test(html);
-  if (!hasLangAttr) {
-    recommendations.push('Add language attribute to HTML tag for better accessibility and SEO');
-  }
-
-  // Calculate SEO score
-  let score = 100;
-
-  // Critical issues (higher penalty)
-  if (!titleTag.present) score -= 25;
-  if (headings.h1Count === 0) score -= 20;
-  if (!metaDescription.present) score -= 15;
-  if (!canonicalTag) score -= 10;
-  if (!mobileFriendly) score -= 15;
-
-  // Quality issues (medium penalty)
-  if (titleTag.length && titleTag.length > 60) score -= 8;
-  if (metaDescription.length && metaDescription.length > 160) score -= 8;
-  if (headings.h1Count > 1) score -= 8;
-  if (images.missingAlt > 0) score -= Math.min(10, images.missingAlt * 2);
-
-  // Enhancements (small penalty)
-  if (!hasStructuredData) score -= 5;
-  if (!hasOGTitle || !hasOGDescription) score -= 3;
-  if (!hasLangAttr) score -= 2;
-
-=======
   // Open Graph tags
   const ogTitle = /<meta[^>]*property=["']og:title["']/i.test(html);
   const ogDesc = /<meta[^>]*property=["']og:description["']/i.test(html);
@@ -688,7 +497,7 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
       solution: 'Enable gzip or Brotli compression on your server',
     });
   }
-  
+
   // Calculate SEO score
   let score = 100;
   enhancedIssues.forEach(issue => {
@@ -696,7 +505,6 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
     else if (issue.severity === 'medium') score -= 8;
     else score -= 3;
   });
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
   score = Math.max(0, Math.min(100, score));
 
   return {
@@ -746,11 +554,7 @@ Deno.serve(async (req) => {
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
     // Perform all checks in parallel
-<<<<<<< HEAD
     const [fetchResult, sslInfo, robotsTxt, sitemap, pageSpeedData] = await Promise.all([
-=======
-    const [fetchResult, sslInfo, robotsTxt, sitemap, pageSpeedResult] = await Promise.all([
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
       fetchWithTiming(targetUrl).catch(err => ({ error: err })),
       checkSSL(targetUrl),
       checkRobotsTxt(baseUrl),
@@ -807,14 +611,8 @@ Deno.serve(async (req) => {
       );
     }
 
-<<<<<<< HEAD
-    const { response, body, timing } = fetchResult;
-
-    // Determine status
-=======
     const { response, body, headers, timing } = fetchResult;
-    
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
+
     let status: 'up' | 'down' | 'degraded' = 'up';
     if (!response.ok) {
       status = response.status >= 500 ? 'down' : 'degraded';
@@ -826,7 +624,6 @@ Deno.serve(async (req) => {
     seoAnalysis.robotsTxt = robotsTxt;
     seoAnalysis.sitemap = sitemap;
 
-<<<<<<< HEAD
     // Use PageSpeed data if available, otherwise fall back to estimated scores
     let performanceScore, mobileScore, desktopScore, accessibilityScore, bestPracticesScore, coreWebVitals;
 
@@ -839,22 +636,6 @@ Deno.serve(async (req) => {
       coreWebVitals = pageSpeedData.coreWebVitals;
     } else {
       // Fallback to estimated scores if PageSpeed API fails
-=======
-    // Use PageSpeed API results if available, otherwise estimate
-    let performanceScore: number, mobileScore: number, desktopScore: number;
-    let accessibilityScore: number, bestPracticesScore: number;
-    let coreWebVitals: { lcp: number | null; fid: number | null; cls: number | null };
-
-    if (pageSpeedResult) {
-      performanceScore = pageSpeedResult.performanceScore ?? 0;
-      accessibilityScore = pageSpeedResult.accessibilityScore ?? 0;
-      bestPracticesScore = pageSpeedResult.bestPracticesScore ?? 0;
-      mobileScore = Math.round((performanceScore + (pageSpeedResult.seoScore ?? 0)) / 2);
-      desktopScore = Math.round(performanceScore * 1.1);
-      coreWebVitals = pageSpeedResult.coreWebVitals;
-    } else {
-      // Fallback to estimated scores
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
       const generateScore = (base: number, variance: number) => {
         return Math.max(0, Math.min(100, Math.round(base + (Math.random() - 0.5) * variance)));
       };
@@ -866,10 +647,7 @@ Deno.serve(async (req) => {
       accessibilityScore = generateScore(75, 20);
       bestPracticesScore = generateScore(80, 15);
 
-<<<<<<< HEAD
       // Generate Core Web Vitals based on actual timing
-=======
->>>>>>> d70c266466fb345c00bb7245ab62959fda8be001
       coreWebVitals = {
         lcp: Math.round(timing.total * 0.8 + Math.random() * 500),
         fid: Math.round(50 + Math.random() * 100),
