@@ -1,8 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { FileDown, Loader2 } from 'lucide-react';
-import { useState } from 'react';
-import { generateWorkingPremiumPDF } from './WorkingPremiumPDF';
-import { captureAllCharts } from '@/utils/screenshotCapture';
+import { useState, useCallback } from 'react';
+import { generatePDFReport } from '@/lib/pdfReportGenerator';
 import type { MonitoringResult } from '@/types/metrics';
 
 interface PDFExportButtonProps {
@@ -11,30 +10,21 @@ interface PDFExportButtonProps {
   disabled?: boolean;
 }
 
-export function PDFExportButton({ data, url, disabled }: PDFExportButtonProps) {
+export function PDFExportButton({ data, disabled }: PDFExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExport = async () => {
+  const handleExport = useCallback(async () => {
     setIsExporting(true);
 
     try {
-      console.log('Starting PDF export for:', url);
-      console.log('Data:', data);
-
-      // Capture screenshots of all charts
-      const screenshots = await captureAllCharts();
-      console.log('Captured screenshots:', Object.keys(screenshots));
-
-      // Generate PDF with screenshots
-      generateWorkingPremiumPDF({ data, url, screenshots });
-      console.log('Working Premium PDF export completed');
+      generatePDFReport(data);
     } catch (error) {
       console.error('PDF export error:', error);
       alert('PDF export failed. Please check the console for details.');
     } finally {
       setIsExporting(false);
     }
-  };
+  }, [data]);
 
   return (
     <Button
