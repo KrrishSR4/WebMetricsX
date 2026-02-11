@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Globe, Loader2, StopCircle, Search, History, X, Clock, Trash2 } from 'lucide-react';
+import { Globe, Loader2, StopCircle, Search, History, X, Clock, Trash2, Bell, BellOff } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useNotifications } from '@/hooks/useNotifications';
-import { Bell, BellOff } from 'lucide-react';
 import type { HistoryItem } from '@/hooks/useUrlHistory';
 
 interface UrlInputProps {
@@ -16,6 +14,10 @@ interface UrlInputProps {
   onSelectHistory?: (url: string) => void;
   onRemoveHistory?: (url: string) => void;
   onClearHistory?: () => void;
+  currentUrl?: string;
+  notificationsEnabled?: boolean;
+  onToggleNotification?: () => void;
+  isNotificationSupported?: boolean;
 }
 
 export function UrlInput({
@@ -27,13 +29,13 @@ export function UrlInput({
   onSelectHistory,
   onRemoveHistory,
   onClearHistory,
+  currentUrl,
+  notificationsEnabled = false,
+  onToggleNotification,
+  isNotificationSupported = true,
 }: UrlInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
-  const { token, enableNotifications, isSupported } = useNotifications();
-
-  // REPLACE THIS WITH ACTUAL VAPID KEY FROM USER
-  const VAPID_KEY = "BBoovMWQMAx1yoUjgIr8ym1RyPJEBTdKNM5tkQj77chTcs6uKDJsz7SAaQRYorthEJHLmi26XRGqy5lf3Ung3Wc";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +57,6 @@ export function UrlInput({
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     const diffHours = Math.floor(diffMins / 60);
@@ -74,7 +75,7 @@ export function UrlInput({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-3">
+    <div className="w-full max-w-2xl mx-auto space-y-4">
       <form onSubmit={handleSubmit}>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -87,7 +88,6 @@ export function UrlInput({
               className="pl-12 pr-12 h-14 text-base border-2 bg-card focus:border-chart-1 transition-colors"
               disabled={isMonitoring}
             />
-            {/* History Button */}
             {!isMonitoring && history.length > 0 && (
               <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
                 <PopoverTrigger asChild>
@@ -108,10 +108,7 @@ export function UrlInput({
                         variant="ghost"
                         size="sm"
                         className="h-7 text-xs text-muted-foreground hover:text-destructive"
-                        onClick={() => {
-                          onClearHistory();
-                          setHistoryOpen(false);
-                        }}
+                        onClick={() => { onClearHistory(); setHistoryOpen(false); }}
                       >
                         <Trash2 className="h-3 w-3 mr-1" />
                         Clear All
@@ -133,9 +130,7 @@ export function UrlInput({
                               <Clock className="h-3 w-3" />
                               {formatTimeAgo(item.lastChecked)}
                             </span>
-                            {item.responseTime && (
-                              <span>{item.responseTime}ms</span>
-                            )}
+                            {item.responseTime && <span>{item.responseTime}ms</span>}
                           </div>
                         </div>
                         {onRemoveHistory && (
@@ -143,10 +138,7 @@ export function UrlInput({
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRemoveHistory(item.url);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); onRemoveHistory(item.url); }}
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -192,32 +184,39 @@ export function UrlInput({
         </div>
       </form>
 
-      {/* Quick Help Text & Notifications */}
-      <div className="flex flex-col items-center gap-2">
-        <p className="text-center text-xs text-muted-foreground">
-          {isMonitoring ? (
-            <>
-              📊 Monitoring active • Click <span className="font-medium text-destructive">Stop Monitoring</span> to analyze a different URL
-            </>
-          ) : (
-            <>
-              💡 Enter any URL to start • Metrics update every 5s • Click <History className="inline h-3 w-3" /> for recent URLs
-            </>
-          )}
-        </p>
-
-        {isSupported && (
+      {/* Per-website notification toggle - only shown when monitoring */}
+      {isMonitoring && currentUrl && isNotificationSupported && onToggleNotification && (
+        <div className="flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border bg-card">
+          <div className="flex items-center gap-2 text-sm">
+            {notificationsEnabled ? (
+              <Bell className="h-4 w-4 text-chart-2" />
+            ) : (
+              <BellOff className="h-4 w-4 text-muted-foreground" />
+            )}
+            <span className="text-muted-foreground">
+              Downtime alerts for <span className="font-medium text-foreground">{(() => { try { return new URL(currentUrl).hostname; } catch { return currentUrl; } })()}</span>
+            </span>
+          </div>
           <Button
-            variant="ghost"
+            type="button"
+            variant={notificationsEnabled ? "secondary" : "default"}
             size="sm"
-            className={`text-xs gap-2 ${token ? 'text-green-500' : 'text-muted-foreground'}`}
-            onClick={() => enableNotifications(VAPID_KEY)}
+            className={`text-xs ${notificationsEnabled ? 'text-chart-2' : ''}`}
+            onClick={onToggleNotification}
           >
-            {token ? <Bell className="h-3 w-3" /> : <BellOff className="h-3 w-3" />}
-            {token ? 'Notifications Enabled' : 'Enable Downtime Alerts'}
+            {notificationsEnabled ? 'Enabled ✓' : 'Enable Alerts'}
           </Button>
+        </div>
+      )}
+
+      {/* Help text */}
+      <p className="text-center text-xs text-muted-foreground">
+        {isMonitoring ? (
+          <>📊 Monitoring active • Click <span className="font-medium text-destructive">Stop Monitoring</span> to stop</>
+        ) : (
+          <>💡 Enter any URL to start • Metrics update every 5s • Click <History className="inline h-3 w-3" /> for recent URLs</>
         )}
-      </div>
+      </p>
     </div>
   );
 }
