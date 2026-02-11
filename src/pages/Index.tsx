@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useMonitoring } from '@/hooks/useMonitoring';
 import { useUrlHistory } from '@/hooks/useUrlHistory';
+import { useNotifications } from '@/hooks/useNotifications';
 import { Header } from '@/components/Header';
 import { UrlInput } from '@/components/UrlInput';
 import { Dashboard } from '@/components/Dashboard';
@@ -23,7 +24,9 @@ const Index = () => {
     clearHistory,
   } = useUrlHistory();
 
-  // Save to history when monitoring data updates
+  const { checkStatusChange } = useNotifications();
+
+  // Save to history and check for status changes (downtime alerts)
   useEffect(() => {
     if (isMonitoring && metrics.website.url && metrics.lastChecked) {
       addToHistory({
@@ -32,8 +35,10 @@ const Index = () => {
         status: metrics.website.status,
         responseTime: metrics.website.responseTime,
       });
+      // Trigger notification if status changed
+      checkStatusChange(metrics.website.url, metrics.website.status);
     }
-  }, [isMonitoring, metrics.website.url, metrics.website.status, metrics.lastChecked, addToHistory]);
+  }, [isMonitoring, metrics.website.url, metrics.website.status, metrics.lastChecked, addToHistory, checkStatusChange]);
 
   const handleSelectFromHistory = (url: string) => {
     startMonitoring(url);
