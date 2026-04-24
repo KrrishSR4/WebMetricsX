@@ -1,4 +1,4 @@
-# 📊 WebMetrics  
+# 📊 WebMetricsX
 ### Real-Time Website Monitoring & SEO Analytics Platform
 
 WebMetrics is a **production-ready, enterprise-grade web application** that provides **REAL-TIME website monitoring and SEO analytics** using **live APIs, real network requests, and continuous polling**.
