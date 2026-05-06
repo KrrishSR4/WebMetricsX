@@ -43,13 +43,13 @@ const Index = () => {
   const handleSelectFromHistory = (url: string) => {
     setShowStopped(false);
     startMonitoring(url);
-    setTimeout(scrollToMonitor, 100);
+    // Don't scroll - let the monitoring section appear naturally
   };
 
   const handleStart = (url: string) => {
     setShowStopped(false);
     startMonitoring(url);
-    setTimeout(scrollToMonitor, 100);
+    // Don't scroll - let the monitoring section appear naturally
   };
 
   const handleStop = () => {
@@ -65,10 +65,19 @@ const Index = () => {
   const currentUrl = metrics.website.url;
   const notificationsEnabled = currentUrl ? isNotificationEnabledForUrl(currentUrl) : false;
 
+  const handleLaunchMonitor = () => {
+    // Show monitoring section
+    setShowStopped(false);
+    // Scroll to monitoring section
+    setTimeout(() => {
+      monitorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Marketing landing only when not actively monitoring */}
-      {!isMonitoring && !showStopped && <Landing onLaunch={scrollToMonitor} />}
+      {!isMonitoring && !showStopped && <Landing onLaunch={handleLaunchMonitor} />}
 
       {/* Monitor / dashboard surface */}
       <section

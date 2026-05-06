@@ -64,9 +64,9 @@ The platform delivers **accurate, continuously updating insights every 5 seconds
 └───────────┬──────────┘
             │
             ▼
-┌──────────────────────────────┐
-│        Backend (Cloud)       │
-│  Real HTTP Probing Engine    │
+┌─────────────────────────────┐
+│        Backend (Cloud)      │
+│  Real HTTP Probing Engine   │
 │  Performance Collectors     │
 │  SEO & Lighthouse APIs      │
 └───────────┬─────────────────┘
@@ -74,7 +74,7 @@ The platform delivers **accurate, continuously updating insights every 5 seconds
             ▼
 ┌──────────────────────────────┐
 │ External Real APIs & Targets │
-│ Websites • DNS • SSL • SEO  │
+│ Websites • DNS • SSL • SEO   │
 └──────────────────────────────┘
 ```
 
