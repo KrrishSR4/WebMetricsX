@@ -10,7 +10,7 @@ export function Header() {
               <Activity className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">WebMetrics</h1>
+              <h1 className="text-xl font-bold tracking-tight">WebMetricsX</h1>
               <p className="text-xs text-muted-foreground">Real-time Website Monitoring</p>
             </div>
           </div>
