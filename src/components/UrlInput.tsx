@@ -161,7 +161,10 @@ export function UrlInput({
           {isMonitoring ? (
             <Button
               type="button"
-              onClick={onStop}
+              onClick={() => {
+                onStop();
+                setInputValue('');
+              }}
               variant="destructive"
               size="lg"
               className="h-14 px-8 text-base font-medium"

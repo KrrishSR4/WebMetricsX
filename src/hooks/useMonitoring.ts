@@ -61,7 +61,7 @@ export function useMonitoring() {
     lastChecked: '',
     isMonitoring: false,
   });
-  
+
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const responseHistoryRef = useRef<Array<{ timestamp: string; value: number }>>([]);
   const uptimeCheckRef = useRef<{ total: number; successful: number }>({ total: 0, successful: 0 });
@@ -150,12 +150,32 @@ export function useMonitoring() {
   }, [fetchMetrics]);
 
   const stopMonitoring = useCallback(() => {
+    // Clear polling immediately
     if (pollingRef.current) {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
+
+    // Set monitoring state to false immediately
     setIsMonitoring(false);
-    setMetrics(prev => ({ ...prev, isMonitoring: false }));
+
+    // Update metrics state to reflect stopped monitoring
+    setMetrics(prev => ({
+      ...prev,
+      isMonitoring: false,
+      website: {
+        ...prev.website,
+        status: 'pending',
+        responseTime: null,
+        httpStatusCode: null
+      }
+    }));
+
+    // Clear error state
+    setError(null);
+
+    // Clear URL
+    setUrl('');
   }, []);
 
   useEffect(() => {
