@@ -135,6 +135,92 @@
 }
 
 @layer utilities {
+  /* WebMetricsX Landing - dark futuristic theme scope */
+  .wmx-dark {
+    --bg-0: 222 47% 4%;
+    --bg-1: 222 47% 6%;
+    --bg-2: 222 40% 9%;
+    --neon-green: 142 90% 55%;
+    --neon-cyan: 180 95% 55%;
+    --neon-blue: 220 95% 60%;
+    color: hsl(210 40% 98%);
+    background: hsl(var(--bg-0));
+  }
+  .wmx-grid-bg {
+    background-image:
+      linear-gradient(hsl(210 40% 98% / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(210 40% 98% / 0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+  }
+  .wmx-glow-text {
+    background: linear-gradient(120deg, hsl(var(--neon-green)) 0%, hsl(var(--neon-cyan)) 50%, hsl(var(--neon-blue)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    background-size: 200% 200%;
+    animation: wmx-gradient 6s ease infinite;
+  }
+  @keyframes wmx-gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .wmx-glass {
+    background: linear-gradient(180deg, hsl(210 40% 98% / 0.04), hsl(210 40% 98% / 0.01));
+    border: 1px solid hsl(210 40% 98% / 0.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .wmx-glass-strong {
+    background: linear-gradient(180deg, hsl(210 40% 98% / 0.06), hsl(210 40% 98% / 0.02));
+    border: 1px solid hsl(210 40% 98% / 0.1);
+    backdrop-filter: blur(20px);
+  }
+  .wmx-border-glow {
+    position: relative;
+  }
+  .wmx-border-glow::before {
+    content: '';
+    position: absolute; inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--neon-green) / 0.6), hsl(var(--neon-cyan) / 0.4), hsl(var(--neon-blue) / 0.6));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.6;
+    transition: opacity .3s ease;
+  }
+  .wmx-border-glow:hover::before { opacity: 1; }
+  .wmx-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.45;
+    pointer-events: none;
+  }
+  .wmx-floaty { animation: wmx-float 6s ease-in-out infinite; }
+  @keyframes wmx-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .wmx-marquee { animation: wmx-marquee 28s linear infinite; }
+  @keyframes wmx-marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .wmx-scan {
+    background: linear-gradient(180deg, transparent, hsl(var(--neon-cyan) / 0.15), transparent);
+    animation: wmx-scan 3s linear infinite;
+  }
+  @keyframes wmx-scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+  .wmx-tilt { transition: transform .3s ease, box-shadow .3s ease; }
+  .wmx-tilt:hover { transform: translateY(-4px) scale(1.01); }
+
   /* Metric card hover effect */
   .metric-card-hover {
     @apply transition-all duration-200 ease-out;
