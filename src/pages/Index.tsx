@@ -5,7 +5,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { UrlInput } from '@/components/UrlInput';
 import { Dashboard } from '@/components/Dashboard';
 import { Button } from '@/components/ui/button';
-import { Home, CheckCircle2 } from 'lucide-react';
+import { Home, CheckCircle2, Activity, Zap, Shield, BarChart3, Search, Globe } from 'lucide-react';
 import { Landing } from '@/components/landing/Landing';
 
 const Index = () => {
@@ -22,6 +22,8 @@ const Index = () => {
   const { isSupported, toggleNotificationForUrl, isNotificationEnabledForUrl, checkStatusChange } = useNotifications();
 
   const [showStopped, setShowStopped] = useState(false);
+  const [landingOpacity, setLandingOpacity] = useState(1);
+  const [monitorSectionOpacity, setMonitorSectionOpacity] = useState(0);
   const monitorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,6 +61,8 @@ const Index = () => {
 
   const handleReturnHome = () => {
     setShowStopped(false);
+    setLandingOpacity(1);
+    setMonitorSectionOpacity(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -68,16 +72,24 @@ const Index = () => {
   const handleLaunchMonitor = () => {
     // Show monitoring section
     setShowStopped(false);
-    // Scroll to monitoring section
-    setTimeout(() => {
-      monitorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    // Smooth transition effect
+    setLandingOpacity(0);
+    setMonitorSectionOpacity(1);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Marketing landing only when not actively monitoring */}
-      {!isMonitoring && !showStopped && <Landing onLaunch={handleLaunchMonitor} />}
+      {/* Marketing landing as overlay */}
+      {!isMonitoring && !showStopped && (
+        <div
+          className="fixed inset-0 z-50 transition-opacity duration-500 ease-in-out"
+          style={{ opacity: landingOpacity }}
+        >
+          <div className="h-full overflow-auto">
+            <Landing onLaunch={handleLaunchMonitor} />
+          </div>
+        </div>
+      )}
 
       {/* Monitor / dashboard surface */}
       <section
@@ -85,63 +97,148 @@ const Index = () => {
         className={
           isMonitoring || showStopped
             ? 'min-h-screen bg-background'
-            : 'bg-background border-t border-border'
+            : 'min-h-screen bg-background'
         }
+        style={{ opacity: monitorSectionOpacity, transition: 'opacity 0.5s ease-in-out' }}
       >
-        <div className="container py-16 space-y-8">
-          {!showStopped && (
-            <>
-              {!isMonitoring && (
-                <div className="max-w-2xl mx-auto text-center mb-8">
-                  <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Start monitoring in seconds</h2>
-                  <p className="text-muted-foreground mt-3">Enter any URL below — we'll begin live checks every 5 seconds.</p>
-                </div>
-              )}
-              <UrlInput
-                onSubmit={handleStart}
-                onStop={handleStop}
-                isMonitoring={isMonitoring}
-                isLoading={isLoading}
-                history={history}
-                onSelectHistory={handleSelectFromHistory}
-                onRemoveHistory={removeFromHistory}
-                onClearHistory={clearHistory}
-                currentUrl={currentUrl}
-                notificationsEnabled={notificationsEnabled}
-                onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
-                isNotificationSupported={isSupported}
-              />
-              {error && <p className="text-center text-status-down text-sm mt-3">{error}</p>}
-            </>
-          )}
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            {!showStopped && (
+              <>
+                {!isMonitoring && (
+                  <div className="text-center mb-12">
+                    <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
+                      Monitor Any Website
+                    </h1>
+                    <p className="text-xl text-muted-foreground">
+                      Professional website monitoring with live metrics, performance analysis,
+                      SSL validation, and SEO insights. Updated every 5 seconds.
+                    </p>
+                  </div>
+                )}
 
-          {showStopped && (
-            <div className="text-center space-y-6 py-16 animate-fade-in">
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-chart-2/10">
-                  <CheckCircle2 className="h-8 w-8 text-chart-2" />
+                <UrlInput
+                  onSubmit={handleStart}
+                  onStop={handleStop}
+                  isMonitoring={isMonitoring}
+                  isLoading={isLoading}
+                  history={history}
+                  onSelectHistory={handleSelectFromHistory}
+                  onRemoveHistory={removeFromHistory}
+                  onClearHistory={clearHistory}
+                  currentUrl={currentUrl}
+                  notificationsEnabled={notificationsEnabled}
+                  onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
+                  isNotificationSupported={isSupported}
+                />
+
+                {error && (
+                  <div className="mt-4 text-center">
+                    <p className="text-status-down">{error}</p>
+                  </div>
+                )}
+
+                {!isMonitoring && (
+                  <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                          <Activity className="h-5 w-5 text-chart-1" />
+                        </div>
+                        <h3 className="font-semibold">Real-Time Monitoring</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Continuous monitoring with 5-second intervals. Track uptime, response times, and status codes live.
+                      </p>
+                    </div>
+                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                          <Zap className="h-5 w-5 text-chart-1" />
+                        </div>
+                        <h3 className="font-semibold">Performance Metrics</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Core Web Vitals, TTFB, DNS lookup, TCP connect, and detailed performance breakdowns.
+                      </p>
+                    </div>
+                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                          <Shield className="h-5 w-5 text-chart-1" />
+                        </div>
+                        <h3 className="font-semibold">SSL Validation</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Certificate validity, expiry dates, and issuer information at a glance.
+                      </p>
+                    </div>
+                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                          <BarChart3 className="h-5 w-5 text-chart-1" />
+                        </div>
+                        <h3 className="font-semibold">Visual Analytics</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Beautiful charts for response time history, performance trends, and metric comparisons.
+                      </p>
+                    </div>
+                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                          <Search className="h-5 w-5 text-chart-1" />
+                        </div>
+                        <h3 className="font-semibold">SEO Analysis</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Comprehensive SEO scoring with title tags, meta descriptions, heading structure, and more.
+                      </p>
+                    </div>
+                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                          <Globe className="h-5 w-5 text-chart-1" />
+                        </div>
+                        <h3 className="font-semibold">Mobile Ready</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Fully responsive design optimized for all devices. Monitor on the go.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {showStopped && (
+              <div className="text-center space-y-6 py-16 animate-fade-in">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-full bg-chart-2/10">
+                    <CheckCircle2 className="h-8 w-8 text-chart-2" />
+                  </div>
+                  <h2 className="text-2xl font-bold">Monitoring Stopped</h2>
+                  <p className="text-muted-foreground max-w-md">
+                    You've stopped monitoring{' '}
+                    <span className="font-medium text-foreground">
+                      {(() => { try { return new URL(currentUrl).hostname; } catch { return currentUrl || 'the website'; } })()}
+                    </span>
+                    . You can start monitoring another website or return to home page.
+                  </p>
+                  <Button onClick={handleReturnHome} size="lg" className="h-12 px-8 gap-2 mt-2">
+                    <Home className="h-5 w-5" />
+                    Return to Home
+                  </Button>
                 </div>
-                <h2 className="text-2xl font-bold">Monitoring Stopped</h2>
-                <p className="text-muted-foreground max-w-md">
-                  You've stopped monitoring{' '}
-                  <span className="font-medium text-foreground">
-                    {(() => { try { return new URL(currentUrl).hostname; } catch { return currentUrl || 'the website'; } })()}
-                  </span>
-                  . You can start monitoring another website or return to the home page.
-                </p>
-                <Button onClick={handleReturnHome} size="lg" className="h-12 px-8 gap-2 mt-2">
-                  <Home className="h-5 w-5" />
-                  Return to Home
-                </Button>
               </div>
-            </div>
-          )}
+            )}
 
-          {isMonitoring && (
-            <div className="animate-fade-in-up">
-              <Dashboard data={metrics} />
-            </div>
-          )}
+            {isMonitoring && (
+              <div className="animate-fade-in-up">
+                <Dashboard data={metrics} />
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </div>
