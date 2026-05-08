@@ -2,17 +2,19 @@ import { Button } from '@/components/ui/button';
 import {
   Activity,
   ArrowRight,
-  BarChart3,
   Bell,
   CheckCircle2,
-  ChevronDown,
+  Clock3,
   FileText,
   Gauge,
   Globe,
   LineChart,
+  Lock,
   Search,
+  Server,
   Shield,
   Sparkles,
+  TrendingUp,
   Zap,
 } from 'lucide-react';
 
@@ -21,72 +23,106 @@ interface LandingProps {
 }
 
 const features = [
-  { icon: Activity, title: 'Real-Time Monitoring', desc: 'Live polling every 5 seconds. Track uptime, response times and HTTP status as it happens.' },
-  { icon: Zap, title: 'Performance Metrics', desc: 'Core Web Vitals, TTFB, DNS lookup and TCP connect — measured on real network probes.' },
-  { icon: Shield, title: 'Reliability Insights', desc: 'Detect degradations early with status history and per-site downtime alerts.' },
-  { icon: BarChart3, title: 'Visual Analytics', desc: 'Clean charts for response trends, performance breakdowns and metric comparisons.' },
-  { icon: Search, title: 'SEO Analysis', desc: 'Title tags, meta descriptions, Open Graph, schema and heading structure scoring.' },
-  { icon: Bell, title: 'Smart Alerts', desc: 'Per-website browser notifications when uptime drops or status changes occur.' },
-  { icon: Gauge, title: 'Core Web Vitals', desc: 'LCP, FID, CLS and INP — measured continuously and visualized clearly.' },
-  { icon: FileText, title: 'PDF Reports', desc: 'One-click polished two-page report with charts, scores and recommendations.' },
-  { icon: Globe, title: 'Mobile Ready', desc: 'Fully responsive — monitor from desktop, tablet or phone without losing detail.' },
+  { icon: Activity, title: 'Website Status', desc: 'Instantly see whether a website is up, down, or degraded.' },
+  { icon: Server, title: 'HTTP Status Codes', desc: 'Track live HTTP response codes for each monitoring check.' },
+  { icon: Zap, title: 'Current Response Time', desc: 'Measure the latest response time in milliseconds.' },
+  { icon: Gauge, title: 'Average Response Time', desc: 'Understand response consistency across recent checks.' },
+  { icon: Clock3, title: 'Time To First Byte', desc: 'Monitor TTFB to catch backend and server delay early.' },
+  { icon: Globe, title: 'DNS Lookup Time', desc: 'See how long domain resolution takes before connection.' },
+  { icon: Server, title: 'TCP Connect Time', desc: 'Track network connection setup time for each request.' },
+  { icon: Lock, title: 'TLS Handshake Time', desc: 'Measure secure connection negotiation latency.' },
+  { icon: Shield, title: 'SSL Validity & Expiry', desc: 'Check certificate validity, issuer details, and expiry dates.' },
+  { icon: TrendingUp, title: 'Page Load Score', desc: 'Review a clear performance score for page loading quality.' },
+  { icon: CheckCircle2, title: '24-Hour Uptime', desc: 'Track uptime percentage over the last 24 hours.' },
+  { icon: LineChart, title: 'Response Timeline', desc: 'Visualize response time history across monitoring checks.' },
+  { icon: Bell, title: 'Error Rate Detection', desc: 'Spot repeated failed responses and reliability issues.' },
+  { icon: Activity, title: 'Latency Spike Detection', desc: 'Detect sudden response-time jumps before they become outages.' },
+  { icon: BarChart3, title: 'Performance Breakdown', desc: 'Break down DNS, connect, TTFB, and download timing.' },
+  { icon: Gauge, title: 'Core Web Vitals', desc: 'Track LCP, FID, and CLS for user experience quality.' },
+  { icon: Globe, title: 'Mobile Performance', desc: 'Review mobile-focused performance scoring and signals.' },
+  { icon: Server, title: 'Desktop Performance', desc: 'Measure desktop performance score for larger screens.' },
+  { icon: CheckCircle2, title: 'Accessibility Score', desc: 'Audit accessibility quality with an easy-to-read score.' },
+  { icon: Shield, title: 'Best Practices Score', desc: 'Check security, browser, and implementation best practices.' },
+  { icon: Clock3, title: 'Last Checked Timestamp', desc: 'Know exactly when the latest monitoring result was captured.' },
 ];
 
 const steps = [
-  { icon: Globe, title: 'Enter a URL', desc: 'Paste any website you want to monitor. No signup required.' },
-  { icon: Activity, title: 'See live metrics', desc: 'Performance, uptime and SEO scores update every 5 seconds.' },
-  { icon: FileText, title: 'Export a report', desc: 'Download a polished two-page PDF report instantly.' },
+  { icon: Globe, title: 'Paste the website', desc: 'Start with any public URL and keep recent checks close for repeat analysis.' },
+  { icon: Gauge, title: 'Read the signal', desc: 'See live status, response trends, SSL, SEO and Core Web Vitals without tab-hopping.' },
+  { icon: FileText, title: 'Share the report', desc: 'Turn the current result into a clean PDF for clients, teams or incident notes.' },
 ];
 
 const stats = [
   { value: '5s', label: 'Live polling interval' },
   { value: '50+', label: 'Metrics tracked' },
-  { value: '24/7', label: 'Uptime monitoring' },
-  { value: '0', label: 'Setup required' },
+  { value: 'PDF', label: 'Instant reports' },
+  { value: '0', label: 'Setup friction' },
+];
+
+const useCases = [
+  { icon: Server, title: 'Launch checks', desc: 'Verify uptime, SSL and SEO basics before shipping a new page.' },
+  { icon: Clock3, title: 'Client reporting', desc: 'Convert live monitoring sessions into readable performance summaries.' },
+  { icon: TrendingUp, title: 'Optimization work', desc: 'Compare response trends and identify slow network phases quickly.' },
 ];
 
 export function Landing({ onLaunch }: LandingProps) {
   return (
-    <div className="bg-background text-foreground font-sans antialiased">
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden border-b border-border">
-        <div className="absolute inset-0 -z-10 opacity-[0.5]" style={{
-          backgroundImage: 'linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)',
-          backgroundSize: '56px 56px',
-          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, #000 35%, transparent 100%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, #000 35%, transparent 100%)',
-        }} />
-        {/* Accent blobs */}
-        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-chart-1/10 blur-3xl -z-10" />
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full bg-chart-4/10 blur-3xl -z-10" />
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased">
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-xl">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          <a href="#hero" className="flex items-center gap-3">
+            <img src="/favicon.png" alt="WebMetricsX" className="h-10 w-10 rounded-xl shadow-sm" />
+            <div>
+              <div className="text-lg font-bold leading-none tracking-tight">WebMetricsX</div>
+              <div className="mt-1 text-xs font-medium text-muted-foreground">Website Intelligence Platform</div>
+            </div>
+          </a>
+          <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
+            <a href="#features" className="transition-colors hover:text-foreground">Features</a>
+            <a href="#workflow" className="transition-colors hover:text-foreground">Workflow</a>
+            <a href="#reports" className="transition-colors hover:text-foreground">Reports</a>
+          </nav>
+          <Button onClick={onLaunch} size="sm" className="gap-2">
+            Open Monitor
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </header>
 
-        <div className="container mx-auto px-4 pt-24 pb-16">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* Left Content */}
+      <section id="hero" className="relative overflow-hidden border-b border-border">
+        <div className="absolute inset-0 -z-10 opacity-60" style={{
+          backgroundImage: 'linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+          maskImage: 'linear-gradient(#000, transparent 85%)',
+          WebkitMaskImage: 'linear-gradient(#000, transparent 85%)',
+        }} />
+
+        <div className="container mx-auto px-4 py-16 lg:py-20">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:gap-14">
             <div className="animate-fade-in-up">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground mb-6 shadow-sm">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground shadow-sm">
                 <Sparkles className="h-3.5 w-3.5 text-chart-1" />
-                Real-time website intelligence
+                Built for fast audits, uptime checks and client-ready reports
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.02]">
-                Monitor any website
+              <h1 className="max-w-3xl text-4xl font-bold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
+                WebMetricsX turns any URL into
                 <br />
-                in <span className="text-chart-1">real time.</span>
+                <span className="text-chart-1">live website intelligence.</span>
               </h1>
-              <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-                WebMetricsX gives you live uptime, performance, SEO and Core Web Vitals
-                for any URL — with clean visuals and a one-click PDF report.
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+                Monitor uptime, response speed, SSL health, SEO readiness and Core Web Vitals from one
+                focused SaaS dashboard. Move from quick check to shareable PDF report in minutes.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button size="lg" onClick={onLaunch} className="h-12 px-6 gap-2 shadow-sm">
-                  Start Monitoring
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Button size="lg" onClick={onLaunch} className="h-12 gap-2 px-6 shadow-sm">
+                  Start Monitoring Now
                   <ArrowRight className="h-4 w-4" />
                 </Button>
                 <Button size="lg" variant="outline" className="h-12 px-6" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
                   Explore features
                 </Button>
               </div>
-              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              <div className="mt-8 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full rounded-full bg-status-up opacity-60 animate-ping" />
@@ -98,16 +134,14 @@ export function Landing({ onLaunch }: LandingProps) {
                   <CheckCircle2 className="h-4 w-4 text-chart-2" /> No signup required
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <FileText className="h-4 w-4 text-chart-1" /> Instant PDF export
+                  <Lock className="h-4 w-4 text-chart-1" /> SSL aware
                 </span>
               </div>
             </div>
 
-            {/* Dashboard preview */}
             <div className="animate-fade-in-up" style={{ animationDelay: '120ms' }}>
-              <div className="relative rounded-2xl border border-border bg-card shadow-xl shadow-foreground/[0.04] p-5">
-                {/* Window chrome */}
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+              <div className="relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xl shadow-foreground/[0.05] transition-transform duration-300 hover:-translate-y-1">
+                <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-status-down/70" />
                     <span className="h-2.5 w-2.5 rounded-full bg-status-degraded/70" />
@@ -121,7 +155,7 @@ export function Landing({ onLaunch }: LandingProps) {
                     Live
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="mb-4 grid grid-cols-3 gap-3">
                   {[
                     { label: 'Response', value: '142ms', color: 'text-chart-1', icon: Zap },
                     { label: 'Uptime', value: '99.98%', color: 'text-chart-2', icon: Activity },
@@ -137,39 +171,44 @@ export function Landing({ onLaunch }: LandingProps) {
                   ))}
                 </div>
                 <div className="rounded-lg border border-border bg-background p-4">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">Response time (last 60s)</span>
-                    <span className="text-xs text-chart-2 inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 text-xs text-chart-2">
                       <LineChart className="h-3 w-3" /> stable
                     </span>
                   </div>
-                  <div className="h-24 flex items-end gap-1">
+                  <div className="flex h-24 items-end gap-1">
                     {[35, 45, 30, 55, 40, 60, 35, 50, 25, 45, 30, 55, 40, 50, 35, 45].map((h, i) => (
-                      <div key={i} className="flex-1 bg-chart-1/80 rounded-sm transition-all hover:bg-chart-1" style={{ height: `${h}%` }} />
+                      <div key={i} className="flex-1 rounded-sm bg-chart-1/80 transition-all duration-300 hover:bg-chart-1" style={{ height: `${h}%`, animationDelay: `${i * 45}ms` }} />
                     ))}
                   </div>
                 </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg border border-border bg-background p-3">
+                    <div className="mb-1 text-xs text-muted-foreground">SSL certificate</div>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-status-up">
+                      <Shield className="h-4 w-4" /> Valid · 86 days left
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background p-3">
+                    <div className="mb-1 text-xs text-muted-foreground">Report status</div>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-chart-1">
+                      <FileText className="h-4 w-4" /> PDF ready
+                    </div>
+                  </div>
+                </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-status-up" /> HTTP 200 · TTFB 68ms
-                  </span>
+                  <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-status-up" /> HTTP 200 · TTFB 68ms</span>
                   <span>Updated just now</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Scroll hint */}
-        <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="absolute bottom-6 left-1/2 -translate-x-1/2 inline-flex flex-col items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors" aria-label="Scroll down">
-          Scroll
-          <ChevronDown className="h-4 w-4 animate-bounce" />
-        </button>
       </section>
 
-      {/* Stats strip */}
       <section className="border-b border-border bg-secondary/40">
-        <div className="container mx-auto px-4 py-10">
+        <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {stats.map((s) => (
               <div key={s.label} className="text-center">
@@ -181,24 +220,24 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      {/* Features */}
       <section id="features" className="border-b border-border">
-        <div className="container mx-auto px-4 py-24">
-          <div className="max-w-2xl mb-14 mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground mb-4">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-2xl mb-10 mx-auto text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground mb-4">
               Features
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
-              Everything you need to monitor a site
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              A focused monitoring workspace for modern websites
             </h2>
-            <p className="mt-4 text-muted-foreground text-lg">
-              Performance, reliability and SEO — measured continuously and presented clearly.
+            <p className="mt-4 text-muted-foreground">
+              Reliability, diagnostics, search readiness, alerts and reporting in a single
+              interface built for fast decisions.
             </p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
-              <div key={f.title} className="group p-6 rounded-xl border border-border bg-card hover:border-foreground/20 hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all">
-                <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-secondary mb-4 group-hover:bg-chart-1/10 transition-colors">
+              <div key={f.title} className="group rounded-lg border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-chart-1/30 hover:shadow-lg hover:shadow-foreground/[0.04]">
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-secondary transition-colors group-hover:bg-chart-1/10">
                   <f.icon className="h-5 w-5 text-chart-1" />
                 </div>
                 <h3 className="font-semibold mb-1.5">{f.title}</h3>
@@ -209,47 +248,78 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="border-b border-border bg-secondary/30">
-        <div className="container mx-auto px-4 py-24">
-          <div className="max-w-2xl mb-14 mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground mb-4">
-              Workflow
+      <section id="workflow" className="border-b border-border bg-secondary/30">
+        <div className="container mx-auto px-4 py-16">
+          <div className="mb-10 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
+                Workflow
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">From URL to decision in one flow</h2>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">How it works</h2>
-            <p className="mt-4 text-muted-foreground text-lg">From URL to report in under a minute.</p>
+            <p className="text-muted-foreground leading-relaxed">
+              WebMetricsX keeps the path short: enter a site, inspect the live health profile,
+              then share a clean report without stitching screenshots together.
+            </p>
           </div>
-          <div className="grid gap-5 md:grid-cols-3 relative">
+          <div className="grid gap-5 md:grid-cols-3">
             {steps.map((s, i) => (
-              <div key={s.title} className="relative p-7 rounded-xl border border-border bg-card hover:shadow-md transition-all">
-                <div className="absolute -top-3 -left-3 h-8 w-8 rounded-full bg-foreground text-background text-sm font-semibold flex items-center justify-center shadow-sm">
+              <div key={s.title} className="relative rounded-lg border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+                <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-lg bg-foreground text-sm font-semibold text-background shadow-sm">
                   {i + 1}
                 </div>
-                <s.icon className="h-6 w-6 text-chart-1 mb-3" />
-                <h3 className="font-semibold mb-1.5 text-lg">{s.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                <s.icon className="mb-3 h-6 w-6 text-chart-1" />
+                <h3 className="mb-1.5 text-lg font-semibold">{s.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section>
-        <div className="container mx-auto px-4 py-24">
-          <div className="relative rounded-3xl border border-border bg-card p-10 lg:p-16 text-center overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.4] -z-0" style={{
-              backgroundImage: 'linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)',
-              backgroundSize: '40px 40px',
-              maskImage: 'radial-gradient(ellipse 60% 80% at 50% 50%, #000 30%, transparent 100%)',
-              WebkitMaskImage: 'radial-gradient(ellipse 60% 80% at 50% 50%, #000 30%, transparent 100%)',
-            }} />
-            <div className="relative">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">Ready to monitor your site?</h2>
-              <p className="mt-4 text-muted-foreground text-lg max-w-xl mx-auto">
-                Paste a URL, get live metrics in seconds, and download a polished PDF report.
+      <section id="reports" className="border-b border-border">
+        <div className="container mx-auto px-4 py-16">
+          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
+                Product use cases
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Built for teams that need quick signal</h2>
+              <p className="mt-4 leading-relaxed text-muted-foreground">
+                Use WebMetricsX for launch validation, client audits, production checks and recurring
+                performance snapshots. It is lightweight enough for quick checks and detailed enough
+                for real reporting.
               </p>
-              <Button size="lg" onClick={onLaunch} className="mt-8 h-12 px-8 gap-2 shadow-sm">
+            </div>
+            <div className="grid gap-4">
+              {useCases.map((item) => (
+                <div key={item.title} className="flex gap-4 rounded-lg border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="container mx-auto px-4 py-16">
+          <div className="relative overflow-hidden rounded-xl border border-border bg-card p-8 text-center shadow-xl shadow-foreground/[0.04] lg:p-12">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
+              <img src="/favicon.png" alt="" className="h-9 w-9 rounded-lg" />
+            </div>
+            <div className="relative">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to monitor your site?</h2>
+              <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
+                Open the monitor, paste a URL and get live uptime, performance, SEO and SSL insight in seconds.
+              </p>
+              <Button size="lg" onClick={onLaunch} className="mt-8 h-12 gap-2 px-8 shadow-sm">
                 Start Monitoring
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -257,6 +327,21 @@ export function Landing({ onLaunch }: LandingProps) {
           </div>
         </div>
       </section>
+
+      <footer className="border-t border-border">
+        <div className="container mx-auto flex flex-col gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" />
+            <span className="font-semibold text-foreground">WebMetricsX</span>
+            <span>Enterprise-grade website monitoring and SEO analytics.</span>
+          </div>
+          <div className="flex gap-4">
+            <a href="#features" className="hover:text-foreground">Features</a>
+            <a href="#workflow" className="hover:text-foreground">Workflow</a>
+            <button onClick={onLaunch} className="font-medium text-chart-1 hover:text-chart-1/80">Open Monitor</button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
