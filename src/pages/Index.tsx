@@ -86,13 +86,12 @@ const Index = () => {
             {!showStopped && (
               <>
                 {!isMonitoring && (
-                  <div className="text-center mb-12">
-                    <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-                      Monitor Any Website
-                    </h1>
-                    <p className="text-xl text-muted-foreground">
-                      Professional website monitoring with live metrics, performance analysis,
-                      SSL validation, and SEO insights. Updated every 5 seconds.
+                  <div className="text-center mb-10">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
+                      Start Monitoring
+                    </h2>
+                    <p className="text-base text-muted-foreground">
+                      Paste a URL below to begin live monitoring. Updates every 5 seconds.
                     </p>
                   </div>
                 )}
@@ -118,76 +117,6 @@ const Index = () => {
                   </div>
                 )}
 
-                {!isMonitoring && (
-                  <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <Activity className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">Real-Time Monitoring</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Continuous monitoring with 5-second intervals. Track uptime, response times, and status codes live.
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <Zap className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">Performance Metrics</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Core Web Vitals, TTFB, DNS lookup, TCP connect, and detailed performance breakdowns.
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <Shield className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">SSL Validation</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Certificate validity, expiry dates, and issuer information at a glance.
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <BarChart3 className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">Visual Analytics</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Beautiful charts for response time history, performance trends, and metric comparisons.
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <Search className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">SEO Analysis</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Comprehensive SEO scoring with title tags, meta descriptions, heading structure, and more.
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <Globe className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">Mobile Ready</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Fully responsive design optimized for all devices. Monitor on the go.
-                      </p>
-                    </div>
-                  </div>
-                )}
               </>
             )}
 
