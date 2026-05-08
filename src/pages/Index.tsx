@@ -22,8 +22,6 @@ const Index = () => {
   const { isSupported, toggleNotificationForUrl, isNotificationEnabledForUrl, checkStatusChange } = useNotifications();
 
   const [showStopped, setShowStopped] = useState(false);
-  const [landingOpacity, setLandingOpacity] = useState(1);
-  const [monitorSectionOpacity, setMonitorSectionOpacity] = useState(0);
   const monitorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -61,8 +59,6 @@ const Index = () => {
 
   const handleReturnHome = () => {
     setShowStopped(false);
-    setLandingOpacity(1);
-    setMonitorSectionOpacity(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -70,37 +66,21 @@ const Index = () => {
   const notificationsEnabled = currentUrl ? isNotificationEnabledForUrl(currentUrl) : false;
 
   const handleLaunchMonitor = () => {
-    // Show monitoring section
     setShowStopped(false);
-    // Smooth transition effect
-    setLandingOpacity(0);
-    setMonitorSectionOpacity(1);
+    requestAnimationFrame(() => {
+      monitorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Marketing landing as overlay */}
+      {/* Marketing landing rendered inline; scroll past it to reach the monitor */}
       {!isMonitoring && !showStopped && (
-        <div
-          className="fixed inset-0 z-50 transition-opacity duration-500 ease-in-out"
-          style={{ opacity: landingOpacity }}
-        >
-          <div className="h-full overflow-auto">
-            <Landing onLaunch={handleLaunchMonitor} />
-          </div>
-        </div>
+        <Landing onLaunch={handleLaunchMonitor} />
       )}
 
       {/* Monitor / dashboard surface */}
-      <section
-        ref={monitorRef}
-        className={
-          isMonitoring || showStopped
-            ? 'min-h-screen bg-background'
-            : 'min-h-screen bg-background'
-        }
-        style={{ opacity: monitorSectionOpacity, transition: 'opacity 0.5s ease-in-out' }}
-      >
+      <section ref={monitorRef} className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             {!showStopped && (
