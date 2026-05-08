@@ -14,7 +14,6 @@ import {
   LineChart,
   Lock,
   MousePointerClick,
-  Play,
   RefreshCcw,
   Search,
   Server,
@@ -335,45 +334,45 @@ export function Landing({ onLaunch }: LandingProps) {
           </div>
           <div
             key={workflowReplayKey}
-            className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border border-foreground/35 bg-card p-5 shadow-xl shadow-foreground/[0.04] lg:p-6"
+            className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border border-foreground/35 bg-card p-4 shadow-xl shadow-foreground/[0.04] lg:p-5"
           >
-            <div className="mx-auto grid max-w-4xl gap-5">
-              <div className="grid animate-fade-in-up gap-4 rounded-lg border border-foreground/30 bg-background p-4 shadow-sm md:grid-cols-[150px_1fr] md:items-center">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-chart-1 text-white">
-                    <Globe className="h-6 w-6" />
+            <div className="mx-auto grid max-w-4xl gap-3">
+              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm md:grid-cols-[140px_1fr] md:items-center">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1 text-white">
+                    <Globe className="h-5 w-5" />
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 01</div>
-                    <div className="text-lg font-extrabold tracking-tight">Enter URL</div>
+                    <div className="text-base font-extrabold tracking-tight">Enter URL</div>
                   </div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_130px] md:items-center">
-                  <div className="flex items-center gap-2 rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-3 text-sm font-bold text-foreground">
+                  <div className="flex items-center gap-2 rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2.5 text-sm font-bold text-foreground">
                     <Search className="h-4 w-4 text-chart-1" />
-                    <span className="inline-block animate-[type-webmetrics-url_2.8s_steps(19)_0.4s_both] overflow-hidden whitespace-nowrap">webmetricsx.web.app</span>
+                    <span className="inline-block animate-[type-webmetrics-url_1.4s_steps(19)_0.25s_both] overflow-hidden whitespace-nowrap">webmetricsx.web.app</span>
                   </div>
                   <div className="animate-[fade-in_0.5s_ease-out_2s_both] text-sm font-semibold text-muted-foreground">URL accepted</div>
                 </div>
               </div>
 
-              <div className="grid animate-fade-in-up gap-4 rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:2800ms] md:grid-cols-[150px_1fr] md:items-center">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-chart-1">
-                    <BarChart3 className="h-6 w-6 animate-pulse" />
+              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:2800ms] md:grid-cols-[140px_1fr] md:items-center">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                    <BarChart3 className="h-5 w-5 animate-pulse" />
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 02</div>
-                    <div className="text-lg font-extrabold tracking-tight">Analytics Running</div>
+                    <div className="text-base font-extrabold tracking-tight">Analytics Running</div>
                   </div>
                 </div>
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-center">
-                  <div className="rounded-lg border border-foreground/25 bg-secondary/60 p-4">
-                    <div className="mb-3 flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                  <div className="rounded-lg border border-foreground/25 bg-secondary/60 p-3">
+                    <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted-foreground">
                       <span>Response time sample</span>
                       <span className="animate-[fade-in_0.4s_ease-out_5.3s_both] text-chart-2">stable</span>
                     </div>
-                    <div className="flex h-28 items-end gap-1.5">
+                    <div className="flex h-20 items-end gap-1.5">
                       {[36, 54, 42, 68, 58, 82, 48, 74, 38, 62, 44, 78, 56, 70].map((height, index) => (
                         <span
                           key={`${height}-${index}`}
@@ -390,7 +389,7 @@ export function Landing({ onLaunch }: LandingProps) {
                       ['TTFB', '68ms', '4.8s'],
                       ['LCP', '1.8s', '5.4s'],
                     ].map(([label, value, delay]) => (
-                      <div key={label} className="animate-[fade-in_0.45s_ease-out_both] flex items-center justify-between rounded-md bg-secondary/70 px-3 py-2 text-sm" style={{ animationDelay: delay }}>
+                      <div key={label} className="animate-[fade-in_0.45s_ease-out_both] flex items-center justify-between rounded-md bg-secondary/70 px-3 py-1.5 text-sm" style={{ animationDelay: delay }}>
                         <span className="font-semibold text-muted-foreground">{label}</span>
                         <span className="font-bold text-foreground">{value}</span>
                       </div>
@@ -399,14 +398,14 @@ export function Landing({ onLaunch }: LandingProps) {
                 </div>
               </div>
 
-              <div className="grid animate-fade-in-up gap-4 rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:6400ms] md:grid-cols-[150px_1fr] md:items-center">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-chart-2">
-                    <Activity className="h-6 w-6" />
+              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:6400ms] md:grid-cols-[140px_1fr] md:items-center">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
+                    <Activity className="h-5 w-5" />
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 03</div>
-                    <div className="text-lg font-extrabold tracking-tight">Read Signal</div>
+                    <div className="text-base font-extrabold tracking-tight">Read Signal</div>
                   </div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">
@@ -415,26 +414,26 @@ export function Landing({ onLaunch }: LandingProps) {
                     ['SEO', '92', 'text-chart-3'],
                     ['SSL', 'Valid', 'text-status-up'],
                   ].map(([label, value, color], index) => (
-                    <div key={label} className="animate-[pop-in_0.45s_ease-out_both] rounded-lg border border-foreground/25 bg-secondary/70 p-3" style={{ animationDelay: `${7 + index * 0.35}s` }}>
+                    <div key={label} className="animate-[pop-in_0.45s_ease-out_both] rounded-lg border border-foreground/25 bg-secondary/70 p-2.5" style={{ animationDelay: `${7 + index * 0.35}s` }}>
                       <div className="text-xs font-semibold text-muted-foreground">{label}</div>
-                      <div className={`mt-1 text-lg font-extrabold ${color}`}>{value}</div>
+                      <div className={`mt-0.5 text-base font-extrabold ${color}`}>{value}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="grid animate-fade-in-up gap-4 rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:8800ms] md:grid-cols-[150px_1fr] md:items-center">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-chart-1">
-                    <Download className="h-6 w-6 animate-bounce" />
+              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:8800ms] md:grid-cols-[140px_1fr] md:items-center">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                    <Download className="h-5 w-5 animate-bounce" />
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 04</div>
-                    <div className="text-lg font-extrabold tracking-tight">Export PDF</div>
+                    <div className="text-base font-extrabold tracking-tight">Export PDF</div>
                   </div>
                 </div>
-                <div className="rounded-lg border border-foreground/25 bg-secondary/70 p-4">
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="rounded-lg border border-foreground/25 bg-secondary/70 p-3">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-sm font-bold">
                       <FileText className="h-4 w-4 text-chart-1" />
                       webmetricsx-report.pdf
@@ -447,18 +446,18 @@ export function Landing({ onLaunch }: LandingProps) {
                 </div>
               </div>
 
-              <div className="grid animate-fade-in-up gap-4 rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:12200ms] md:grid-cols-[150px_1fr] md:items-center">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-chart-2">
-                    <Share2 className="h-6 w-6" />
+              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:12200ms] md:grid-cols-[140px_1fr] md:items-center">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
+                    <Share2 className="h-5 w-5" />
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 05</div>
-                    <div className="text-lg font-extrabold tracking-tight">Share Report</div>
+                    <div className="text-base font-extrabold tracking-tight">Share Report</div>
                   </div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
-                  <div className="rounded-lg border border-foreground/25 bg-secondary/70 px-4 py-3">
+                  <div className="rounded-lg border border-foreground/25 bg-secondary/70 px-4 py-2.5">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-sm font-bold text-muted-foreground">Report ready for client or team</span>
                       <span className="flex h-8 w-8 animate-[pop-in_0.4s_ease-out_14s_both] items-center justify-center rounded-full bg-status-up text-white">
@@ -468,18 +467,10 @@ export function Landing({ onLaunch }: LandingProps) {
                   </div>
                   <Button type="button" variant="outline" className="pointer-events-none gap-2 border-foreground/35 font-semibold animate-[fade-in_0.4s_ease-out_14.4s_both]">
                     <Share2 className="h-4 w-4" />
-                    Share link
+                    Share PDF
                   </Button>
                 </div>
               </div>
-            </div>
-
-            <div className="mx-auto mt-5 flex max-w-4xl flex-wrap items-center justify-between gap-3 rounded-lg border border-foreground/25 bg-secondary/60 px-4 py-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                <Play className="h-4 w-4 text-chart-1" />
-                Interactive demo: URL check, analytics, signal, PDF export and sharing
-              </div>
-              <div className="text-sm font-bold text-chart-1">15s replayable flow</div>
             </div>
           </div>
         </div>
