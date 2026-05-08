@@ -73,10 +73,12 @@ export function Landing({ onLaunch }: LandingProps) {
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <a href="#hero" className="flex items-center gap-3">
-            <img src="/favicon.png" alt="WebMetricsX" className="h-10 w-10 rounded-xl shadow-sm" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-card shadow-sm">
+              <img src="/favicon.png" alt="WebMetricsX" className="h-9 w-9 rounded-xl" />
+            </div>
             <div>
-              <div className="text-lg font-bold leading-none tracking-tight">WebMetricsX</div>
-              <div className="mt-1 text-xs font-medium text-muted-foreground">Website Intelligence Platform</div>
+              <div className="text-xl font-bold leading-none tracking-tight">WebMetricsX</div>
+              <div className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Website Intelligence</div>
             </div>
           </a>
           <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
@@ -98,16 +100,28 @@ export function Landing({ onLaunch }: LandingProps) {
           maskImage: 'linear-gradient(#000, transparent 85%)',
           WebkitMaskImage: 'linear-gradient(#000, transparent 85%)',
         }} />
+        <img
+          src="/favicon.png"
+          alt=""
+          className="pointer-events-none absolute -right-16 top-12 -z-10 h-56 w-56 rounded-[2rem] opacity-[0.035] blur-[1px] sm:h-72 sm:w-72 lg:right-10 lg:top-20"
+        />
 
         <div className="container mx-auto px-4 py-16 lg:py-20">
           <div className="grid items-center gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:gap-14">
             <div className="animate-fade-in-up">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground shadow-sm">
-                <Sparkles className="h-3.5 w-3.5 text-chart-1" />
+              <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-border bg-card py-1 pl-1 pr-4 text-xs font-semibold text-muted-foreground shadow-sm">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
+                  <img src="/favicon.png" alt="" className="h-6 w-6 rounded-md" />
+                </span>
                 Built for fast audits, uptime checks and client-ready reports
               </div>
               <h1 className="max-w-3xl text-4xl font-bold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
-                WebMetricsX turns any URL into
+                <span className="inline-flex items-center gap-3">
+                  WebMetricsX
+                  <Sparkles className="hidden h-8 w-8 text-chart-1 sm:inline-block" />
+                </span>
+                <br />
+                turns any URL into
                 <br />
                 <span className="text-chart-1">live website intelligence.</span>
               </h1>
@@ -143,6 +157,9 @@ export function Landing({ onLaunch }: LandingProps) {
 
             <div className="animate-fade-in-up" style={{ animationDelay: '120ms' }}>
               <div className="relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xl shadow-foreground/[0.05] transition-transform duration-300 hover:-translate-y-1">
+                <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-[1.5rem] bg-secondary/70 p-5 opacity-40">
+                  <img src="/favicon.png" alt="" className="h-full w-full rounded-xl" />
+                </div>
                 <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-status-down/70" />
@@ -332,8 +349,13 @@ export function Landing({ onLaunch }: LandingProps) {
       <section>
         <div className="container mx-auto px-4 py-16">
           <div className="relative overflow-hidden rounded-xl border border-border bg-card p-8 text-center shadow-xl shadow-foreground/[0.04] lg:p-12">
-            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
-              <img src="/favicon.png" alt="" className="h-9 w-9 rounded-lg" />
+            <img
+              src="/favicon.png"
+              alt=""
+              className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-[2rem] opacity-[0.04]"
+            />
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-border bg-secondary shadow-sm">
+              <img src="/favicon.png" alt="" className="h-14 w-14 rounded-2xl" />
             </div>
             <div className="relative">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to monitor your site?</h2>
@@ -352,8 +374,10 @@ export function Landing({ onLaunch }: LandingProps) {
       <footer className="border-t border-border">
         <div className="container mx-auto flex flex-col gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" />
-            <span className="font-semibold text-foreground">WebMetricsX</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card">
+              <img src="/favicon.png" alt="" className="h-7 w-7 rounded-lg" />
+            </div>
+            <span className="text-base font-bold text-foreground">WebMetricsX</span>
             <span>Enterprise-grade website monitoring and SEO analytics.</span>
           </div>
           <div className="flex gap-4">
