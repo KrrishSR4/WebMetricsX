@@ -5,7 +5,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { UrlInput } from '@/components/UrlInput';
 import { Dashboard } from '@/components/Dashboard';
 import { Button } from '@/components/ui/button';
-import { Home, CheckCircle2, Activity, Zap, Shield, BarChart3, Search, Globe } from 'lucide-react';
+import { Home, CheckCircle2 } from 'lucide-react';
 import { Landing } from '@/components/landing/Landing';
 
 const Index = () => {
