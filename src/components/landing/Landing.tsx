@@ -47,25 +47,22 @@ const stats = [
 
 export function Landing({ onLaunch }: LandingProps) {
   return (
-    <div className="bg-background text-foreground">
-      {/* Hero — full viewport */}
+    <div className="bg-background text-foreground font-sans antialiased">
+      {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col justify-center overflow-hidden border-b border-border">
-        <div
-          className="absolute inset-0 -z-10 opacity-[0.5]"
-          style={{
-            backgroundImage:
-              'linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)',
-            backgroundSize: '56px 56px',
-            maskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, #000 35%, transparent 100%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, #000 35%, transparent 100%)',
-          }}
-        />
-        {/* soft accent blobs */}
+        <div className="absolute inset-0 -z-10 opacity-[0.5]" style={{
+          backgroundImage: 'linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)',
+          backgroundSize: '56px 56px',
+          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, #000 35%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 30%, #000 35%, transparent 100%)',
+        }} />
+        {/* Accent blobs */}
         <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-chart-1/10 blur-3xl -z-10" />
         <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full bg-chart-4/10 blur-3xl -z-10" />
 
         <div className="container mx-auto px-4 pt-24 pb-16">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left Content */}
             <div className="animate-fade-in-up">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground mb-6 shadow-sm">
                 <Sparkles className="h-3.5 w-3.5 text-chart-1" />
@@ -85,12 +82,7 @@ export function Landing({ onLaunch }: LandingProps) {
                   Start Monitoring
                   <ArrowRight className="h-4 w-4" />
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-12 px-6"
-                  onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                >
+                <Button size="lg" variant="outline" className="h-12 px-6" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
                   Explore features
                 </Button>
               </div>
@@ -114,7 +106,7 @@ export function Landing({ onLaunch }: LandingProps) {
             {/* Dashboard preview */}
             <div className="animate-fade-in-up" style={{ animationDelay: '120ms' }}>
               <div className="relative rounded-2xl border border-border bg-card shadow-xl shadow-foreground/[0.04] p-5">
-                {/* window chrome */}
+                {/* Window chrome */}
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-status-down/70" />
@@ -151,29 +143,11 @@ export function Landing({ onLaunch }: LandingProps) {
                       <LineChart className="h-3 w-3" /> stable
                     </span>
                   </div>
-                  <svg viewBox="0 0 320 90" className="w-full h-24">
-                    <defs>
-                      <linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity="0.22" />
-                        <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    {[20, 40, 60, 80].map((y) => (
-                      <line key={y} x1="0" x2="320" y1={y} y2={y} stroke="hsl(var(--border))" strokeDasharray="2 4" />
+                  <div className="h-24 flex items-end gap-1">
+                    {[35, 45, 30, 55, 40, 60, 35, 50, 25, 45, 30, 55, 40, 50, 35, 45].map((h, i) => (
+                      <div key={i} className="flex-1 bg-chart-1/80 rounded-sm transition-all hover:bg-chart-1" style={{ height: `${h}%` }} />
                     ))}
-                    <path
-                      d="M0,60 L30,52 L60,58 L90,40 L120,46 L150,30 L180,38 L210,22 L240,34 L270,26 L300,32 L320,24"
-                      fill="none"
-                      stroke="hsl(var(--chart-1))"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M0,60 L30,52 L60,58 L90,40 L120,46 L150,30 L180,38 L210,22 L240,34 L270,26 L300,32 L320,24 L320,90 L0,90 Z"
-                      fill="url(#chart-fill)"
-                    />
-                  </svg>
+                  </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5">
@@ -186,12 +160,8 @@ export function Landing({ onLaunch }: LandingProps) {
           </div>
         </div>
 
-        {/* scroll hint */}
-        <button
-          onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 inline-flex flex-col items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Scroll down"
-        >
+        {/* Scroll hint */}
+        <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="absolute bottom-6 left-1/2 -translate-x-1/2 inline-flex flex-col items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors" aria-label="Scroll down">
           Scroll
           <ChevronDown className="h-4 w-4 animate-bounce" />
         </button>
@@ -227,10 +197,7 @@ export function Landing({ onLaunch }: LandingProps) {
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
-              <div
-                key={f.title}
-                className="group p-6 rounded-xl border border-border bg-card hover:border-foreground/20 hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all"
-              >
+              <div key={f.title} className="group p-6 rounded-xl border border-border bg-card hover:border-foreground/20 hover:shadow-lg hover:shadow-foreground/[0.03] hover:-translate-y-0.5 transition-all">
                 <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-secondary mb-4 group-hover:bg-chart-1/10 transition-colors">
                   <f.icon className="h-5 w-5 text-chart-1" />
                 </div>
@@ -271,16 +238,12 @@ export function Landing({ onLaunch }: LandingProps) {
       <section>
         <div className="container mx-auto px-4 py-24">
           <div className="relative rounded-3xl border border-border bg-card p-10 lg:p-16 text-center overflow-hidden">
-            <div
-              className="absolute inset-0 opacity-[0.4] -z-0"
-              style={{
-                backgroundImage:
-                  'linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)',
-                backgroundSize: '40px 40px',
-                maskImage: 'radial-gradient(ellipse 60% 80% at 50% 50%, #000 30%, transparent 100%)',
-                WebkitMaskImage: 'radial-gradient(ellipse 60% 80% at 50% 50%, #000 30%, transparent 100%)',
-              }}
-            />
+            <div className="absolute inset-0 opacity-[0.4] -z-0" style={{
+              backgroundImage: 'linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)',
+              backgroundSize: '40px 40px',
+              maskImage: 'radial-gradient(ellipse 60% 80% at 50% 50%, #000 30%, transparent 100%)',
+              WebkitMaskImage: 'radial-gradient(ellipse 60% 80% at 50% 50%, #000 30%, transparent 100%)',
+            }} />
             <div className="relative">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">Ready to monitor your site?</h2>
               <p className="mt-4 text-muted-foreground text-lg max-w-xl mx-auto">
