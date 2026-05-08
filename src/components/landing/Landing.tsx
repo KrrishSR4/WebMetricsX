@@ -369,15 +369,36 @@ export function Landing({ onLaunch }: LandingProps) {
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-center">
                   <div className="rounded-lg border border-foreground/25 bg-secondary/60 p-3">
                     <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                      <span>Response time sample</span>
+                      <span>Response time graph</span>
                       <span className="animate-[fade-in_0.4s_ease-out_5.3s_both] text-chart-2">stable</span>
                     </div>
-                    <div className="flex h-20 items-end gap-1.5">
-                      {[36, 54, 42, 68, 58, 82, 48, 74, 38, 62, 44, 78, 56, 70].map((height, index) => (
+                    <div className="relative h-20 overflow-hidden rounded-md bg-background/70">
+                      <div className="absolute inset-x-0 top-1/3 border-t border-foreground/10" />
+                      <div className="absolute inset-x-0 top-2/3 border-t border-foreground/10" />
+                      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 360 96" preserveAspectRatio="none" aria-hidden="true">
+                        <path
+                          d="M0 66 C24 56 36 42 60 48 C82 54 88 32 110 38 C132 44 145 70 166 58 C188 46 200 20 224 30 C248 40 252 66 276 55 C298 45 314 28 336 36 C348 40 354 46 360 44"
+                          fill="none"
+                          stroke="hsl(var(--chart-1))"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          className="animate-[draw-line_3s_ease-out_3.4s_both]"
+                        />
+                        <path
+                          d="M0 66 C24 56 36 42 60 48 C82 54 88 32 110 38 C132 44 145 70 166 58 C188 46 200 20 224 30 C248 40 252 66 276 55 C298 45 314 28 336 36 C348 40 354 46 360 44 L360 96 L0 96 Z"
+                          fill="hsl(var(--chart-1) / 0.12)"
+                          className="animate-[fade-in_0.8s_ease-out_4.2s_both]"
+                        />
+                      </svg>
+                      {[60, 110, 224, 336].map((x, index) => (
                         <span
-                          key={`${height}-${index}`}
-                          className="flex-1 animate-[chart-rise_0.7s_ease-out_both] rounded-t-md bg-chart-1/85"
-                          style={{ height: `${height}%`, animationDelay: `${3.4 + index * 0.14}s` }}
+                          key={x}
+                          className="absolute h-2 w-2 rounded-full bg-chart-1 ring-4 ring-chart-1/15 animate-[pop-in_0.35s_ease-out_both]"
+                          style={{
+                            left: `${(x / 360) * 100}%`,
+                            top: `${[48, 38, 30, 36][index]}%`,
+                            animationDelay: `${4.6 + index * 0.25}s`,
+                          }}
                         />
                       ))}
                     </div>

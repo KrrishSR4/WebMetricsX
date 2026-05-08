@@ -225,6 +225,10 @@
     from { transform: scaleY(0); transform-origin: bottom; opacity: 0.45; }
     to { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
   }
+  @keyframes draw-line {
+    from { stroke-dasharray: 520; stroke-dashoffset: 520; opacity: 0.5; }
+    to { stroke-dasharray: 520; stroke-dashoffset: 0; opacity: 1; }
+  }
   @keyframes pop-in {
     0% { opacity: 0; transform: scale(0.6); }
     70% { transform: scale(1.08); }
