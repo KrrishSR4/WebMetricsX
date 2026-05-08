@@ -73,10 +73,10 @@ const useCases = [
 export function Landing({ onLaunch }: LandingProps) {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased">
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-foreground/25 bg-background/85 backdrop-blur-xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <a href="#hero" className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-card shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-foreground/30 bg-card shadow-sm">
               <img src="/favicon.png" alt="WebMetricsX" className="h-9 w-9 rounded-xl" />
             </div>
             <div>
@@ -96,7 +96,7 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </header>
 
-      <section id="hero" className="relative overflow-hidden border-b border-border">
+      <section id="hero" className="relative overflow-hidden border-b border-foreground/20">
         <div className="absolute inset-0 -z-10 opacity-60" style={{
           backgroundImage: 'linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)',
           backgroundSize: '48px 48px',
@@ -112,7 +112,7 @@ export function Landing({ onLaunch }: LandingProps) {
         <div className="container mx-auto px-4 py-16 lg:py-20">
           <div className="grid items-center gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:gap-14">
             <div className="animate-fade-in-up">
-              <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-border bg-card py-1 pl-1 pr-4 text-xs font-semibold text-muted-foreground shadow-sm">
+              <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-foreground/30 bg-card py-1 pl-1 pr-4 text-xs font-semibold text-muted-foreground shadow-sm">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
                   <img src="/favicon.png" alt="" className="h-6 w-6 rounded-md" />
                 </span>
@@ -126,7 +126,7 @@ export function Landing({ onLaunch }: LandingProps) {
                 <br />
                 turns any URL into
                 <br />
-                <span className="text-chart-1">live website intelligence.</span>
+                <span className="text-chart-1">live website insights.</span>
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
                 Monitor uptime, response speed, SSL health, SEO readiness and Core Web Vitals from one
@@ -159,8 +159,8 @@ export function Landing({ onLaunch }: LandingProps) {
             </div>
 
             <div className="animate-fade-in-up" style={{ animationDelay: '120ms' }}>
-              <div className="relative overflow-hidden rounded-xl border border-foreground/35 bg-card p-4 shadow-xl shadow-foreground/[0.05] transition-transform duration-300 hover:-translate-y-1">
-                <div className="mb-4 flex items-center justify-between border-b border-foreground/15 pb-3">
+              <div className="relative overflow-hidden rounded-xl border border-foreground/45 bg-card p-4 shadow-xl shadow-foreground/[0.05] transition-transform duration-300 hover:-translate-y-1">
+                <div className="mb-4 flex items-center justify-between border-b border-foreground/25 pb-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-status-down/70" />
                     <span className="h-2.5 w-2.5 rounded-full bg-status-degraded/70" />
@@ -187,7 +187,7 @@ export function Landing({ onLaunch }: LandingProps) {
                     { label: 'Uptime', value: '99.98%', color: 'text-chart-2', icon: Activity },
                     { label: 'SEO', value: '92', color: 'text-chart-3', icon: Search },
                   ].map((m) => (
-                    <div key={m.label} className="rounded-lg border border-foreground/20 bg-background p-3">
+                    <div key={m.label} className="rounded-lg border border-foreground/35 bg-background p-3">
                       <div className="flex items-center justify-between text-muted-foreground">
                         <span className="text-[11px] uppercase tracking-wide">{m.label}</span>
                         <m.icon className="h-3 w-3" />
@@ -196,7 +196,7 @@ export function Landing({ onLaunch }: LandingProps) {
                     </div>
                   ))}
                 </div>
-                <div className="rounded-lg border border-foreground/20 bg-background p-4">
+                <div className="rounded-lg border border-foreground/35 bg-background p-4">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">Response time (last 60s)</span>
                     <span className="inline-flex items-center gap-1 text-xs text-chart-2">
@@ -210,13 +210,13 @@ export function Landing({ onLaunch }: LandingProps) {
                   </div>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-foreground/20 bg-background p-3">
+                  <div className="rounded-lg border border-foreground/35 bg-background p-3">
                     <div className="mb-1 text-xs text-muted-foreground">SSL certificate</div>
                     <div className="flex items-center gap-2 text-sm font-semibold text-status-up">
                       <Shield className="h-4 w-4" /> Valid certificate
                     </div>
                   </div>
-                  <div className="rounded-lg border border-foreground/20 bg-background p-3">
+                  <div className="rounded-lg border border-foreground/35 bg-background p-3">
                     <div className="mb-1 text-xs text-muted-foreground">Report status</div>
                     <div className="flex items-center gap-2 text-sm font-semibold text-chart-1">
                       <FileText className="h-4 w-4" /> PDF ready
@@ -227,13 +227,13 @@ export function Landing({ onLaunch }: LandingProps) {
                   <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-status-up" /> HTTP 200 · TTFB 68ms</span>
                   <span>Updated just now</span>
                 </div>
-                <div className="mt-4 grid gap-3 border-t border-foreground/15 pt-4 sm:grid-cols-3">
+                <div className="mt-4 grid gap-3 border-t border-foreground/25 pt-4 sm:grid-cols-3">
                   {[
                     { label: 'DNS', value: '18ms' },
                     { label: 'TCP', value: '24ms' },
                     { label: 'LCP', value: '1.8s' },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-lg bg-secondary/70 px-3 py-2">
+                    <div key={item.label} className="rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2">
                       <div className="text-[11px] font-medium text-muted-foreground">{item.label}</div>
                       <div className="mt-0.5 text-sm font-semibold text-foreground">{item.value}</div>
                     </div>
@@ -245,7 +245,7 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      <section className="border-b border-border bg-secondary/40">
+      <section className="border-b border-foreground/20 bg-secondary/40">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6 text-center text-sm font-semibold text-muted-foreground">
             {productName} — {productTagline}
@@ -261,7 +261,7 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      <section id="features" className="border-b border-border">
+      <section id="features" className="border-b border-foreground/20">
         <div className="container relative mx-auto px-4 py-16">
           <img
             src="/favicon.png"
@@ -274,7 +274,7 @@ export function Landing({ onLaunch }: LandingProps) {
             className="pointer-events-none absolute bottom-16 right-4 -z-10 h-56 w-56 rounded-[2rem] opacity-[0.025] lg:right-16"
           />
           <div className="max-w-2xl mb-10 mx-auto text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground mb-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-foreground/30 bg-card px-3 py-1 text-xs font-semibold text-muted-foreground mb-4">
               Features
             </div>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -287,7 +287,7 @@ export function Landing({ onLaunch }: LandingProps) {
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
-              <div key={f.title} className="group rounded-lg border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-chart-1/30 hover:shadow-lg hover:shadow-foreground/[0.04]">
+              <div key={f.title} className="group rounded-lg border border-foreground/30 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/55 hover:shadow-lg hover:shadow-foreground/[0.04]">
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-secondary transition-colors group-hover:bg-chart-1/10">
                   <f.icon className="h-5 w-5 text-chart-1" />
                 </div>
@@ -299,7 +299,7 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      <section id="workflow" className="border-b border-border bg-secondary/30">
+      <section id="workflow" className="border-b border-foreground/20 bg-secondary/30">
         <div className="container relative mx-auto px-4 py-16">
           <div className="pointer-events-none absolute inset-x-4 top-10 -z-10 flex justify-between opacity-[0.035]">
             <img src="/favicon.png" alt="" className="h-28 w-28 rotate-[-8deg] rounded-[1.5rem]" />
@@ -307,7 +307,7 @@ export function Landing({ onLaunch }: LandingProps) {
           </div>
           <div className="mb-10 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-foreground/30 bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
                 Workflow
               </div>
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">From URL to decision in one flow</h2>
@@ -319,7 +319,7 @@ export function Landing({ onLaunch }: LandingProps) {
           </div>
           <div className="grid gap-5 md:grid-cols-3">
             {steps.map((s, i) => (
-              <div key={s.title} className="relative rounded-lg border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+              <div key={s.title} className="relative rounded-lg border border-foreground/30 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/55 hover:shadow-md">
                 <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-lg bg-foreground text-sm font-semibold text-background shadow-sm">
                   {i + 1}
                 </div>
@@ -332,7 +332,7 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      <section id="reports" className="border-b border-border">
+      <section id="reports" className="border-b border-foreground/20">
         <div className="container relative mx-auto px-4 py-16">
           <img
             src="/favicon.png"
@@ -341,7 +341,7 @@ export function Landing({ onLaunch }: LandingProps) {
           />
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-foreground/30 bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
                 Product use cases
               </div>
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Built for teams that need quick signal</h2>
@@ -353,7 +353,7 @@ export function Landing({ onLaunch }: LandingProps) {
             </div>
             <div className="grid gap-4">
               {useCases.map((item) => (
-                <div key={item.title} className="flex gap-4 rounded-lg border border-border bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+                <div key={item.title} className="flex gap-4 rounded-lg border border-foreground/30 bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/55 hover:shadow-md">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-chart-1">
                     <item.icon className="h-5 w-5" />
                   </div>
@@ -370,13 +370,13 @@ export function Landing({ onLaunch }: LandingProps) {
 
       <section>
         <div className="container mx-auto px-4 py-16">
-          <div className="relative overflow-hidden rounded-xl border border-border bg-card p-8 text-center shadow-xl shadow-foreground/[0.04] lg:p-12">
+          <div className="relative overflow-hidden rounded-xl border border-foreground/35 bg-card p-8 text-center shadow-xl shadow-foreground/[0.04] lg:p-12">
             <img
               src="/favicon.png"
               alt=""
               className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-[2rem] opacity-[0.04]"
             />
-            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-border bg-secondary shadow-sm">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-foreground/30 bg-secondary shadow-sm">
               <img src="/favicon.png" alt="" className="h-14 w-14 rounded-2xl" />
             </div>
             <div className="relative">
@@ -394,10 +394,10 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      <footer className="border-t border-border">
+      <footer className="border-t border-foreground/20">
         <div className="container mx-auto flex flex-col gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-foreground/30 bg-card">
               <img src="/favicon.png" alt="" className="h-7 w-7 rounded-lg" />
             </div>
             <span className="text-base font-bold text-foreground">{productName}</span>
