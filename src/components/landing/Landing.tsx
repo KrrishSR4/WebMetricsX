@@ -259,7 +259,17 @@ export function Landing({ onLaunch }: LandingProps) {
       </section>
 
       <section id="features" className="border-b border-border">
-        <div className="container mx-auto px-4 py-16">
+        <div className="container relative mx-auto px-4 py-16">
+          <img
+            src="/favicon.png"
+            alt=""
+            className="pointer-events-none absolute left-0 top-12 -z-10 h-44 w-44 rounded-[2rem] opacity-[0.025] lg:left-10"
+          />
+          <img
+            src="/favicon.png"
+            alt=""
+            className="pointer-events-none absolute bottom-16 right-4 -z-10 h-56 w-56 rounded-[2rem] opacity-[0.025] lg:right-16"
+          />
           <div className="max-w-2xl mb-10 mx-auto text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground mb-4">
               Features
@@ -287,7 +297,11 @@ export function Landing({ onLaunch }: LandingProps) {
       </section>
 
       <section id="workflow" className="border-b border-border bg-secondary/30">
-        <div className="container mx-auto px-4 py-16">
+        <div className="container relative mx-auto px-4 py-16">
+          <div className="pointer-events-none absolute inset-x-4 top-10 -z-10 flex justify-between opacity-[0.035]">
+            <img src="/favicon.png" alt="" className="h-28 w-28 rotate-[-8deg] rounded-[1.5rem]" />
+            <img src="/favicon.png" alt="" className="hidden h-28 w-28 rotate-[8deg] rounded-[1.5rem] md:block" />
+          </div>
           <div className="mb-10 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
@@ -316,7 +330,12 @@ export function Landing({ onLaunch }: LandingProps) {
       </section>
 
       <section id="reports" className="border-b border-border">
-        <div className="container mx-auto px-4 py-16">
+        <div className="container relative mx-auto px-4 py-16">
+          <img
+            src="/favicon.png"
+            alt=""
+            className="pointer-events-none absolute -right-4 top-1/2 -z-10 h-64 w-64 -translate-y-1/2 rounded-[2rem] opacity-[0.03]"
+          />
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">

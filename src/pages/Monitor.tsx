@@ -77,7 +77,7 @@ const Monitor = () => {
       });
       checkStatusChange(metrics.website.url, metrics.website.status);
     }
-  }, [isMonitoring, metrics.website.url, metrics.website.status, metrics.lastChecked, addToHistory, checkStatusChange]);
+  }, [isMonitoring, metrics.website.url, metrics.website.status, metrics.website.responseTime, metrics.lastChecked, addToHistory, checkStatusChange]);
 
   const handleSelectFromHistory = (url: string) => {
     setShowStopped(false);

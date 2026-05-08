@@ -18,6 +18,30 @@ const COLORS = {
   download: '#a855f7' // purple
 };
 
+type ChartDatum = {
+  name: string;
+  value: number;
+  color: string;
+};
+
+type CustomTooltipProps = {
+  active?: boolean;
+  payload?: ChartDatum[];
+};
+
+type PieLabelProps = {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  percent: number;
+};
+
+type LegendEntry = {
+  payload?: ChartDatum;
+};
+
 export function PieChartCard({ data }: PieChartCardProps) {
   if (!data) {
     return (
@@ -60,7 +84,7 @@ export function PieChartCard({ data }: PieChartCardProps) {
     );
   }
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0];
       const percentage = ((data.value / total) * 100).toFixed(1);
@@ -76,7 +100,7 @@ export function PieChartCard({ data }: PieChartCardProps) {
     return null;
   };
 
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: PieLabelProps) => {
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -126,9 +150,9 @@ export function PieChartCard({ data }: PieChartCardProps) {
               <Legend
                 verticalAlign="bottom"
                 height={36}
-                formatter={(value, entry: any) => (
+                formatter={(value, entry: LegendEntry) => (
                   <span className="text-xs">
-                    {value}: {entry.payload.value}ms
+                    {value}: {entry.payload?.value ?? 0}ms
                   </span>
                 )}
               />

@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 // This service worker is required for Firebase Cloud Messaging background notifications.
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');

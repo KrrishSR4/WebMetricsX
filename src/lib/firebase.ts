@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
+import { getMessaging, getToken, onMessage, isSupported, type MessagePayload } from "firebase/messaging";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDQJ1yIGrllAh_OxJBab7HPofCEPCn_POQ",
@@ -42,7 +42,7 @@ export const requestNotificationPermission = async (vapidKey: string) => {
     return null;
 };
 
-export const onForegroundMessage = (callback: (payload: any) => void) => {
+export const onForegroundMessage = (callback: (payload: MessagePayload) => void) => {
     let unsubscribe = () => {};
     getMessagingInstance().then((messaging) => {
         if (messaging) {

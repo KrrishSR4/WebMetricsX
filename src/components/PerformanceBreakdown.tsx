@@ -13,6 +13,12 @@ interface PerformanceBreakdownProps {
 
 const COLORS = ['hsl(221, 83%, 53%)', 'hsl(262, 83%, 58%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)'];
 
+type PerformanceTooltipItem = {
+  payload: {
+    label: string;
+  };
+};
+
 export function PerformanceBreakdown({ data }: PerformanceBreakdownProps) {
   if (!data) {
     return (
@@ -72,7 +78,7 @@ export function PerformanceBreakdown({ data }: PerformanceBreakdownProps) {
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
                 }}
-                formatter={(value: number, name: string, props: any) => [`${value}ms`, props.payload.label]}
+                formatter={(value: number, _name: string, props: PerformanceTooltipItem) => [`${value}ms`, props.payload.label]}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                 {chartData.map((entry, index) => (
