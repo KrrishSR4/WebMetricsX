@@ -76,9 +76,7 @@ export function Landing({ onLaunch }: LandingProps) {
       <header className="sticky top-0 z-40 border-b border-foreground/25 bg-background/85 backdrop-blur-xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <a href="#hero" className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-foreground/30 bg-card shadow-sm">
-              <img src="/favicon.png" alt="WebMetricsX" className="h-9 w-9 rounded-xl" />
-            </div>
+            <img src="/favicon.png" alt="WebMetricsX" className="h-12 w-12 object-contain" />
             <div>
               <div className="text-xl font-bold leading-none tracking-tight">{productName}</div>
               <div className="mt-1 hidden text-xs font-semibold text-muted-foreground sm:block">{productTagline}</div>
