@@ -80,18 +80,30 @@ const Index = () => {
       )}
 
       {/* Monitor / dashboard surface */}
-      <section ref={monitorRef} className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
+      <section
+        ref={monitorRef}
+        className={`bg-background ${!isMonitoring && !showStopped ? 'min-h-screen flex items-center border-t border-border' : ''}`}
+      >
+        <div className="container mx-auto px-4 py-12 w-full">
           <div className="max-w-4xl mx-auto">
             {!showStopped && (
               <>
                 {!isMonitoring && (
-                  <div className="text-center mb-10">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
-                      Start Monitoring
+                  <div className="text-center mb-10 animate-fade-in-up">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground mb-5">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-status-up opacity-60 animate-ping" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-status-up" />
+                      </span>
+                      Start a new session
+                    </div>
+                    <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground mb-4 leading-[1.05]">
+                      Monitor any website
+                      <br />
+                      <span className="text-chart-1">in real time.</span>
                     </h2>
-                    <p className="text-base text-muted-foreground">
-                      Paste a URL below to begin live monitoring. Updates every 5 seconds.
+                    <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
+                      Paste a URL below to begin live monitoring. Metrics update every 5 seconds.
                     </p>
                   </div>
                 )}
