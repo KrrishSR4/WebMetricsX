@@ -79,6 +79,134 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      {!isMonitoring && (
+        <section className="text-center space-y-6 py-12 animate-fade-in">
+          <div className="space-y-4">
+            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">
+              Monitor Any Website
+              <br />
+              <span className="text-chart-1">In Real-Time</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Professional website monitoring with live metrics, performance analysis,
+              SSL validation, and SEO insights. Updated every 5 seconds.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* URL Input */}
+      <section className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <UrlInput
+          onSubmit={handleStart}
+          onStop={handleStop}
+          isMonitoring={isMonitoring}
+          isLoading={isLoading}
+          history={history}
+          onSelectHistory={handleSelectFromHistory}
+          onRemoveHistory={removeFromHistory}
+          onClearHistory={clearHistory}
+          currentUrl={currentUrl}
+          notificationsEnabled={notificationsEnabled}
+          onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
+          isNotificationSupported={isSupported}
+        />
+        {error && (
+          <p className="text-center text-status-down text-sm mt-3">{error}</p>
+        )}
+      </section>
+
+      {/* Dashboard */}
+      {isMonitoring && (
+        <section className="animate-fade-in-up">
+          <Dashboard data={metrics} />
+        </section>
+      )}
+
+      {/* Features Grid - Show only when not monitoring */}
+      {!isMonitoring && (
+        <section className="py-12 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <div className="container">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                    <Activity className="h-5 w-5 text-chart-1" />
+                  </div>
+                  <h3 className="font-semibold">Real-Time Monitoring</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Continuous monitoring with 5-second intervals. Track uptime, response times, and status codes live.
+                </p>
+              </div>
+              <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                    <Zap className="h-5 w-5 text-chart-1" />
+                  </div>
+                  <h3 className="font-semibold">Performance Metrics</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Core Web Vitals, TTFB, DNS lookup, TCP connect, and detailed performance breakdowns.
+                </p>
+              </div>
+              <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                    <Shield className="h-5 w-5 text-chart-1" />
+                  </div>
+                  <h3 className="font-semibold">SSL Validation</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Certificate validity, expiry dates, and issuer information at a glance.
+                </p>
+              </div>
+              <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                    <BarChart3 className="h-5 w-5 text-chart-1" />
+                  </div>
+                  <h3 className="font-semibold">Visual Analytics</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Beautiful charts for response time history, performance trends, and metric comparisons.
+                </p>
+              </div>
+              <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                    <Search className="h-5 w-5 text-chart-1" />
+                  </div>
+                  <h3 className="font-semibold">SEO Analysis</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Comprehensive SEO scoring with title tags, meta descriptions, heading structure, and more.
+                </p>
+              </div>
+              <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
+                    <Globe className="h-5 w-5 text-chart-1" />
+                  </div>
+                  <h3 className="font-semibold">Mobile Ready</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Fully responsive design optimized for all devices. Monitor on the go.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Footer */}
+      <footer className="border-t border-border py-6 mt-auto">
+        <div className="container text-center text-sm text-muted-foreground">
+          <p>WebMetrics — Enterprise-Grade Website Monitoring & SEO Analytics</p>
+        </div>
+      </footer>
+
       {/* Marketing landing as overlay */}
       {!isMonitoring && !showStopped && (
         <div
@@ -101,145 +229,27 @@ const Index = () => {
         }
         style={{ opacity: monitorSectionOpacity, transition: 'opacity 0.5s ease-in-out' }}
       >
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            {!showStopped && (
-              <>
-                {!isMonitoring && (
-                  <div className="text-center mb-12">
-                    <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-                      Monitor Any Website
-                    </h1>
-                    <p className="text-xl text-muted-foreground">
-                      Professional website monitoring with live metrics, performance analysis,
-                      SSL validation, and SEO insights. Updated every 5 seconds.
-                    </p>
-                  </div>
-                )}
-
-                <UrlInput
-                  onSubmit={handleStart}
-                  onStop={handleStop}
-                  isMonitoring={isMonitoring}
-                  isLoading={isLoading}
-                  history={history}
-                  onSelectHistory={handleSelectFromHistory}
-                  onRemoveHistory={removeFromHistory}
-                  onClearHistory={clearHistory}
-                  currentUrl={currentUrl}
-                  notificationsEnabled={notificationsEnabled}
-                  onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
-                  isNotificationSupported={isSupported}
-                />
-
-                {error && (
-                  <div className="mt-4 text-center">
-                    <p className="text-status-down">{error}</p>
-                  </div>
-                )}
-
-                {!isMonitoring && (
-                  <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <Activity className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">Real-Time Monitoring</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Continuous monitoring with 5-second intervals. Track uptime, response times, and status codes live.
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <Zap className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">Performance Metrics</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Core Web Vitals, TTFB, DNS lookup, TCP connect, and detailed performance breakdowns.
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <Shield className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">SSL Validation</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Certificate validity, expiry dates, and issuer information at a glance.
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <BarChart3 className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">Visual Analytics</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Beautiful charts for response time history, performance trends, and metric comparisons.
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <Search className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">SEO Analysis</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Comprehensive SEO scoring with title tags, meta descriptions, heading structure, and more.
-                      </p>
-                    </div>
-                    <div className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary">
-                          <Globe className="h-5 w-5 text-chart-1" />
-                        </div>
-                        <h3 className="font-semibold">Mobile Ready</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Fully responsive design optimized for all devices. Monitor on the go.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {showStopped && (
-              <div className="text-center space-y-6 py-16 animate-fade-in">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="flex items-center justify-center w-16 h-16 rounded-full bg-chart-2/10">
-                    <CheckCircle2 className="h-8 w-8 text-chart-2" />
-                  </div>
-                  <h2 className="text-2xl font-bold">Monitoring Stopped</h2>
-                  <p className="text-muted-foreground max-w-md">
-                    You've stopped monitoring{' '}
-                    <span className="font-medium text-foreground">
-                      {(() => { try { return new URL(currentUrl).hostname; } catch { return currentUrl || 'the website'; } })()}
-                    </span>
-                    . You can start monitoring another website or return to home page.
-                  </p>
-                  <Button onClick={handleReturnHome} size="lg" className="h-12 px-8 gap-2 mt-2">
-                    <Home className="h-5 w-5" />
-                    Return to Home
-                  </Button>
-                </div>
+        {showStopped && (
+          <div className="text-center space-y-6 py-16 animate-fade-in">
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-chart-2/10">
+                <CheckCircle2 className="h-8 w-8 text-chart-2" />
               </div>
-            )}
-
-            {isMonitoring && (
-              <div className="animate-fade-in-up">
-                <Dashboard data={metrics} />
-              </div>
-            )}
+              <h2 className="text-2xl font-bold">Monitoring Stopped</h2>
+              <p className="text-muted-foreground max-w-md">
+                You've stopped monitoring{' '}
+                <span className="font-medium text-foreground">
+                  {(() => { try { return new URL(currentUrl).hostname; } catch { return currentUrl || 'the website'; } })()}
+                </span>
+                . You can start monitoring another website or return to home page.
+              </p>
+              <Button onClick={handleReturnHome} size="lg" className="h-12 px-8 gap-2 mt-2">
+                <Home className="h-5 w-5" />
+                Return to Home
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </section>
     </div>
   );
