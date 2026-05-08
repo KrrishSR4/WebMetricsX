@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Activity,
@@ -6,14 +7,18 @@ import {
   Bell,
   CheckCircle2,
   Clock3,
+  Download,
   FileText,
   Gauge,
   Globe,
   LineChart,
   Lock,
   MousePointerClick,
+  Play,
+  RefreshCcw,
   Search,
   Server,
+  Share2,
   Shield,
   Sparkles,
   TrendingUp,
@@ -51,12 +56,6 @@ const features = [
   { icon: Clock3, title: 'Last Checked Timestamp', desc: 'Know exactly when the latest monitoring result was captured.' },
 ];
 
-const steps = [
-  { icon: Globe, title: 'Paste the website', desc: 'Start with any public URL and keep recent checks close for repeat analysis.' },
-  { icon: Gauge, title: 'Read the signal', desc: 'See live status, response trends, SSL, SEO and Core Web Vitals without tab-hopping.' },
-  { icon: FileText, title: 'Share the report', desc: 'Turn the current result into a clean PDF for clients, teams or incident notes.' },
-];
-
 const stats = [
   { value: '5s', label: 'Live polling interval' },
   { value: '50+', label: 'Metrics tracked' },
@@ -71,6 +70,8 @@ const useCases = [
 ];
 
 export function Landing({ onLaunch }: LandingProps) {
+  const [workflowReplayKey, setWorkflowReplayKey] = useState(0);
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased [text-rendering:optimizeLegibility]">
       <header className="sticky top-0 z-40 border-b border-foreground/25 bg-background/85 backdrop-blur-xl">
@@ -314,28 +315,118 @@ export function Landing({ onLaunch }: LandingProps) {
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-foreground/30 bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
                 Workflow
               </div>
-              <h2 className="text-3xl font-extrabold tracking-tight [text-wrap:balance] sm:text-4xl">From URL to decision in one flow</h2>
+              <h2 className="text-3xl font-extrabold tracking-tight [text-wrap:balance] sm:text-4xl">Watch a site become a shareable report</h2>
             </div>
-            <p className="font-medium leading-7 text-muted-foreground">
-              {productName} keeps the path short: enter a site, inspect the live health profile,
-              then share a clean report without stitching screenshots together.
-            </p>
-          </div>
-          <div className="grid gap-5 md:grid-cols-3">
-            {steps.map((s, i) => (
-              <div
-                key={s.title}
-                className="group relative animate-fade-in-up rounded-lg border border-foreground/30 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/55 hover:shadow-md"
-                style={{ animationDelay: `${i * 90}ms` }}
+            <div className="flex flex-col gap-4 lg:items-end">
+              <p className="max-w-2xl font-medium leading-7 text-muted-foreground lg:text-right">
+                See the product flow in motion: enter google.com, generate analytics, read the signal,
+                export the PDF and share the report.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setWorkflowReplayKey((key) => key + 1)}
+                className="group w-fit gap-2 border-foreground/35 font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/60"
               >
-                <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-lg bg-foreground text-sm font-semibold text-background shadow-sm">
-                  {i + 1}
+                <RefreshCcw className="h-4 w-4 transition-transform duration-500 group-hover:rotate-180" />
+                Replay Animation
+              </Button>
+            </div>
+          </div>
+          <div
+            key={workflowReplayKey}
+            className="relative overflow-hidden rounded-xl border border-foreground/35 bg-card p-5 shadow-xl shadow-foreground/[0.04] lg:p-6"
+          >
+            <div className="pointer-events-none absolute left-8 right-8 top-[92px] hidden h-0.5 bg-foreground/15 lg:block">
+              <span className="absolute inset-y-0 left-0 w-1/4 animate-[workflow-line_1.4s_ease-out_0.5s_both] rounded-full bg-chart-1" />
+              <span className="absolute inset-y-0 left-1/4 w-1/4 animate-[workflow-line_1.4s_ease-out_1.7s_both] rounded-full bg-chart-1" />
+              <span className="absolute inset-y-0 left-2/4 w-1/4 animate-[workflow-line_1.4s_ease-out_2.9s_both] rounded-full bg-chart-1" />
+              <span className="absolute inset-y-0 left-3/4 w-1/4 animate-[workflow-line_1.4s_ease-out_4.1s_both] rounded-full bg-chart-1" />
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-5">
+              <div className="animate-fade-in-up rounded-lg border border-foreground/30 bg-background p-4 shadow-sm">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1 text-white">
+                  <Globe className="h-5 w-5" />
                 </div>
-                <s.icon className="mb-3 h-6 w-6 text-chart-1 transition-transform duration-300 group-hover:scale-110" />
-                <h3 className="mb-1.5 text-lg font-bold tracking-tight">{s.title}</h3>
-                <p className="text-sm font-medium leading-relaxed text-muted-foreground">{s.desc}</p>
+                <div className="mb-3 text-sm font-bold tracking-tight">Enter URL</div>
+                <div className="flex items-center gap-2 rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2 text-sm font-semibold text-foreground">
+                  <Search className="h-4 w-4 text-chart-1" />
+                  <span className="inline-block animate-[type-url_1.2s_steps(10)_0.25s_both] overflow-hidden whitespace-nowrap">google.com</span>
+                </div>
               </div>
-            ))}
+
+              <div className="animate-fade-in-up rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:700ms]">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                  <BarChart3 className="h-5 w-5 animate-pulse" />
+                </div>
+                <div className="mb-3 text-sm font-bold tracking-tight">Analytics Running</div>
+                <div className="space-y-2">
+                  {[78, 92, 64].map((width, index) => (
+                    <div key={width} className="h-2 rounded-full bg-secondary">
+                      <div
+                        className="h-full rounded-full bg-chart-1 animate-[fill-bar_1s_ease-out_both]"
+                        style={{ width: `${width}%`, animationDelay: `${1 + index * 0.18}s` }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="animate-fade-in-up rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:1500ms]">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
+                  <Activity className="h-5 w-5" />
+                </div>
+                <div className="mb-3 text-sm font-bold tracking-tight">Read Signal</div>
+                <div className="grid gap-2 text-sm">
+                  <div className="flex items-center justify-between rounded-md bg-secondary/70 px-3 py-2">
+                    <span className="text-muted-foreground">Status</span>
+                    <span className="font-bold text-status-up">Healthy</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-md bg-secondary/70 px-3 py-2">
+                    <span className="text-muted-foreground">SEO</span>
+                    <span className="font-bold text-chart-3">92</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="animate-fade-in-up rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:2300ms]">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                  <Download className="h-5 w-5 animate-bounce" />
+                </div>
+                <div className="mb-3 text-sm font-bold tracking-tight">Export PDF</div>
+                <div className="rounded-lg border border-foreground/25 bg-secondary/70 p-3">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-bold">
+                    <FileText className="h-4 w-4 text-chart-1" />
+                    webmetrics-report.pdf
+                  </div>
+                  <div className="h-2 rounded-full bg-background">
+                    <div className="h-full rounded-full bg-chart-1 animate-[fill-bar_1.1s_ease-out_3s_both]" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="animate-fade-in-up rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:3100ms]">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
+                  <Share2 className="h-5 w-5" />
+                </div>
+                <div className="mb-3 text-sm font-bold tracking-tight">Share Report</div>
+                <div className="flex items-center justify-between rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2">
+                  <span className="text-sm font-semibold text-muted-foreground">Ready</span>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-status-up text-white animate-[pop-in_0.35s_ease-out_4.2s_both]">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-foreground/25 bg-secondary/60 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <Play className="h-4 w-4 text-chart-1" />
+                google.com analyzed, exported and ready to share
+              </div>
+              <div className="text-sm font-bold text-chart-1">4.8s demo flow</div>
+            </div>
           </div>
         </div>
       </section>

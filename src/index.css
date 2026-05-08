@@ -205,6 +205,23 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
   }
+  @keyframes workflow-line {
+    from { transform: scaleX(0); transform-origin: left; opacity: 0; }
+    to { transform: scaleX(1); transform-origin: left; opacity: 1; }
+  }
+  @keyframes type-url {
+    from { width: 0; }
+    to { width: 10ch; }
+  }
+  @keyframes fill-bar {
+    from { transform: scaleX(0); transform-origin: left; }
+    to { transform: scaleX(1); transform-origin: left; }
+  }
+  @keyframes pop-in {
+    0% { opacity: 0; transform: scale(0.6); }
+    70% { transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
   .wmx-marquee { animation: wmx-marquee 28s linear infinite; }
   @keyframes wmx-marquee {
     from { transform: translateX(0); }
