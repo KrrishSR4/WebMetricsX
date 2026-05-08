@@ -72,24 +72,24 @@ const useCases = [
 
 export function Landing({ onLaunch }: LandingProps) {
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans antialiased">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased [text-rendering:optimizeLegibility]">
       <header className="sticky top-0 z-40 border-b border-foreground/25 bg-background/85 backdrop-blur-xl">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <a href="#hero" className="flex items-center gap-3">
+        <div className="container mx-auto flex h-20 items-center justify-between px-4">
+          <a href="#hero" className="group flex items-center gap-3">
             <img src="/favicon.png" alt="WebMetricsX" className="h-12 w-12 object-contain" />
             <div>
-              <div className="text-xl font-bold leading-none tracking-tight">{productName}</div>
-              <div className="mt-1 hidden text-xs font-semibold text-muted-foreground sm:block">{productTagline}</div>
+              <div className="text-xl font-extrabold leading-none tracking-tight transition-colors group-hover:text-chart-1">{productName}</div>
+              <div className="mt-1 hidden max-w-[360px] text-xs font-semibold leading-snug text-muted-foreground sm:block">{productTagline}</div>
             </div>
           </a>
-          <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-            <a href="#features" className="transition-colors hover:text-foreground">Features</a>
-            <a href="#workflow" className="transition-colors hover:text-foreground">Workflow</a>
-            <a href="#reports" className="transition-colors hover:text-foreground">Reports</a>
+          <nav className="hidden items-center gap-8 text-sm font-semibold text-muted-foreground md:flex">
+            <a href="#features" className="relative transition-colors after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-0 after:bg-foreground after:transition-all hover:text-foreground hover:after:w-full">Features</a>
+            <a href="#workflow" className="relative transition-colors after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-0 after:bg-foreground after:transition-all hover:text-foreground hover:after:w-full">Workflow</a>
+            <a href="#reports" className="relative transition-colors after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-0 after:bg-foreground after:transition-all hover:text-foreground hover:after:w-full">Reports</a>
           </nav>
-          <Button onClick={onLaunch} size="sm" className="gap-2">
+          <Button onClick={onLaunch} size="sm" className="group gap-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
             Open Monitor
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
         </div>
       </header>
@@ -104,38 +104,36 @@ export function Landing({ onLaunch }: LandingProps) {
         <img
           src="/favicon.png"
           alt=""
-          className="pointer-events-none absolute -right-16 top-12 -z-10 h-56 w-56 rounded-[2rem] opacity-[0.035] blur-[1px] sm:h-72 sm:w-72 lg:right-10 lg:top-20"
+          className="wmx-floaty pointer-events-none absolute -right-16 top-12 -z-10 h-56 w-56 rounded-[2rem] opacity-[0.035] blur-[1px] sm:h-72 sm:w-72 lg:right-10 lg:top-20"
         />
 
         <div className="container mx-auto px-4 py-16 lg:py-20">
           <div className="grid items-center gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:gap-14">
             <div className="animate-fade-in-up">
-              <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-foreground/30 bg-card py-1 pl-1 pr-4 text-xs font-semibold text-muted-foreground shadow-sm">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
-                  <img src="/favicon.png" alt="" className="h-6 w-6 rounded-md" />
-                </span>
+              <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-foreground/30 bg-card py-1.5 pl-2 pr-4 text-xs font-semibold text-muted-foreground shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/50 hover:shadow-md">
+                <img src="/favicon.png" alt="" className="h-7 w-7 object-contain drop-shadow-sm" />
                 Built for fast audits, uptime checks and client-ready reports
               </div>
-              <h1 className="max-w-3xl text-4xl font-bold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
+              <h1 className="max-w-3xl text-4xl font-extrabold leading-[0.98] tracking-tight [text-wrap:balance] sm:text-5xl lg:text-7xl">
                 <span className="inline-flex items-center gap-3">
                   {productName}
-                  <Sparkles className="hidden h-8 w-8 text-chart-1 sm:inline-block" />
+                  <Sparkles className="hidden h-8 w-8 animate-pulse text-chart-1 sm:inline-block" />
                 </span>
                 <br />
                 turns any URL into
                 <br />
                 <span className="text-chart-1">live website insights.</span>
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+              <p className="mt-6 max-w-2xl text-lg font-medium leading-8 text-muted-foreground">
                 Monitor uptime, response speed, SSL health, SEO readiness and Core Web Vitals from one
                 enterprise-grade monitoring dashboard. Move from quick check to shareable PDF report in minutes.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" onClick={onLaunch} className="h-12 gap-2 px-6 shadow-sm">
+                <Button size="lg" onClick={onLaunch} className="group h-12 gap-2 px-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                   Start Monitoring Now
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
-                <Button size="lg" variant="outline" className="h-12 px-6" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
+                <Button size="lg" variant="outline" className="h-12 px-6 font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/50" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
                   Explore features
                 </Button>
               </div>
@@ -157,7 +155,7 @@ export function Landing({ onLaunch }: LandingProps) {
             </div>
 
             <div className="animate-fade-in-up" style={{ animationDelay: '120ms' }}>
-              <div className="relative overflow-hidden rounded-xl border border-foreground/45 bg-card p-4 shadow-xl shadow-foreground/[0.05] transition-transform duration-300 hover:-translate-y-1">
+              <div className="relative overflow-hidden rounded-xl border border-foreground/45 bg-card p-4 shadow-xl shadow-foreground/[0.05] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-foreground/[0.08]">
                 <div className="mb-4 flex items-center justify-between border-b border-foreground/25 pb-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-status-down/70" />
@@ -185,7 +183,7 @@ export function Landing({ onLaunch }: LandingProps) {
                     { label: 'Uptime', value: '99.98%', color: 'text-chart-2', icon: Activity },
                     { label: 'SEO', value: '92', color: 'text-chart-3', icon: Search },
                   ].map((m) => (
-                    <div key={m.label} className="rounded-lg border border-foreground/35 bg-background p-3">
+                    <div key={m.label} className="rounded-lg border border-foreground/35 bg-background p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/55">
                       <div className="flex items-center justify-between text-muted-foreground">
                         <span className="text-[11px] uppercase tracking-wide">{m.label}</span>
                         <m.icon className="h-3 w-3" />
@@ -203,18 +201,18 @@ export function Landing({ onLaunch }: LandingProps) {
                   </div>
                   <div className="flex h-24 items-end gap-1">
                     {[35, 45, 30, 55, 40, 60, 35, 50, 25, 45, 30, 55, 40, 50, 35, 45].map((h, i) => (
-                      <div key={i} className="flex-1 rounded-sm bg-chart-1/80 transition-all duration-300 hover:bg-chart-1" style={{ height: `${h}%`, animationDelay: `${i * 45}ms` }} />
+                      <div key={i} className="animate-fade-in-up flex-1 rounded-sm bg-chart-1/80 transition-all duration-300 hover:bg-chart-1" style={{ height: `${h}%`, animationDelay: `${i * 45}ms` }} />
                     ))}
                   </div>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-foreground/35 bg-background p-3">
+                  <div className="rounded-lg border border-foreground/35 bg-background p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/55">
                     <div className="mb-1 text-xs text-muted-foreground">SSL certificate</div>
                     <div className="flex items-center gap-2 text-sm font-semibold text-status-up">
                       <Shield className="h-4 w-4" /> Valid certificate
                     </div>
                   </div>
-                  <div className="rounded-lg border border-foreground/35 bg-background p-3">
+                  <div className="rounded-lg border border-foreground/35 bg-background p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/55">
                     <div className="mb-1 text-xs text-muted-foreground">Report status</div>
                     <div className="flex items-center gap-2 text-sm font-semibold text-chart-1">
                       <FileText className="h-4 w-4" /> PDF ready
@@ -231,7 +229,7 @@ export function Landing({ onLaunch }: LandingProps) {
                     { label: 'TCP', value: '24ms' },
                     { label: 'LCP', value: '1.8s' },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2">
+                    <div key={item.label} className="rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/45">
                       <div className="text-[11px] font-medium text-muted-foreground">{item.label}</div>
                       <div className="mt-0.5 text-sm font-semibold text-foreground">{item.value}</div>
                     </div>
@@ -249,10 +247,14 @@ export function Landing({ onLaunch }: LandingProps) {
             {productName} — {productTagline}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
+            {stats.map((s, index) => (
+              <div
+                key={s.label}
+                className="animate-fade-in-up rounded-lg border border-foreground/20 bg-background/70 p-5 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-foreground/45 hover:shadow-md"
+                style={{ animationDelay: `${index * 80}ms` }}
+              >
                 <div className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">{s.value}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{s.label}</div>
+                <div className="mt-1 text-sm font-medium text-muted-foreground">{s.label}</div>
               </div>
             ))}
           </div>
@@ -275,22 +277,26 @@ export function Landing({ onLaunch }: LandingProps) {
             <div className="inline-flex items-center gap-2 rounded-full border border-foreground/30 bg-card px-3 py-1 text-xs font-semibold text-muted-foreground mb-4">
               Features
             </div>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="text-3xl font-extrabold tracking-tight [text-wrap:balance] sm:text-4xl">
               A focused monitoring workspace for modern websites
             </h2>
-            <p className="mt-4 text-muted-foreground">
+            <p className="mt-4 text-base font-medium leading-7 text-muted-foreground">
               Reliability, diagnostics, search readiness, alerts and reporting in a single
               interface built for fast decisions.
             </p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((f) => (
-              <div key={f.title} className="group rounded-lg border border-foreground/30 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/55 hover:shadow-lg hover:shadow-foreground/[0.04]">
+            {features.map((f, index) => (
+              <div
+                key={f.title}
+                className="group animate-fade-in-up rounded-lg border border-foreground/30 bg-card p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-foreground/55 hover:shadow-lg hover:shadow-foreground/[0.04]"
+                style={{ animationDelay: `${(index % 6) * 55}ms` }}
+              >
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-secondary transition-colors group-hover:bg-chart-1/10">
-                  <f.icon className="h-5 w-5 text-chart-1" />
+                  <f.icon className="h-5 w-5 text-chart-1 transition-transform duration-300 group-hover:scale-110" />
                 </div>
-                <h3 className="font-semibold mb-1.5">{f.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                <h3 className="mb-1.5 text-[15px] font-bold tracking-tight">{f.title}</h3>
+                <p className="text-sm font-medium leading-relaxed text-muted-foreground">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -308,22 +314,26 @@ export function Landing({ onLaunch }: LandingProps) {
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-foreground/30 bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
                 Workflow
               </div>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">From URL to decision in one flow</h2>
+              <h2 className="text-3xl font-extrabold tracking-tight [text-wrap:balance] sm:text-4xl">From URL to decision in one flow</h2>
             </div>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="font-medium leading-7 text-muted-foreground">
               {productName} keeps the path short: enter a site, inspect the live health profile,
               then share a clean report without stitching screenshots together.
             </p>
           </div>
           <div className="grid gap-5 md:grid-cols-3">
             {steps.map((s, i) => (
-              <div key={s.title} className="relative rounded-lg border border-foreground/30 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/55 hover:shadow-md">
+              <div
+                key={s.title}
+                className="group relative animate-fade-in-up rounded-lg border border-foreground/30 bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/55 hover:shadow-md"
+                style={{ animationDelay: `${i * 90}ms` }}
+              >
                 <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-lg bg-foreground text-sm font-semibold text-background shadow-sm">
                   {i + 1}
                 </div>
-                <s.icon className="mb-3 h-6 w-6 text-chart-1" />
-                <h3 className="mb-1.5 text-lg font-semibold">{s.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+                <s.icon className="mb-3 h-6 w-6 text-chart-1 transition-transform duration-300 group-hover:scale-110" />
+                <h3 className="mb-1.5 text-lg font-bold tracking-tight">{s.title}</h3>
+                <p className="text-sm font-medium leading-relaxed text-muted-foreground">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -342,22 +352,26 @@ export function Landing({ onLaunch }: LandingProps) {
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-foreground/30 bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
                 Product use cases
               </div>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Built for teams that need quick signal</h2>
-              <p className="mt-4 leading-relaxed text-muted-foreground">
+              <h2 className="text-3xl font-extrabold tracking-tight [text-wrap:balance] sm:text-4xl">Built for teams that need quick signal</h2>
+              <p className="mt-4 font-medium leading-7 text-muted-foreground">
                 Use {productName} for launch validation, client audits, production checks and recurring
                 performance snapshots. It is lightweight enough for quick checks and detailed enough
                 for real reporting.
               </p>
             </div>
             <div className="grid gap-4">
-              {useCases.map((item) => (
-                <div key={item.title} className="flex gap-4 rounded-lg border border-foreground/30 bg-card p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/55 hover:shadow-md">
+              {useCases.map((item, index) => (
+                <div
+                  key={item.title}
+                  className="group animate-fade-in-up flex gap-4 rounded-lg border border-foreground/30 bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/55 hover:shadow-md"
+                  style={{ animationDelay: `${index * 80}ms` }}
+                >
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-chart-1">
-                    <item.icon className="h-5 w-5" />
+                    <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
+                    <h3 className="font-bold tracking-tight">{item.title}</h3>
+                    <p className="mt-1 text-sm font-medium leading-relaxed text-muted-foreground">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -368,7 +382,7 @@ export function Landing({ onLaunch }: LandingProps) {
 
       <section>
         <div className="container mx-auto px-4 py-16">
-          <div className="relative overflow-hidden rounded-xl border border-foreground/35 bg-card p-8 text-center shadow-xl shadow-foreground/[0.04] lg:p-12">
+          <div className="relative overflow-hidden rounded-xl border border-foreground/35 bg-card p-8 text-center shadow-xl shadow-foreground/[0.04] transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-foreground/[0.07] lg:p-12">
             <img
               src="/favicon.png"
               alt=""
@@ -378,14 +392,14 @@ export function Landing({ onLaunch }: LandingProps) {
               <img src="/favicon.png" alt="" className="h-14 w-14 rounded-2xl" />
             </div>
             <div className="relative">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to monitor your site with {productName}?</h2>
-              <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
+              <h2 className="text-3xl font-extrabold tracking-tight [text-wrap:balance] sm:text-4xl">Ready to monitor your site with {productName}?</h2>
+              <p className="mx-auto mt-4 max-w-xl font-medium leading-7 text-muted-foreground">
                 {productTagline}. Open the monitor, paste a URL and get live uptime,
                 performance, SEO and SSL insight in seconds.
               </p>
-              <Button size="lg" onClick={onLaunch} className="mt-8 h-12 gap-2 px-8 shadow-sm">
+              <Button size="lg" onClick={onLaunch} className="group mt-8 h-12 gap-2 px-8 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                 Start Monitoring
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
           </div>
