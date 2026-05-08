@@ -7,7 +7,49 @@ import { UrlInput } from '@/components/UrlInput';
 import { Dashboard } from '@/components/Dashboard';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
-import { Home, CheckCircle2 } from 'lucide-react';
+import {
+  Activity,
+  BarChart3,
+  CheckCircle2,
+  Globe,
+  Home,
+  Search,
+  Shield,
+  Zap,
+} from 'lucide-react';
+
+const featureCards = [
+  {
+    icon: Activity,
+    title: 'Real-Time Monitoring',
+    description: 'Continuous monitoring with 5-second intervals. Track uptime, response times, and status codes live.',
+  },
+  {
+    icon: Zap,
+    title: 'Performance Metrics',
+    description: 'Core Web Vitals, TTFB, DNS lookup, TCP connect, and detailed performance breakdowns.',
+  },
+  {
+    icon: Shield,
+    title: 'SSL Validation',
+    description: 'Certificate validity, expiry dates, and issuer information at a glance.',
+  },
+  {
+    icon: BarChart3,
+    title: 'Visual Analytics',
+    description: 'Beautiful charts for response time history, performance trends, and metric comparisons.',
+  },
+  {
+    icon: Search,
+    title: 'SEO Analysis',
+    description: 'Comprehensive SEO scoring with title tags, meta descriptions, heading structure, and more.',
+  },
+  {
+    icon: Globe,
+    title: 'Mobile Ready',
+    description: 'Fully responsive design optimized for all devices. Monitor on the go.',
+  },
+];
 
 const Monitor = () => {
   const navigate = useNavigate();
@@ -61,47 +103,59 @@ const Monitor = () => {
   const notificationsEnabled = currentUrl ? isNotificationEnabledForUrl(currentUrl) : false;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <main className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
+      <main className="flex-1">
+        <div className="container mx-auto px-4">
           {!showStopped && (
             <>
               {!isMonitoring && (
-                <div className="text-center mb-10 animate-fade-in-up">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground mb-5">
-                    <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full rounded-full bg-status-up opacity-60 animate-ping" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-status-up" />
-                    </span>
-                    Start a new session
-                  </div>
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground mb-4 leading-[1.05]">
-                    Monitor any website
+                <section className="pt-20 pb-16 text-center animate-fade-in-up">
+                  <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground mb-5 leading-[1.05]">
+                    Monitor Any Website
                     <br />
-                    <span className="text-chart-1">in real time.</span>
+                    <span className="text-chart-1">In Real-Time</span>
                   </h1>
-                  <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
-                    Paste a URL below to begin live monitoring. Metrics update every 5 seconds.
+                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-20">
+                    Professional website monitoring with live metrics, performance analysis, SSL
+                    validation, and SEO insights. Updated every 5 seconds.
                   </p>
-                </div>
+                  <UrlInput
+                    onSubmit={handleStart}
+                    onStop={handleStop}
+                    isMonitoring={isMonitoring}
+                    isLoading={isLoading}
+                    history={history}
+                    onSelectHistory={handleSelectFromHistory}
+                    onRemoveHistory={removeFromHistory}
+                    onClearHistory={clearHistory}
+                    currentUrl={currentUrl}
+                    notificationsEnabled={notificationsEnabled}
+                    onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
+                    isNotificationSupported={isSupported}
+                  />
+                </section>
               )}
 
-              <UrlInput
-                onSubmit={handleStart}
-                onStop={handleStop}
-                isMonitoring={isMonitoring}
-                isLoading={isLoading}
-                history={history}
-                onSelectHistory={handleSelectFromHistory}
-                onRemoveHistory={removeFromHistory}
-                onClearHistory={clearHistory}
-                currentUrl={currentUrl}
-                notificationsEnabled={notificationsEnabled}
-                onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
-                isNotificationSupported={isSupported}
-              />
+              {isMonitoring && (
+                <section className="max-w-4xl mx-auto py-10">
+                  <UrlInput
+                    onSubmit={handleStart}
+                    onStop={handleStop}
+                    isMonitoring={isMonitoring}
+                    isLoading={isLoading}
+                    history={history}
+                    onSelectHistory={handleSelectFromHistory}
+                    onRemoveHistory={removeFromHistory}
+                    onClearHistory={clearHistory}
+                    currentUrl={currentUrl}
+                    notificationsEnabled={notificationsEnabled}
+                    onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
+                    isNotificationSupported={isSupported}
+                  />
+                </section>
+              )}
 
               {error && (
                 <div className="mt-4 text-center">
@@ -112,7 +166,7 @@ const Monitor = () => {
           )}
 
           {showStopped && (
-            <div className="text-center space-y-6 py-16 animate-fade-in">
+            <div className="text-center space-y-6 py-16 animate-fade-in max-w-4xl mx-auto">
               <div className="flex flex-col items-center gap-4">
                 <div className="flex items-center justify-center w-16 h-16 rounded-full bg-chart-2/10">
                   <CheckCircle2 className="h-8 w-8 text-chart-2" />
@@ -140,12 +194,41 @@ const Monitor = () => {
           )}
 
           {isMonitoring && (
-            <div className="animate-fade-in-up">
+            <div className="max-w-4xl mx-auto animate-fade-in-up pb-12">
               <Dashboard data={metrics} />
             </div>
           )}
+
+          {!isMonitoring && !showStopped && (
+            <section className="pb-20">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {featureCards.map((feature) => (
+                  <article
+                    key={feature.title}
+                    className="rounded-lg border border-border bg-card p-6 shadow-sm"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                        <feature.icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h2 className="mb-4 text-base font-semibold text-foreground">{feature.title}</h2>
+                        <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </main>
+
+      {!isMonitoring && !showStopped && (
+        <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
+          WebMetricsX — Enterprise-Grade Website Monitoring & SEO Analytics
+        </footer>
+      )}
     </div>
   );
 };
