@@ -24,6 +24,9 @@ interface LandingProps {
   onLaunch: () => void;
 }
 
+const productName = 'WebMetricsX';
+const productTagline = 'Enterprise-Grade Website Monitoring & SEO Analytics';
+
 const features = [
   { icon: Activity, title: 'Website Status', desc: 'Instantly see whether a website is up, down, or degraded.' },
   { icon: Server, title: 'HTTP Status Codes', desc: 'Track live HTTP response codes for each monitoring check.' },
@@ -77,8 +80,8 @@ export function Landing({ onLaunch }: LandingProps) {
               <img src="/favicon.png" alt="WebMetricsX" className="h-9 w-9 rounded-xl" />
             </div>
             <div>
-              <div className="text-xl font-bold leading-none tracking-tight">WebMetricsX</div>
-              <div className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Website Intelligence</div>
+              <div className="text-xl font-bold leading-none tracking-tight">{productName}</div>
+              <div className="mt-1 hidden text-xs font-semibold text-muted-foreground sm:block">{productTagline}</div>
             </div>
           </a>
           <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
@@ -117,7 +120,7 @@ export function Landing({ onLaunch }: LandingProps) {
               </div>
               <h1 className="max-w-3xl text-4xl font-bold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
                 <span className="inline-flex items-center gap-3">
-                  WebMetricsX
+                  {productName}
                   <Sparkles className="hidden h-8 w-8 text-chart-1 sm:inline-block" />
                 </span>
                 <br />
@@ -127,7 +130,7 @@ export function Landing({ onLaunch }: LandingProps) {
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
                 Monitor uptime, response speed, SSL health, SEO readiness and Core Web Vitals from one
-                focused SaaS dashboard. Move from quick check to shareable PDF report in minutes.
+                enterprise-grade monitoring dashboard. Move from quick check to shareable PDF report in minutes.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" onClick={onLaunch} className="h-12 gap-2 px-6 shadow-sm">
@@ -156,11 +159,8 @@ export function Landing({ onLaunch }: LandingProps) {
             </div>
 
             <div className="animate-fade-in-up" style={{ animationDelay: '120ms' }}>
-              <div className="relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xl shadow-foreground/[0.05] transition-transform duration-300 hover:-translate-y-1">
-                <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-[1.5rem] bg-secondary/70 p-5 opacity-40">
-                  <img src="/favicon.png" alt="" className="h-full w-full rounded-xl" />
-                </div>
-                <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
+              <div className="relative overflow-hidden rounded-xl border border-foreground/35 bg-card p-4 shadow-xl shadow-foreground/[0.05] transition-transform duration-300 hover:-translate-y-1">
+                <div className="mb-4 flex items-center justify-between border-b border-foreground/15 pb-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-status-down/70" />
                     <span className="h-2.5 w-2.5 rounded-full bg-status-degraded/70" />
@@ -187,7 +187,7 @@ export function Landing({ onLaunch }: LandingProps) {
                     { label: 'Uptime', value: '99.98%', color: 'text-chart-2', icon: Activity },
                     { label: 'SEO', value: '92', color: 'text-chart-3', icon: Search },
                   ].map((m) => (
-                    <div key={m.label} className="rounded-lg border border-border bg-background p-3">
+                    <div key={m.label} className="rounded-lg border border-foreground/20 bg-background p-3">
                       <div className="flex items-center justify-between text-muted-foreground">
                         <span className="text-[11px] uppercase tracking-wide">{m.label}</span>
                         <m.icon className="h-3 w-3" />
@@ -196,7 +196,7 @@ export function Landing({ onLaunch }: LandingProps) {
                     </div>
                   ))}
                 </div>
-                <div className="rounded-lg border border-border bg-background p-4">
+                <div className="rounded-lg border border-foreground/20 bg-background p-4">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">Response time (last 60s)</span>
                     <span className="inline-flex items-center gap-1 text-xs text-chart-2">
@@ -210,13 +210,13 @@ export function Landing({ onLaunch }: LandingProps) {
                   </div>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="rounded-lg border border-foreground/20 bg-background p-3">
                     <div className="mb-1 text-xs text-muted-foreground">SSL certificate</div>
                     <div className="flex items-center gap-2 text-sm font-semibold text-status-up">
                       <Shield className="h-4 w-4" /> Valid certificate
                     </div>
                   </div>
-                  <div className="rounded-lg border border-border bg-background p-3">
+                  <div className="rounded-lg border border-foreground/20 bg-background p-3">
                     <div className="mb-1 text-xs text-muted-foreground">Report status</div>
                     <div className="flex items-center gap-2 text-sm font-semibold text-chart-1">
                       <FileText className="h-4 w-4" /> PDF ready
@@ -227,7 +227,7 @@ export function Landing({ onLaunch }: LandingProps) {
                   <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-status-up" /> HTTP 200 · TTFB 68ms</span>
                   <span>Updated just now</span>
                 </div>
-                <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-3">
+                <div className="mt-4 grid gap-3 border-t border-foreground/15 pt-4 sm:grid-cols-3">
                   {[
                     { label: 'DNS', value: '18ms' },
                     { label: 'TCP', value: '24ms' },
@@ -247,6 +247,9 @@ export function Landing({ onLaunch }: LandingProps) {
 
       <section className="border-b border-border bg-secondary/40">
         <div className="container mx-auto px-4 py-8">
+          <div className="mb-6 text-center text-sm font-semibold text-muted-foreground">
+            {productName} — {productTagline}
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {stats.map((s) => (
               <div key={s.label} className="text-center">
@@ -310,7 +313,7 @@ export function Landing({ onLaunch }: LandingProps) {
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">From URL to decision in one flow</h2>
             </div>
             <p className="text-muted-foreground leading-relaxed">
-              WebMetricsX keeps the path short: enter a site, inspect the live health profile,
+              {productName} keeps the path short: enter a site, inspect the live health profile,
               then share a clean report without stitching screenshots together.
             </p>
           </div>
@@ -343,7 +346,7 @@ export function Landing({ onLaunch }: LandingProps) {
               </div>
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Built for teams that need quick signal</h2>
               <p className="mt-4 leading-relaxed text-muted-foreground">
-                Use WebMetricsX for launch validation, client audits, production checks and recurring
+                Use {productName} for launch validation, client audits, production checks and recurring
                 performance snapshots. It is lightweight enough for quick checks and detailed enough
                 for real reporting.
               </p>
@@ -377,9 +380,10 @@ export function Landing({ onLaunch }: LandingProps) {
               <img src="/favicon.png" alt="" className="h-14 w-14 rounded-2xl" />
             </div>
             <div className="relative">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to monitor your site?</h2>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to monitor your site with {productName}?</h2>
               <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-                Open the monitor, paste a URL and get live uptime, performance, SEO and SSL insight in seconds.
+                {productTagline}. Open the monitor, paste a URL and get live uptime,
+                performance, SEO and SSL insight in seconds.
               </p>
               <Button size="lg" onClick={onLaunch} className="mt-8 h-12 gap-2 px-8 shadow-sm">
                 Start Monitoring
@@ -396,8 +400,8 @@ export function Landing({ onLaunch }: LandingProps) {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card">
               <img src="/favicon.png" alt="" className="h-7 w-7 rounded-lg" />
             </div>
-            <span className="text-base font-bold text-foreground">WebMetricsX</span>
-            <span>Enterprise-grade website monitoring and SEO analytics.</span>
+            <span className="text-base font-bold text-foreground">{productName}</span>
+            <span>{productTagline}</span>
           </div>
           <div className="flex gap-4">
             <a href="#features" className="hover:text-foreground">Features</a>
