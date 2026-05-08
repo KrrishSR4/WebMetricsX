@@ -335,97 +335,151 @@ export function Landing({ onLaunch }: LandingProps) {
           </div>
           <div
             key={workflowReplayKey}
-            className="relative overflow-hidden rounded-xl border border-foreground/35 bg-card p-5 shadow-xl shadow-foreground/[0.04] lg:p-6"
+            className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border border-foreground/35 bg-card p-5 shadow-xl shadow-foreground/[0.04] lg:p-6"
           >
-            <div className="pointer-events-none absolute left-8 right-8 top-[92px] hidden h-0.5 bg-foreground/15 lg:block">
-              <span className="absolute inset-y-0 left-0 w-1/4 animate-[workflow-line_1.4s_ease-out_0.5s_both] rounded-full bg-chart-1" />
-              <span className="absolute inset-y-0 left-1/4 w-1/4 animate-[workflow-line_1.4s_ease-out_1.7s_both] rounded-full bg-chart-1" />
-              <span className="absolute inset-y-0 left-2/4 w-1/4 animate-[workflow-line_1.4s_ease-out_2.9s_both] rounded-full bg-chart-1" />
-              <span className="absolute inset-y-0 left-3/4 w-1/4 animate-[workflow-line_1.4s_ease-out_4.1s_both] rounded-full bg-chart-1" />
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-5">
-              <div className="animate-fade-in-up rounded-lg border border-foreground/30 bg-background p-4 shadow-sm">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1 text-white">
-                  <Globe className="h-5 w-5" />
+            <div className="mx-auto grid max-w-4xl gap-5">
+              <div className="grid animate-fade-in-up gap-4 rounded-lg border border-foreground/30 bg-background p-4 shadow-sm md:grid-cols-[150px_1fr] md:items-center">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-chart-1 text-white">
+                    <Globe className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 01</div>
+                    <div className="text-lg font-extrabold tracking-tight">Enter URL</div>
+                  </div>
                 </div>
-                <div className="mb-3 text-sm font-bold tracking-tight">Enter URL</div>
-                <div className="flex items-center gap-2 rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2 text-sm font-semibold text-foreground">
-                  <Search className="h-4 w-4 text-chart-1" />
-                  <span className="inline-block animate-[type-url_1.2s_steps(10)_0.25s_both] overflow-hidden whitespace-nowrap">google.com</span>
+                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_130px] md:items-center">
+                  <div className="flex items-center gap-2 rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-3 text-sm font-bold text-foreground">
+                    <Search className="h-4 w-4 text-chart-1" />
+                    <span className="inline-block animate-[type-webmetrics-url_2.8s_steps(19)_0.4s_both] overflow-hidden whitespace-nowrap">webmetricsx.web.app</span>
+                  </div>
+                  <div className="animate-[fade-in_0.5s_ease-out_2s_both] text-sm font-semibold text-muted-foreground">URL accepted</div>
                 </div>
               </div>
 
-              <div className="animate-fade-in-up rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:700ms]">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
-                  <BarChart3 className="h-5 w-5 animate-pulse" />
+              <div className="grid animate-fade-in-up gap-4 rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:2800ms] md:grid-cols-[150px_1fr] md:items-center">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                    <BarChart3 className="h-6 w-6 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 02</div>
+                    <div className="text-lg font-extrabold tracking-tight">Analytics Running</div>
+                  </div>
                 </div>
-                <div className="mb-3 text-sm font-bold tracking-tight">Analytics Running</div>
-                <div className="space-y-2">
-                  {[78, 92, 64].map((width, index) => (
-                    <div key={width} className="h-2 rounded-full bg-secondary">
-                      <div
-                        className="h-full rounded-full bg-chart-1 animate-[fill-bar_1s_ease-out_both]"
-                        style={{ width: `${width}%`, animationDelay: `${1 + index * 0.18}s` }}
-                      />
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-center">
+                  <div className="rounded-lg border border-foreground/25 bg-secondary/60 p-4">
+                    <div className="mb-3 flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                      <span>Response time sample</span>
+                      <span className="animate-[fade-in_0.4s_ease-out_5.3s_both] text-chart-2">stable</span>
+                    </div>
+                    <div className="flex h-28 items-end gap-1.5">
+                      {[36, 54, 42, 68, 58, 82, 48, 74, 38, 62, 44, 78, 56, 70].map((height, index) => (
+                        <span
+                          key={`${height}-${index}`}
+                          className="flex-1 animate-[chart-rise_0.7s_ease-out_both] rounded-t-md bg-chart-1/85"
+                          style={{ height: `${height}%`, animationDelay: `${3.4 + index * 0.14}s` }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    {[
+                      ['DNS', '18ms', '3.6s'],
+                      ['TCP', '24ms', '4.2s'],
+                      ['TTFB', '68ms', '4.8s'],
+                      ['LCP', '1.8s', '5.4s'],
+                    ].map(([label, value, delay]) => (
+                      <div key={label} className="animate-[fade-in_0.45s_ease-out_both] flex items-center justify-between rounded-md bg-secondary/70 px-3 py-2 text-sm" style={{ animationDelay: delay }}>
+                        <span className="font-semibold text-muted-foreground">{label}</span>
+                        <span className="font-bold text-foreground">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid animate-fade-in-up gap-4 rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:6400ms] md:grid-cols-[150px_1fr] md:items-center">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-chart-2">
+                    <Activity className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 03</div>
+                    <div className="text-lg font-extrabold tracking-tight">Read Signal</div>
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {[
+                    ['Status', 'Healthy', 'text-status-up'],
+                    ['SEO', '92', 'text-chart-3'],
+                    ['SSL', 'Valid', 'text-status-up'],
+                  ].map(([label, value, color], index) => (
+                    <div key={label} className="animate-[pop-in_0.45s_ease-out_both] rounded-lg border border-foreground/25 bg-secondary/70 p-3" style={{ animationDelay: `${7 + index * 0.35}s` }}>
+                      <div className="text-xs font-semibold text-muted-foreground">{label}</div>
+                      <div className={`mt-1 text-lg font-extrabold ${color}`}>{value}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="animate-fade-in-up rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:1500ms]">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
-                  <Activity className="h-5 w-5" />
-                </div>
-                <div className="mb-3 text-sm font-bold tracking-tight">Read Signal</div>
-                <div className="grid gap-2 text-sm">
-                  <div className="flex items-center justify-between rounded-md bg-secondary/70 px-3 py-2">
-                    <span className="text-muted-foreground">Status</span>
-                    <span className="font-bold text-status-up">Healthy</span>
+              <div className="grid animate-fade-in-up gap-4 rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:8800ms] md:grid-cols-[150px_1fr] md:items-center">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                    <Download className="h-6 w-6 animate-bounce" />
                   </div>
-                  <div className="flex items-center justify-between rounded-md bg-secondary/70 px-3 py-2">
-                    <span className="text-muted-foreground">SEO</span>
-                    <span className="font-bold text-chart-3">92</span>
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 04</div>
+                    <div className="text-lg font-extrabold tracking-tight">Export PDF</div>
                   </div>
                 </div>
-              </div>
-
-              <div className="animate-fade-in-up rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:2300ms]">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
-                  <Download className="h-5 w-5 animate-bounce" />
-                </div>
-                <div className="mb-3 text-sm font-bold tracking-tight">Export PDF</div>
-                <div className="rounded-lg border border-foreground/25 bg-secondary/70 p-3">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-bold">
-                    <FileText className="h-4 w-4 text-chart-1" />
-                    webmetrics-report.pdf
+                <div className="rounded-lg border border-foreground/25 bg-secondary/70 p-4">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-sm font-bold">
+                      <FileText className="h-4 w-4 text-chart-1" />
+                      webmetricsx-report.pdf
+                    </div>
+                    <span className="animate-[fade-in_0.4s_ease-out_11s_both] text-xs font-bold text-muted-foreground">charts + scores included</span>
                   </div>
                   <div className="h-2 rounded-full bg-background">
-                    <div className="h-full rounded-full bg-chart-1 animate-[fill-bar_1.1s_ease-out_3s_both]" />
+                    <div className="h-full animate-[fill-bar_2.8s_ease-out_9.8s_both] rounded-full bg-chart-1" />
                   </div>
                 </div>
               </div>
 
-              <div className="animate-fade-in-up rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:3100ms]">
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
-                  <Share2 className="h-5 w-5" />
+              <div className="grid animate-fade-in-up gap-4 rounded-lg border border-foreground/30 bg-background p-4 shadow-sm [animation-delay:12200ms] md:grid-cols-[150px_1fr] md:items-center">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-chart-2">
+                    <Share2 className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 05</div>
+                    <div className="text-lg font-extrabold tracking-tight">Share Report</div>
+                  </div>
                 </div>
-                <div className="mb-3 text-sm font-bold tracking-tight">Share Report</div>
-                <div className="flex items-center justify-between rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2">
-                  <span className="text-sm font-semibold text-muted-foreground">Ready</span>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-status-up text-white animate-[pop-in_0.35s_ease-out_4.2s_both]">
-                    <CheckCircle2 className="h-4 w-4" />
-                  </span>
+                <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
+                  <div className="rounded-lg border border-foreground/25 bg-secondary/70 px-4 py-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-sm font-bold text-muted-foreground">Report ready for client or team</span>
+                      <span className="flex h-8 w-8 animate-[pop-in_0.4s_ease-out_14s_both] items-center justify-center rounded-full bg-status-up text-white">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </span>
+                    </div>
+                  </div>
+                  <Button type="button" variant="outline" className="pointer-events-none gap-2 border-foreground/35 font-semibold animate-[fade-in_0.4s_ease-out_14.4s_both]">
+                    <Share2 className="h-4 w-4" />
+                    Share link
+                  </Button>
                 </div>
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-foreground/25 bg-secondary/60 px-4 py-3">
+            <div className="mx-auto mt-5 flex max-w-4xl flex-wrap items-center justify-between gap-3 rounded-lg border border-foreground/25 bg-secondary/60 px-4 py-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <Play className="h-4 w-4 text-chart-1" />
-                google.com analyzed, exported and ready to share
+                Interactive demo: URL check, analytics, signal, PDF export and sharing
               </div>
-              <div className="text-sm font-bold text-chart-1">4.8s demo flow</div>
+              <div className="text-sm font-bold text-chart-1">15s replayable flow</div>
             </div>
           </div>
         </div>
