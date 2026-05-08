@@ -11,6 +11,7 @@ import {
   Globe,
   LineChart,
   Lock,
+  MousePointerClick,
   Search,
   Server,
   Shield,
@@ -148,9 +149,16 @@ export function Landing({ onLaunch }: LandingProps) {
                     <span className="h-2.5 w-2.5 rounded-full bg-status-degraded/70" />
                     <span className="h-2.5 w-2.5 rounded-full bg-status-up/70" />
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-secondary text-xs text-muted-foreground">
-                    <Globe className="h-3 w-3" /> webmetricsx.app
-                  </div>
+                  <a
+                    href="https://webmetricsx.web.app"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group flex items-center gap-2 rounded-md bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <Globe className="h-3 w-3" />
+                    webmetricsx.web.app
+                    <MousePointerClick className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </a>
                   <span className="inline-flex items-center gap-1.5 text-xs text-status-up">
                     <span className="h-1.5 w-1.5 rounded-full bg-status-up animate-pulse" />
                     Live
@@ -188,7 +196,7 @@ export function Landing({ onLaunch }: LandingProps) {
                   <div className="rounded-lg border border-border bg-background p-3">
                     <div className="mb-1 text-xs text-muted-foreground">SSL certificate</div>
                     <div className="flex items-center gap-2 text-sm font-semibold text-status-up">
-                      <Shield className="h-4 w-4" /> Valid · 86 days left
+                      <Shield className="h-4 w-4" /> Valid certificate
                     </div>
                   </div>
                   <div className="rounded-lg border border-border bg-background p-3">
@@ -201,6 +209,18 @@ export function Landing({ onLaunch }: LandingProps) {
                 <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-status-up" /> HTTP 200 · TTFB 68ms</span>
                   <span>Updated just now</span>
+                </div>
+                <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-3">
+                  {[
+                    { label: 'DNS', value: '18ms' },
+                    { label: 'TCP', value: '24ms' },
+                    { label: 'LCP', value: '1.8s' },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-lg bg-secondary/70 px-3 py-2">
+                      <div className="text-[11px] font-medium text-muted-foreground">{item.label}</div>
+                      <div className="mt-0.5 text-sm font-semibold text-foreground">{item.value}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
