@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Zap } from 'lucide-react';
+import { Activity, BarChart3, Github, Zap } from 'lucide-react';
 
 export function Header() {
   return (
@@ -23,6 +23,10 @@ export function Header() {
               <BarChart3 className="h-4 w-4" />
               <span>SEO Insights</span>
             </div>
+            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 transition-colors hover:text-foreground">
+              <Github className="h-4 w-4" />
+              <span>GitHub</span>
+            </a>
           </div>
         </div>
       </div>

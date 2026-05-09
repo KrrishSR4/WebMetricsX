@@ -10,6 +10,7 @@ import {
   Download,
   FileText,
   Gauge,
+  Github,
   Globe,
   LineChart,
   Lock,
@@ -86,6 +87,10 @@ export function Landing({ onLaunch }: LandingProps) {
             <a href="#features" className="relative transition-colors after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-0 after:bg-foreground after:transition-all hover:text-foreground hover:after:w-full">Features</a>
             <a href="#workflow" className="relative transition-colors after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-0 after:bg-foreground after:transition-all hover:text-foreground hover:after:w-full">Workflow</a>
             <a href="#reports" className="relative transition-colors after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-0 after:bg-foreground after:transition-all hover:text-foreground hover:after:w-full">Reports</a>
+            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 transition-colors hover:text-foreground">
+              <Github className="h-4 w-4" />
+              GitHub
+            </a>
           </nav>
           <Button onClick={onLaunch} size="sm" className="group gap-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
             Open Monitor
@@ -546,9 +551,7 @@ export function Landing({ onLaunch }: LandingProps) {
               alt=""
               className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-[2rem] opacity-[0.04]"
             />
-            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-foreground/30 bg-secondary shadow-sm">
-              <img src="/favicon.png" alt="" className="h-14 w-14 rounded-2xl" />
-            </div>
+            <img src="/favicon.png" alt="" className="mx-auto mb-6 h-28 w-28 object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.15)] animate-float" />
             <div className="relative">
               <h2 className="text-3xl font-extrabold tracking-tight [text-wrap:balance] sm:text-4xl">Ready to monitor your site with {productName}?</h2>
               <p className="mx-auto mt-4 max-w-xl font-medium leading-7 text-muted-foreground">
@@ -564,11 +567,17 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      <footer className="border-t border-foreground/20 bg-background/50 py-12">
+      <footer className="border-t border-black bg-background/50 py-12">
         <div className="container mx-auto px-4 text-center">
-          <div className="mb-6 flex items-center justify-center gap-3">
-            <span className="text-2xl" role="img" aria-label="laptop">💻</span>
-            <span className="text-2xl font-bold tracking-tight text-[#00875A]">Krish Mishra</span>
+          <div className="mb-6 flex flex-col items-center justify-center gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl" role="img" aria-label="laptop">💻</span>
+              <a href="https://github.com/KrrishSR4" target="_blank" rel="noreferrer" className="text-2xl font-bold tracking-tight text-[#00875A] transition-colors hover:opacity-80">Krish Mishra</a>
+            </div>
+            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 text-sm font-semibold transition-all hover:bg-secondary hover:shadow-sm">
+              <Github className="h-4 w-4" />
+              View on GitHub
+            </a>
           </div>
           <p className="mb-4 text-lg font-medium text-muted-foreground flex items-center justify-center gap-2">
             Built with <span className="text-red-500 animate-pulse">❤️</span> using React, Tailwind CSS, and Framer Motion
@@ -579,6 +588,7 @@ export function Landing({ onLaunch }: LandingProps) {
           <div className="mt-8 flex justify-center gap-8 text-xs font-bold uppercase tracking-widest text-muted-foreground">
             <a href="#features" className="transition-colors hover:text-foreground">Features</a>
             <a href="#workflow" className="transition-colors hover:text-foreground">Workflow</a>
+            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="transition-colors hover:text-foreground">Repository</a>
             <button onClick={onLaunch} className="text-chart-1 transition-colors hover:text-chart-1/80">Open Monitor</button>
           </div>
         </div>

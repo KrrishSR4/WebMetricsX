@@ -225,8 +225,15 @@ const Monitor = () => {
       </main>
 
       {!isMonitoring && !showStopped && (
-        <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
-          WebMetricsX — Enterprise-Grade Website Monitoring & SEO Analytics
+        <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
+          <div className="flex flex-col items-center gap-3">
+            <p>WebMetricsX — Enterprise-Grade Website Monitoring & SEO Analytics</p>
+            <div className="flex items-center gap-4 font-semibold">
+              <a href="https://github.com/KrrishSR4" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">By Krish Mishra</a>
+              <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+              <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">View Repository</a>
+            </div>
+          </div>
         </footer>
       )}
     </div>
