@@ -350,13 +350,13 @@ export function Landing({ onLaunch }: LandingProps) {
                 <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_130px] md:items-center">
                   <div className="flex items-center gap-2 rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2.5 text-sm font-bold text-foreground">
                     <Search className="h-4 w-4 text-chart-1" />
-                    <span className="inline-block animate-[type-webmetrics-url_1.4s_steps(19)_0.25s_both] overflow-hidden whitespace-nowrap">webmetricsx.web.app</span>
+                    <span className="inline-block animate-[type-webmetrics-url_0.6s_steps(19)_0.15s_both] overflow-hidden whitespace-nowrap">webmetricsx.web.app</span>
                   </div>
-                  <div className="animate-[fade-in_0.5s_ease-out_2s_both] text-sm font-semibold text-muted-foreground">URL accepted</div>
+                  <div className="animate-[fade-in_0.3s_ease-out_0.8s_both] text-sm font-semibold text-muted-foreground">URL accepted</div>
                 </div>
               </div>
 
-              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:2800ms] md:grid-cols-[140px_1fr] md:items-center">
+              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:1200ms] md:grid-cols-[140px_1fr] md:items-center">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
                     <BarChart3 className="h-5 w-5 animate-pulse" />
@@ -370,34 +370,35 @@ export function Landing({ onLaunch }: LandingProps) {
                   <div className="rounded-lg border border-foreground/25 bg-secondary/60 p-3">
                     <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted-foreground">
                       <span>Response time graph</span>
-                      <span className="animate-[fade-in_0.4s_ease-out_5.3s_both] text-chart-2">stable</span>
+                      <span className="animate-[fade-in_0.3s_ease-out_2.5s_both] text-chart-2">stable</span>
                     </div>
                     <div className="relative h-20 overflow-hidden rounded-md bg-background/70">
                       <div className="absolute inset-x-0 top-1/3 border-t border-foreground/10" />
                       <div className="absolute inset-x-0 top-2/3 border-t border-foreground/10" />
                       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 360 96" preserveAspectRatio="none" aria-hidden="true">
                         <path
-                          d="M0 66 C24 56 36 42 60 48 C82 54 88 32 110 38 C132 44 145 70 166 58 C188 46 200 20 224 30 C248 40 252 66 276 55 C298 45 314 28 336 36 C348 40 354 46 360 44"
+                          d="M0 80 L20 75 L40 85 L60 30 L80 45 L100 40 L120 75 L140 55 L160 50 L180 25 L200 35 L220 30 L240 70 L260 45 L280 40 L300 75 L320 50 L340 55 L360 40"
                           fill="none"
                           stroke="hsl(var(--chart-1))"
-                          strokeWidth="4"
+                          strokeWidth="3"
                           strokeLinecap="round"
-                          className="animate-[draw-line_3s_ease-out_3.4s_both]"
+                          strokeLinejoin="round"
+                          className="animate-[draw-line_1.2s_ease-out_1.5s_both]"
                         />
                         <path
-                          d="M0 66 C24 56 36 42 60 48 C82 54 88 32 110 38 C132 44 145 70 166 58 C188 46 200 20 224 30 C248 40 252 66 276 55 C298 45 314 28 336 36 C348 40 354 46 360 44 L360 96 L0 96 Z"
-                          fill="hsl(var(--chart-1) / 0.12)"
-                          className="animate-[fade-in_0.8s_ease-out_4.2s_both]"
+                          d="M0 80 L20 75 L40 85 L60 30 L80 45 L100 40 L120 75 L140 55 L160 50 L180 25 L200 35 L220 30 L240 70 L260 45 L280 40 L300 75 L320 50 L340 55 L360 40 L360 96 L0 96 Z"
+                          fill="hsl(var(--chart-1) / 0.1)"
+                          className="animate-[fade-in_0.6s_ease-out_2s_both]"
                         />
                       </svg>
                       {[60, 110, 224, 336].map((x, index) => (
                         <span
                           key={x}
-                          className="absolute h-2 w-2 rounded-full bg-chart-1 ring-4 ring-chart-1/15 animate-[pop-in_0.35s_ease-out_both]"
+                          className="absolute h-2 w-2 rounded-full bg-chart-1 ring-4 ring-chart-1/15 animate-[pop-in_0.3s_ease-out_both]"
                           style={{
                             left: `${(x / 360) * 100}%`,
-                            top: `${[48, 38, 30, 36][index]}%`,
-                            animationDelay: `${4.6 + index * 0.25}s`,
+                            top: `${[30, 40, 30, 40][index]}%`,
+                            animationDelay: `${2.1 + index * 0.15}s`,
                           }}
                         />
                       ))}
@@ -405,12 +406,12 @@ export function Landing({ onLaunch }: LandingProps) {
                   </div>
                   <div className="grid gap-2">
                     {[
-                      ['DNS', '18ms', '3.6s'],
-                      ['TCP', '24ms', '4.2s'],
-                      ['TTFB', '68ms', '4.8s'],
-                      ['LCP', '1.8s', '5.4s'],
+                      ['DNS', '18ms', '1.6s'],
+                      ['TCP', '24ms', '1.9s'],
+                      ['TTFB', '68ms', '2.2s'],
+                      ['LCP', '1.8s', '2.5s'],
                     ].map(([label, value, delay]) => (
-                      <div key={label} className="animate-[fade-in_0.45s_ease-out_both] flex items-center justify-between rounded-md bg-secondary/70 px-3 py-1.5 text-sm" style={{ animationDelay: delay }}>
+                      <div key={label} className="animate-[fade-in_0.3s_ease-out_both] flex items-center justify-between rounded-md bg-secondary/70 px-3 py-1.5 text-sm" style={{ animationDelay: delay }}>
                         <span className="font-semibold text-muted-foreground">{label}</span>
                         <span className="font-bold text-foreground">{value}</span>
                       </div>
@@ -419,7 +420,7 @@ export function Landing({ onLaunch }: LandingProps) {
                 </div>
               </div>
 
-              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:6400ms] md:grid-cols-[140px_1fr] md:items-center">
+              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:3000ms] md:grid-cols-[140px_1fr] md:items-center">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
                     <Activity className="h-5 w-5" />
@@ -435,7 +436,7 @@ export function Landing({ onLaunch }: LandingProps) {
                     ['SEO', '92', 'text-chart-3'],
                     ['SSL', 'Valid', 'text-status-up'],
                   ].map(([label, value, color], index) => (
-                    <div key={label} className="animate-[pop-in_0.45s_ease-out_both] rounded-lg border border-foreground/25 bg-secondary/70 p-2.5" style={{ animationDelay: `${7 + index * 0.35}s` }}>
+                    <div key={label} className="animate-[pop-in_0.35s_ease-out_both] rounded-lg border border-foreground/25 bg-secondary/70 p-2.5" style={{ animationDelay: `${3.3 + index * 0.2}s` }}>
                       <div className="text-xs font-semibold text-muted-foreground">{label}</div>
                       <div className={`mt-0.5 text-base font-extrabold ${color}`}>{value}</div>
                     </div>
@@ -443,7 +444,7 @@ export function Landing({ onLaunch }: LandingProps) {
                 </div>
               </div>
 
-              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:8800ms] md:grid-cols-[140px_1fr] md:items-center">
+              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:4500ms] md:grid-cols-[140px_1fr] md:items-center">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
                     <Download className="h-5 w-5 animate-bounce" />
@@ -459,15 +460,15 @@ export function Landing({ onLaunch }: LandingProps) {
                       <FileText className="h-4 w-4 text-chart-1" />
                       webmetricsx-report.pdf
                     </div>
-                    <span className="animate-[fade-in_0.4s_ease-out_11s_both] text-xs font-bold text-muted-foreground">charts + scores included</span>
+                    <span className="animate-[fade-in_0.3s_ease-out_5.5s_both] text-xs font-bold text-muted-foreground">charts + scores included</span>
                   </div>
                   <div className="h-2 rounded-full bg-background">
-                    <div className="h-full animate-[fill-bar_2.8s_ease-out_9.8s_both] rounded-full bg-chart-1" />
+                    <div className="h-full animate-[fill-bar_1.2s_ease-out_4.8s_both] rounded-full bg-chart-1" />
                   </div>
                 </div>
               </div>
 
-              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:12200ms] md:grid-cols-[140px_1fr] md:items-center">
+              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:6000ms] md:grid-cols-[140px_1fr] md:items-center">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
                     <Share2 className="h-5 w-5" />
@@ -481,12 +482,12 @@ export function Landing({ onLaunch }: LandingProps) {
                   <div className="rounded-lg border border-foreground/25 bg-secondary/70 px-4 py-2.5">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-sm font-bold text-muted-foreground">Report ready for client or team</span>
-                      <span className="flex h-8 w-8 animate-[pop-in_0.4s_ease-out_14s_both] items-center justify-center rounded-full bg-status-up text-white">
+                      <span className="flex h-8 w-8 animate-[pop-in_0.3s_ease-out_6.8s_both] items-center justify-center rounded-full bg-status-up text-white">
                         <CheckCircle2 className="h-4 w-4" />
                       </span>
                     </div>
                   </div>
-                  <Button type="button" variant="outline" className="pointer-events-none gap-2 border-foreground/35 font-semibold animate-[fade-in_0.4s_ease-out_14.4s_both]">
+                  <Button type="button" variant="outline" className="pointer-events-none gap-2 border-foreground/35 font-semibold animate-[fade-in_0.3s_ease-out_7s_both]">
                     <Share2 className="h-4 w-4" />
                     Share PDF
                   </Button>
