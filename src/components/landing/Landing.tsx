@@ -563,19 +563,22 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      <footer className="border-t border-foreground/20">
-        <div className="container mx-auto flex flex-col gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-foreground/30 bg-card">
-              <img src="/favicon.png" alt="" className="h-7 w-7 rounded-lg" />
-            </div>
-            <span className="text-base font-bold text-foreground">{productName}</span>
-            <span>{productTagline}</span>
+      <footer className="border-t border-foreground/20 bg-background/50 py-12">
+        <div className="container mx-auto px-4 text-center">
+          <div className="mb-6 flex items-center justify-center gap-3">
+            <span className="text-2xl" role="img" aria-label="laptop">💻</span>
+            <span className="text-2xl font-bold tracking-tight text-[#00875A]">Krish Mishra</span>
           </div>
-          <div className="flex gap-4">
-            <a href="#features" className="hover:text-foreground">Features</a>
-            <a href="#workflow" className="hover:text-foreground">Workflow</a>
-            <button onClick={onLaunch} className="font-medium text-chart-1 hover:text-chart-1/80">Open Monitor</button>
+          <p className="mb-4 text-lg font-medium text-muted-foreground flex items-center justify-center gap-2">
+            Built with <span className="text-red-500 animate-pulse">❤️</span> using React, Tailwind CSS, and GSAP
+          </p>
+          <div className="text-sm font-semibold text-muted-foreground/80">
+            © 2026 NO rights reserved — Let's build something amazing together!
+          </div>
+          <div className="mt-8 flex justify-center gap-8 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            <a href="#features" className="transition-colors hover:text-foreground">Features</a>
+            <a href="#workflow" className="transition-colors hover:text-foreground">Workflow</a>
+            <button onClick={onLaunch} className="text-chart-1 transition-colors hover:text-chart-1/80">Open Monitor</button>
           </div>
         </div>
       </footer>
