@@ -40,7 +40,7 @@ export function MetricCard({
   return (
     <Card
       className={cn(
-        'metric-card-hover border-l-4 shadow-metric hover:shadow-metric-hover',
+        'metric-card-hover border-2 border-black border-l-4 shadow-metric hover:shadow-metric-hover',
         statusColors[status],
         className
       )}

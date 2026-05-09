@@ -103,7 +103,7 @@ const Monitor = () => {
   const notificationsEnabled = currentUrl ? isNotificationEnabledForUrl(currentUrl) : false;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col border-[12px] border-black">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
       <main className="flex-1">
@@ -205,7 +205,7 @@ const Monitor = () => {
                 {featureCards.map((feature) => (
                   <article
                     key={feature.title}
-                    className="rounded-lg border border-border bg-card p-6 shadow-sm"
+                    className="rounded-lg border-2 border-black bg-card p-6 shadow-sm"
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-chart-1">

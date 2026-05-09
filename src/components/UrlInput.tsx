@@ -170,7 +170,7 @@ export function UrlInput({
 
               onChange={(e) => setInputValue(e.target.value)}
 
-              className="pl-12 pr-12 h-14 text-base border-2 bg-card focus:border-chart-1 transition-colors"
+              className="pl-12 pr-12 h-14 text-base border-2 border-black bg-card focus:border-chart-1 transition-colors"
 
               disabled={isMonitoring}
 
