@@ -391,13 +391,13 @@ export function Landing({ onLaunch }: LandingProps) {
                           className="animate-[fade-in_0.6s_ease-out_2s_both]"
                         />
                       </svg>
-                      {[60, 110, 224, 336].map((x, index) => (
+                      {[60, 100, 180, 220, 360].map((x, index) => (
                         <span
                           key={x}
-                          className="absolute h-2 w-2 rounded-full bg-chart-1 ring-4 ring-chart-1/15 animate-[pop-in_0.3s_ease-out_both]"
+                          className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-1 ring-4 ring-chart-1/15 animate-[pop-in_0.3s_ease-out_both]"
                           style={{
                             left: `${(x / 360) * 100}%`,
-                            top: `${[30, 40, 30, 40][index]}%`,
+                            top: `${[30, 40, 25, 30, 40][index]}%`,
                             animationDelay: `${2.1 + index * 0.15}s`,
                           }}
                         />
