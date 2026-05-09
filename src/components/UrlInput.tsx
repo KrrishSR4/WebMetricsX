@@ -33,36 +33,31 @@ interface UrlInputProps {
   onRemoveHistory?: (url: string) => void;
 
   onClearHistory?: () => void;
-
+  currentUrl?: string;
+  notificationsEnabled?: boolean;
+  onToggleNotification?: () => void;
+  isNotificationSupported?: boolean;
 }
 
 
 
 export function UrlInput({
-
   onSubmit,
-
   onStop,
-
   isMonitoring,
-
   isLoading,
-
   history = [],
-
   onSelectHistory,
-
   onRemoveHistory,
-
   onClearHistory,
-
+  currentUrl,
+  notificationsEnabled,
+  onToggleNotification,
+  isNotificationSupported,
 }: UrlInputProps) {
 
   const [inputValue, setInputValue] = useState('');
-
   const [historyOpen, setHistoryOpen] = useState(false);
-
-  const { token, enableNotifications, isSupported } = useNotifications();
 
 
 
