@@ -103,7 +103,7 @@ const Monitor = () => {
   const notificationsEnabled = currentUrl ? isNotificationEnabledForUrl(currentUrl) : false;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col border-[12px] border-black">
       <Header />
 
       <main className="flex-1">
