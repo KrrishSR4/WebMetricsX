@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Activity,
@@ -72,9 +72,29 @@ const useCases = [
 export function Landing({ onLaunch }: LandingProps) {
   const [workflowReplayKey, setWorkflowReplayKey] = useState(0);
 
+  const [workflowInView, setWorkflowInView] = useState(false);
+  const workflowRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setWorkflowInView(true);
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (workflowRef.current) {
+      observer.observe(workflowRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased [text-rendering:optimizeLegibility]">
-      <header className="sticky top-0 z-40 border-b border-black bg-background/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-black/10 bg-background/85 backdrop-blur-xl">
         <div className="container mx-auto flex h-20 items-center justify-between px-4">
           <a href="#hero" className="group flex items-center gap-3">
             <img src="/favicon.png" alt="WebMetricsX" className="h-12 w-12 object-contain" />
@@ -307,7 +327,7 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      <section id="workflow" className="border-b border-foreground/20 bg-secondary/30">
+      <section id="workflow" ref={workflowRef} className="border-b border-foreground/20 bg-secondary/30">
         <div className="container relative mx-auto px-4 py-16">
           <div className="pointer-events-none absolute inset-x-4 top-10 -z-10 flex justify-between opacity-[0.035]">
             <img src="/favicon.png" alt="" className="h-28 w-28 rotate-[-8deg] rounded-[1.5rem]" />
@@ -337,10 +357,11 @@ export function Landing({ onLaunch }: LandingProps) {
             </div>
           </div>
           <div
-            key={workflowReplayKey}
+            key={`${workflowReplayKey}-${workflowInView}`}
             className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border border-foreground/35 bg-card p-4 shadow-xl shadow-foreground/[0.04] lg:p-5"
           >
-            <div className="mx-auto grid max-w-4xl gap-3">
+            {workflowInView ? (
+              <div className="mx-auto grid max-w-4xl gap-3">
               <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm md:grid-cols-[140px_1fr] md:items-center">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1 text-white">
@@ -498,6 +519,14 @@ export function Landing({ onLaunch }: LandingProps) {
                 </div>
               </div>
             </div>
+          ) : (
+              <div className="flex h-96 items-center justify-center">
+                <div className="flex flex-col items-center gap-4 text-muted-foreground">
+                  <div className="h-12 w-12 animate-pulse rounded-full bg-secondary" />
+                  <p className="text-sm font-medium">Scroll down to start animation...</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
