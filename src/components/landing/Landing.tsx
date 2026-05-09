@@ -137,7 +137,7 @@ export function Landing({ onLaunch }: LandingProps) {
                   Start Monitoring Now
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
-                <Button size="lg" variant="outline" className="h-12 px-6 font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/50" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
+                <Button size="lg" variant="outline" className="h-12 px-6 font-semibold border-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-black hover:text-white" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
                   Explore features
                 </Button>
               </div>
@@ -329,7 +329,7 @@ export function Landing({ onLaunch }: LandingProps) {
                 type="button"
                 variant="outline"
                 onClick={() => setWorkflowReplayKey((key) => key + 1)}
-                className="group w-fit gap-2 border-foreground/35 font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/60"
+                className="group w-fit gap-2 border-black font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-black hover:text-white"
               >
                 <RefreshCcw className="h-4 w-4 transition-transform duration-500 group-hover:rotate-180" />
                 Replay Animation
@@ -573,7 +573,7 @@ export function Landing({ onLaunch }: LandingProps) {
               <span className="text-2xl" role="img" aria-label="laptop">💻</span>
               <a href="https://github.com/KrrishSR4" target="_blank" rel="noreferrer" className="text-2xl font-bold tracking-tight text-[#00875A] transition-colors hover:opacity-80">Krish Mishra</a>
             </div>
-            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 text-sm font-semibold transition-all hover:bg-secondary hover:shadow-sm">
+            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 text-sm font-semibold transition-all hover:bg-black hover:text-white hover:shadow-sm">
               <Github className="h-4 w-4" />
               View on GitHub
             </a>
