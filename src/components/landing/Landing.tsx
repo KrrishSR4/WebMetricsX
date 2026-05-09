@@ -570,7 +570,7 @@ export function Landing({ onLaunch }: LandingProps) {
             <span className="text-2xl font-bold tracking-tight text-[#00875A]">Krish Mishra</span>
           </div>
           <p className="mb-4 text-lg font-medium text-muted-foreground flex items-center justify-center gap-2">
-            Built with <span className="text-red-500 animate-pulse">❤️</span> using React, Tailwind CSS, and GSAP
+            Built with <span className="text-red-500 animate-pulse">❤️</span> using React, Tailwind CSS, and Framer Motion
           </p>
           <div className="text-sm font-semibold text-muted-foreground/80">
             © 2026 NO rights reserved — Let's build something amazing together!
