@@ -114,6 +114,7 @@ export function Landing({ onLaunch }: LandingProps) {
                 <img src="/favicon.png" alt="" className="h-7 w-7 object-contain drop-shadow-sm" />
                 Built for smart website monitoring, AI-powered insights, and SEO audits
               </div>
+              <h1 className="max-w-3xl text-4xl font-extrabold leading-[0.98] tracking-tight [text-wrap:balance] sm:text-5xl lg:text-7xl">
                 <span className="inline-flex items-center gap-3">
                   {productName}
                   <Sparkles className="hidden h-8 w-8 animate-pulse text-chart-1 sm:inline-block" />
