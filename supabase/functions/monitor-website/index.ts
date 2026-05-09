@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 // WebMetrics - Website Monitoring Edge Function with Enhanced SEO & PageSpeed API
 
 const corsHeaders = {
@@ -530,7 +532,7 @@ function analyzeSEO(html: string, url: string, headers: Headers): SEOAnalysis {
   };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
