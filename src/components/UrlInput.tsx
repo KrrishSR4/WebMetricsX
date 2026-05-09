@@ -61,9 +61,7 @@ export function UrlInput({
 
 
 
-  // REPLACE THIS WITH ACTUAL VAPID KEY FROM USER
-
-  const VAPID_KEY = "BBoovMWQMAx1yoUjgIr8ym1RyPJEBTdKNM5tkQj77chTcs6uKDJsz7SAaQRYorthEJHLmi26XRGqy5lf3Ung3Wc";
+  // Form submit handler
 
 
 
@@ -408,26 +406,16 @@ export function UrlInput({
 
 
 
-        {isSupported && (
-
+        {isNotificationSupported && (
           <Button
-
             variant="ghost"
-
             size="sm"
-
-            className={`text-xs gap-2 ${token ? 'text-green-500' : 'text-muted-foreground'}`}
-
-            onClick={() => enableNotifications(VAPID_KEY)}
-
+            className={`text-xs gap-2 ${notificationsEnabled ? 'text-chart-1' : 'text-muted-foreground'}`}
+            onClick={onToggleNotification}
           >
-
-            {token ? <Bell className="h-3 w-3" /> : <BellOff className="h-3 w-3" />}
-
-            {token ? 'Notifications Enabled' : 'Enable Downtime Alerts'}
-
+            {notificationsEnabled ? <Bell className="h-3 w-3" /> : <BellOff className="h-3 w-3" />}
+            {notificationsEnabled ? 'Downtime Alerts On' : 'Enable Downtime Alerts'}
           </Button>
-
         )}
 
       </div>
