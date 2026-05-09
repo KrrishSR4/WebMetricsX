@@ -205,7 +205,7 @@ const Monitor = () => {
                 {featureCards.map((feature) => (
                   <article
                     key={feature.title}
-                    className="rounded-lg border-2 border-black bg-card p-6 shadow-sm"
+                    className="rounded-lg border border-black bg-card p-6"
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-chart-1">

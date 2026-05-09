@@ -170,7 +170,7 @@ export function UrlInput({
 
               onChange={(e) => setInputValue(e.target.value)}
 
-              className="pl-12 pr-12 h-14 text-base border-2 border-black bg-card focus:border-chart-1 transition-colors"
+              className="pl-12 pr-12 h-14 text-base border-2 border-black bg-card focus:border-chart-1 transition-all"
 
               disabled={isMonitoring}
 
@@ -330,8 +330,7 @@ export function UrlInput({
 
               size="lg"
 
-              className="h-14 px-8 text-base font-medium"
-
+              className="h-14 px-8 text-base font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
             >
 
               <StopCircle className="mr-2 h-5 w-5" />
@@ -348,7 +347,7 @@ export function UrlInput({
 
               size="lg"
 
-              className="h-14 px-8 text-base font-medium bg-chart-1 hover:bg-chart-1/90"
+              className="h-14 px-8 text-base font-bold bg-chart-1 hover:bg-chart-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all text-white"
 
               disabled={isLoading || !inputValue.trim()}
 

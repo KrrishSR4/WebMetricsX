@@ -70,7 +70,7 @@ export function Dashboard({ data }: DashboardProps) {
       <div className="space-y-6">
         {/* Tabs */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-md border border-black bg-muted/50 p-1">
             <TabsTrigger value="overview" className="gap-2">
               <Activity className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
