@@ -84,9 +84,9 @@ export function Landing({ onLaunch }: LandingProps) {
             </div>
           </a>
           <nav className="hidden items-center gap-4 text-sm font-semibold text-muted-foreground md:flex">
-            <a href="#features" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-secondary hover:shadow-sm">Features</a>
-            <a href="#workflow" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-secondary hover:shadow-sm">Workflow</a>
-            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-secondary hover:shadow-sm">
+            <a href="#features" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-black hover:text-white hover:shadow-sm">Features</a>
+            <a href="#workflow" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-black hover:text-white hover:shadow-sm">Workflow</a>
+            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-black hover:text-white hover:shadow-sm">
               <Github className="h-4 w-4" />
               GitHub
             </a>

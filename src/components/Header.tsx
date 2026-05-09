@@ -17,7 +17,7 @@ export function Header() {
               </div>
             </Link>
             
-            <Link to="/" className="hidden md:flex items-center gap-2 rounded-full border border-black bg-background px-4 py-1.5 text-sm font-semibold transition-all hover:bg-secondary">
+            <Link to="/" className="hidden md:flex items-center gap-2 rounded-full border border-black bg-background px-4 py-1.5 text-sm font-semibold transition-all hover:bg-black hover:text-white">
               <Home className="h-4 w-4" />
               Back to Home
             </Link>
@@ -32,13 +32,13 @@ export function Header() {
               <BarChart3 className="h-4 w-4" />
               <span>SEO Insights</span>
             </div>
-            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-secondary hover:shadow-sm">
+            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-black hover:text-white hover:shadow-sm">
               <Github className="h-4 w-4" />
               <span>GitHub</span>
             </a>
           </div>
           
-          <Link to="/" className="md:hidden flex h-10 w-10 items-center justify-center rounded-full border border-black bg-background transition-all hover:bg-secondary">
+          <Link to="/" className="md:hidden flex h-10 w-10 items-center justify-center rounded-full border border-black bg-background transition-all hover:bg-black hover:text-white">
             <Home className="h-5 w-5" />
           </Link>
         </div>
