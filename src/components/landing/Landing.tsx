@@ -29,7 +29,7 @@ interface LandingProps {
 }
 
 const productName = 'WebMetricsX';
-const productTagline = 'Enterprise-Grade Website Monitoring & SEO Analytics';
+const productTagline = 'AI-Powered Website Monitoring & SEO Audit Tool';
 
 const features = [
   { icon: Activity, title: 'Website Status', desc: 'Instantly see whether a website is up, down, or degraded.' },
@@ -112,21 +112,21 @@ export function Landing({ onLaunch }: LandingProps) {
             <div className="animate-fade-in-up">
               <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-foreground/30 bg-card py-1.5 pl-2 pr-4 text-xs font-semibold text-muted-foreground shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/50 hover:shadow-md">
                 <img src="/favicon.png" alt="" className="h-7 w-7 object-contain drop-shadow-sm" />
-                Built for fast audits, uptime checks and client-ready reports
+                Built for smart website monitoring, AI-powered insights, and SEO audits
               </div>
-              <h1 className="max-w-3xl text-4xl font-extrabold leading-[0.98] tracking-tight [text-wrap:balance] sm:text-5xl lg:text-7xl">
                 <span className="inline-flex items-center gap-3">
                   {productName}
                   <Sparkles className="hidden h-8 w-8 animate-pulse text-chart-1 sm:inline-block" />
                 </span>
                 <br />
-                turns any URL into
+                The smartest way to get
                 <br />
-                <span className="text-chart-1">live website insights.</span>
+                <span className="text-chart-1">AI-powered website insights.</span>
               </h1>
               <p className="mt-6 max-w-2xl text-lg font-medium leading-8 text-muted-foreground">
-                Monitor uptime, response speed, SSL health, SEO readiness and Core Web Vitals from one
-                enterprise-grade monitoring dashboard. Move from quick check to shareable PDF report in minutes.
+                Monitor uptime, performance speed, SSL health, and Core Web Vitals with our 
+                AI-powered SEO analytics platform. Get automated website audits and developer-focused 
+                intelligence in one professional dashboard.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" onClick={onLaunch} className="group h-12 gap-2 px-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
