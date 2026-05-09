@@ -74,7 +74,7 @@ export function Landing({ onLaunch }: LandingProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased [text-rendering:optimizeLegibility]">
-      <header className="sticky top-0 z-40 border-b border-foreground/25 bg-background/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-black bg-background/85 backdrop-blur-xl">
         <div className="container mx-auto flex h-20 items-center justify-between px-4">
           <a href="#hero" className="group flex items-center gap-3">
             <img src="/favicon.png" alt="WebMetricsX" className="h-12 w-12 object-contain" />
@@ -83,16 +83,15 @@ export function Landing({ onLaunch }: LandingProps) {
               <div className="mt-1 hidden max-w-[360px] text-xs font-semibold leading-snug text-muted-foreground sm:block">{productTagline}</div>
             </div>
           </a>
-          <nav className="hidden items-center gap-8 text-sm font-semibold text-muted-foreground md:flex">
-            <a href="#features" className="relative transition-colors after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-0 after:bg-foreground after:transition-all hover:text-foreground hover:after:w-full">Features</a>
-            <a href="#workflow" className="relative transition-colors after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-0 after:bg-foreground after:transition-all hover:text-foreground hover:after:w-full">Workflow</a>
-            <a href="#reports" className="relative transition-colors after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-0 after:bg-foreground after:transition-all hover:text-foreground hover:after:w-full">Reports</a>
-            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 transition-colors hover:text-foreground">
+          <nav className="hidden items-center gap-4 text-sm font-semibold text-muted-foreground md:flex">
+            <a href="#features" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-secondary hover:shadow-sm">Features</a>
+            <a href="#workflow" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-secondary hover:shadow-sm">Workflow</a>
+            <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-secondary hover:shadow-sm">
               <Github className="h-4 w-4" />
               GitHub
             </a>
           </nav>
-          <Button onClick={onLaunch} size="sm" className="group gap-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+          <Button onClick={onLaunch} size="sm" className="group h-10 gap-2 rounded-full border border-black bg-foreground px-5 text-background shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-foreground/90 hover:shadow-md">
             Open Monitor
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
