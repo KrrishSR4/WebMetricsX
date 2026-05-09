@@ -46,7 +46,7 @@ export function Dashboard({ data }: DashboardProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/10">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <Globe className="h-6 w-6 text-chart-1" />
@@ -70,7 +70,7 @@ export function Dashboard({ data }: DashboardProps) {
       <div className="space-y-6">
         {/* Tabs */}
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md border border-black bg-muted/50 p-1">
+          <TabsList className="grid w-full grid-cols-3 max-w-md border border-black/10 bg-muted/50 p-1">
             <TabsTrigger value="overview" className="gap-2">
               <Activity className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>

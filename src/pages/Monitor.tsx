@@ -205,7 +205,7 @@ const Monitor = () => {
                 {featureCards.map((feature) => (
                   <article
                     key={feature.title}
-                    className="rounded-lg border border-black bg-card p-6"
+                    className="rounded-lg border border-black/10 bg-card p-6 shadow-sm hover:shadow-md transition-all"
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-chart-1">
@@ -225,7 +225,7 @@ const Monitor = () => {
       </main>
 
       {!isMonitoring && !showStopped && (
-        <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
+        <footer className="border-t border-black/10 py-8 text-center text-sm text-muted-foreground">
           <div className="flex flex-col items-center gap-3">
             <p>WebMetricsX — Enterprise-Grade Website Monitoring & SEO Analytics</p>
             <div className="flex items-center gap-4 font-semibold">

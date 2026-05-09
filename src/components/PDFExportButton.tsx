@@ -31,7 +31,7 @@ export function PDFExportButton({ data, disabled }: PDFExportButtonProps) {
       variant="outline"
       onClick={handleExport}
       disabled={disabled || isExporting}
-      className="gap-2"
+      className="gap-2 border-black hover:bg-black hover:text-white transition-colors"
     >
       {isExporting ? (
         <>

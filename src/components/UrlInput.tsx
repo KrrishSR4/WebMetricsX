@@ -170,7 +170,7 @@ export function UrlInput({
 
               onChange={(e) => setInputValue(e.target.value)}
 
-              className="pl-12 pr-12 h-14 text-base border-2 border-black bg-card focus:border-chart-1 transition-all"
+              className="pl-12 pr-12 h-14 text-base border-2 border-black/10 bg-card focus:border-chart-1 transition-all"
 
               disabled={isMonitoring}
 
@@ -204,7 +204,7 @@ export function UrlInput({
 
                 <PopoverContent className="w-80 p-0" align="end">
 
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-black">
 
                     <span className="text-sm font-medium">Recent URLs</span>
 
