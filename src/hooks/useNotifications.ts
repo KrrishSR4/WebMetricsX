@@ -24,7 +24,7 @@ export const useNotifications = () => {
   const prevStatusRef = useRef<string | null>(null);
 
   // VAPID key
-  const VAPID_KEY = "BBoovMWQMAx1yoUjgIr8ym1RyPJEBTdKNM5tkQj77chTcs6uKDJsz7SAaQRYorthEJHLmi26XRGqy5lf3Ung3Wc";
+  const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 
   useEffect(() => {
     if (!('Notification' in window)) {
