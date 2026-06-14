@@ -942,25 +942,25 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
-      <footer className="border-t border-black bg-background/50 py-12">
-        <div className="container mx-auto px-4 text-center">
+      <footer className="border-t border-black bg-background/50 py-12 px-4">
+        <div className="container mx-auto text-center">
           <div className="mb-6 flex flex-col items-center justify-center gap-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl" role="img" aria-label="laptop">💻</span>
-              <a href="https://github.com/KrrishSR4" target="_blank" rel="noreferrer" className="text-2xl font-bold tracking-tight text-[#00875A] transition-colors hover:opacity-80">Krish Mishra</a>
+              <a href="https://github.com/KrrishSR4" target="_blank" rel="noreferrer" className="text-xl sm:text-2xl font-bold tracking-tight text-[#00875A] transition-colors hover:opacity-80">Krish Mishra</a>
             </div>
             <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 text-sm font-semibold transition-all hover:bg-black hover:text-white hover:shadow-sm">
               <Github className="h-4 w-4" />
               View on GitHub
             </a>
           </div>
-          <p className="mb-4 text-lg font-medium text-muted-foreground flex items-center justify-center gap-2">
-            Built with <span className="text-red-500 animate-pulse">❤️</span> using React, Tailwind CSS, and Framer Motion
+          <p className="mb-4 text-sm sm:text-lg font-medium text-muted-foreground leading-relaxed">
+            Built with <span className="inline-block text-red-500 animate-pulse mx-1">❤️</span> using React, Tailwind CSS, and Framer Motion
           </p>
-          <div className="text-sm font-semibold text-muted-foreground/80">
+          <div className="text-xs sm:text-sm font-semibold text-muted-foreground/80 px-2 leading-relaxed">
             © 2026 NO rights reserved — Let's build something amazing together!
           </div>
-          <div className="mt-8 flex justify-center gap-8 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-3 text-[11px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground">
             <a href="#features" className="transition-colors hover:text-foreground">Features</a>
             <a href="#workflow" className="transition-colors hover:text-foreground">Workflow</a>
             <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="transition-colors hover:text-foreground">Repository</a>
