@@ -54,16 +54,28 @@ export const useNotifications = () => {
       return;
     }
 
-    // Enable - first ensure we have permission + token
-    if (!token) {
-      const fcmToken = await requestNotificationPermission(VAPID_KEY);
-      if (fcmToken) {
-        setToken(fcmToken);
-        localStorage.setItem('fcm_token', fcmToken);
-      } else {
+    // Enable - first ensure we have browser notification permission
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
         toast.error('Failed to enable notifications. Please check browser permissions.');
         return;
       }
+    } else {
+      toast.error('Notifications are not supported in this browser.');
+      return;
+    }
+
+    // Try to get FCM token in background if not already present, but don't block local notification enabling
+    if (!token) {
+      requestNotificationPermission(VAPID_KEY).then((fcmToken) => {
+        if (fcmToken) {
+          setToken(fcmToken);
+          localStorage.setItem('fcm_token', fcmToken);
+        }
+      }).catch((err) => {
+        console.warn('Firebase FCM token registration skipped/failed:', err);
+      });
     }
 
     const updated = [...enabledUrls, url];
@@ -84,14 +96,18 @@ export const useNotifications = () => {
 
     const prevStatus = prevStatusRef.current;
 
-    if (prevStatus && prevStatus !== currentStatus) {
+    // Trigger alert if status changed, OR if this is the first check and status is down/degraded
+    const isStatusChanged = prevStatus !== null && prevStatus !== currentStatus;
+    const isFirstCheckAndAlerting = prevStatus === null && (currentStatus === 'down' || currentStatus === 'degraded');
+
+    if (isStatusChanged || isFirstCheckAndAlerting) {
       if (currentStatus === 'down') {
         showDowntimeNotification(url, 'down');
         toast.error(`🚨 ${(() => { try { return new URL(url).hostname; } catch { return url; } })()} is DOWN!`, { duration: 10000 });
       } else if (currentStatus === 'degraded') {
         showDowntimeNotification(url, 'degraded');
-        toast.warning(`⚡ ${(() => { try { return new URL(url).hostname; } catch { return url; } })()} is experiencing issues`, { duration: 8000 });
-      } else if (currentStatus === 'up' && (prevStatus === 'down' || prevStatus === 'degraded')) {
+        toast.warning(`⚡ ${(() => { try { return new URL(url).hostname; } catch { return url; } })()} is experiencing issues (Response time: >400ms)`, { duration: 8000 });
+      } else if (currentStatus === 'up' && prevStatus && (prevStatus === 'down' || prevStatus === 'degraded')) {
         toast.success(`✅ ${(() => { try { return new URL(url).hostname; } catch { return url; } })()} is back UP!`, { duration: 5000 });
       }
     }

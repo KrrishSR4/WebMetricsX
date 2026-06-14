@@ -618,7 +618,7 @@ Deno.serve(async (req: Request) => {
     let status: 'up' | 'down' | 'degraded' = 'up';
     if (!response.ok) {
       status = response.status >= 500 ? 'down' : 'degraded';
-    } else if (timing.total > 3000) {
+    } else if (timing.total > 400) {
       status = 'degraded';
     }
 
