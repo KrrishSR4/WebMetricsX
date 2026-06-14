@@ -37,6 +37,7 @@ const productName = 'WebMetricsX';
 const productTagline = 'Enterprise-Grade Website Monitoring & SEO Analytics';
 
 const features = [
+  { icon: BellRing, title: 'Downtime Alerts', desc: 'Get instant notifications if your website goes down or experiences outages.' },
   { icon: Activity, title: 'Website Status', desc: 'Instantly see whether a website is up, down, or degraded.' },
   { icon: Server, title: 'HTTP Status Codes', desc: 'Track live HTTP response codes for each monitoring check.' },
   { icon: Zap, title: 'Current Response Time', desc: 'Measure the latest response time in milliseconds.' },
@@ -61,7 +62,7 @@ const features = [
 ];
 
 const stats = [
-  { value: '5s', label: 'Live polling interval' },
+  { value: '3s', label: 'Live polling interval' },
   { value: '50+', label: 'Metrics tracked' },
   { value: 'PDF', label: 'Instant reports' },
   { value: '0', label: 'Setup friction' },
@@ -375,19 +376,86 @@ export function Landing({ onLaunch }: LandingProps) {
             </p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((f, index) => (
-              <div
-                key={f.title}
-                className="group animate-fade-in-up rounded-lg border border-foreground/30 bg-card p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-foreground/55 hover:shadow-lg hover:shadow-foreground/[0.04]"
-                style={{ animationDelay: `${(index % 6) * 55}ms` }}
-              >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-secondary transition-colors group-hover:bg-chart-1/10">
-                  <f.icon className="h-5 w-5 text-chart-1 transition-transform duration-300 group-hover:scale-110" />
+            {features.map((f, index) => {
+              const isDowntimeAlerts = f.title === 'Downtime Alerts';
+              const isStatus = f.title === 'Website Status';
+              const isHttpCodes = f.title === 'HTTP Status Codes';
+              const isResponseTime = f.title === 'Current Response Time';
+              const isCoreFeature = isStatus || isHttpCodes || isResponseTime;
+              
+              // Custom labels
+              let badgeText = '';
+              if (isDowntimeAlerts) badgeText = 'CRITICAL ALERT';
+              else if (isStatus) badgeText = 'LIVE STATUS';
+              else if (isHttpCodes) badgeText = 'PROTOCOL CODES';
+              else if (isResponseTime) badgeText = 'REAL-TIME SPEED';
+
+              return (
+                <div
+                  key={f.title}
+                  className={`group relative animate-fade-in-up rounded-lg p-6 transition-all duration-300 ${
+                    isDowntimeAlerts 
+                      ? 'border border-transparent bg-red-500/[0.015] hover:bg-red-500/[0.035] hover:shadow-[0_0_20px_rgba(239,68,68,0.12)] hover:-translate-y-2' 
+                      : isCoreFeature 
+                        ? 'border border-transparent bg-blue-500/[0.01] hover:bg-blue-500/[0.03] hover:shadow-[0_0_20px_rgba(59,130,246,0.12)] hover:-translate-y-2' 
+                        : 'border border-foreground/30 bg-card hover:-translate-y-1 hover:border-foreground/55 hover:shadow-md hover:shadow-foreground/[0.02]'
+                  }`}
+                  style={{ animationDelay: `${(index % 6) * 55}ms` }}
+                >
+                  {/* Dynamic Animated Dotted SVG Border */}
+                  {(isDowntimeAlerts || isCoreFeature) && (
+                    <div className="absolute inset-0 pointer-events-none rounded-lg overflow-hidden">
+                      <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <rect
+                          x="0"
+                          y="0"
+                          width="100"
+                          height="100"
+                          rx="3"
+                          fill="none"
+                          stroke={isDowntimeAlerts ? "rgba(239, 68, 68, 0.65)" : "rgba(59, 130, 246, 0.65)"}
+                          strokeWidth="2"
+                          vectorEffect="non-scaling-stroke"
+                          strokeDasharray="6 4"
+                          className={`transition-all duration-300 ${
+                            isDowntimeAlerts 
+                              ? 'animate-[border-dash_18s_linear_infinite] group-hover:stroke-red-600 group-hover:animate-[border-dash_5s_linear_infinite]' 
+                              : 'animate-[border-dash_18s_linear_infinite] group-hover:stroke-blue-600 group-hover:animate-[border-dash_5s_linear_infinite]'
+                          }`}
+                        />
+                      </svg>
+                    </div>
+                  )}
+
+                  {(isDowntimeAlerts || isCoreFeature) && (
+                    <span className={`absolute top-4 right-4 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider border ${
+                      isDowntimeAlerts 
+                        ? 'bg-red-500/10 text-red-500 border-red-500/25 animate-pulse' 
+                        : 'bg-blue-500/10 text-blue-500 border-blue-500/25'
+                    }`}>
+                      {badgeText}
+                    </span>
+                  )}
+                  <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
+                    isDowntimeAlerts 
+                      ? 'bg-red-500/10 group-hover:bg-red-500/20' 
+                      : isCoreFeature 
+                        ? 'bg-blue-500/10 group-hover:bg-blue-500/20' 
+                        : 'bg-secondary group-hover:bg-chart-1/10'
+                  }`}>
+                    <f.icon className={`h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${
+                      isDowntimeAlerts 
+                        ? 'text-red-500' 
+                        : isCoreFeature 
+                          ? 'text-blue-500' 
+                          : 'text-chart-1'
+                    }`} />
+                  </div>
+                  <h3 className="mb-1.5 text-[15px] font-bold tracking-tight">{f.title}</h3>
+                  <p className="text-sm font-medium leading-relaxed text-muted-foreground">{f.desc}</p>
                 </div>
-                <h3 className="mb-1.5 text-[15px] font-bold tracking-tight">{f.title}</h3>
-                <p className="text-sm font-medium leading-relaxed text-muted-foreground">{f.desc}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -756,7 +824,7 @@ export function Landing({ onLaunch }: LandingProps) {
                     1
                   </div>
                   <span className={`text-sm font-semibold ${alertPhase === 0 ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
-                    Continuous 5s Polling Active
+                    Continuous 3s Polling Active
                   </span>
                 </div>
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { MonitoringResult, WebsiteMetrics, SEOMetrics } from '@/types/metrics';
 
-const POLLING_INTERVAL = 5000; // 5 seconds
+const POLLING_INTERVAL = 3000; // 3 seconds
 
 const initialWebsiteMetrics: WebsiteMetrics = {
   url: '',
