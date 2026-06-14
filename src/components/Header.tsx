@@ -7,9 +7,9 @@ export function Header() {
       <div className="container py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link to="/" className="group flex flex-col transition-opacity hover:opacity-90">
-              <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-foreground to-foreground/85 bg-clip-text text-transparent">WebMetricsX</h1>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-chart-1">Real-time Website Monitoring</p>
+            <Link to="/" className="group flex flex-col items-start text-left transition-opacity hover:opacity-90">
+              <span className="text-2xl font-black tracking-tight text-foreground">WebMetricsX</span>
+              <span className="mt-1 text-[9px] font-bold uppercase tracking-widest text-chart-1">Real-time Website Monitoring</span>
             </Link>
             
             <Link to="/" className="hidden md:flex items-center gap-2 rounded-full border border-black bg-background px-4 py-1.5 text-sm font-semibold transition-all hover:bg-black hover:text-white">
