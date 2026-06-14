@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Activity,
+  AlertTriangle,
   ArrowRight,
   BarChart3,
   Bell,
+  BellRing,
   CheckCircle2,
   Clock3,
   Download,
@@ -22,6 +24,8 @@ import {
   Shield,
   Sparkles,
   TrendingUp,
+  Wifi,
+  WifiOff,
   Zap,
 } from 'lucide-react';
 
@@ -75,6 +79,31 @@ export function Landing({ onLaunch }: LandingProps) {
   const [workflowInView, setWorkflowInView] = useState(false);
   const workflowRef = React.useRef<HTMLDivElement>(null);
 
+  // Downtime alerts section
+  const [alertsInView, setAlertsInView] = useState(false);
+  const [alertsReplayKey, setAlertsReplayKey] = useState(0);
+  const [alertPhase, setAlertPhase] = useState(0); // 0=monitoring, 1=detecting, 2=alerting, 3=notified
+  const alertsRef = React.useRef<HTMLDivElement>(null);
+  const alertPhaseTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const startAlertSequence = React.useCallback(() => {
+    setAlertPhase(0);
+    if (alertPhaseTimerRef.current) clearTimeout(alertPhaseTimerRef.current);
+    
+    // Phase 0 -> 1 (monitoring -> detecting downtime) at 1.5s
+    alertPhaseTimerRef.current = setTimeout(() => {
+      setAlertPhase(1);
+      // Phase 1 -> 2 (detecting -> alert triggered) at 3.5s
+      alertPhaseTimerRef.current = setTimeout(() => {
+        setAlertPhase(2);
+        // Phase 2 -> 3 (alert -> notification delivered) at 5.5s
+        alertPhaseTimerRef.current = setTimeout(() => {
+          setAlertPhase(3);
+        }, 2000);
+      }, 2000);
+    }, 1500);
+  }, []);
+
   React.useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -91,6 +120,34 @@ export function Landing({ onLaunch }: LandingProps) {
 
     return () => observer.disconnect();
   }, []);
+
+  // Downtime alerts observer
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !alertsInView) {
+          setAlertsInView(true);
+          startAlertSequence();
+        }
+      },
+      { threshold: 0.25 }
+    );
+
+    if (alertsRef.current) {
+      observer.observe(alertsRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+      if (alertPhaseTimerRef.current) clearTimeout(alertPhaseTimerRef.current);
+    };
+  }, [alertsInView, startAlertSequence]);
+
+  const handleReplayAlerts = () => {
+    setAlertsReplayKey(k => k + 1);
+    setAlertsInView(true);
+    startAlertSequence();
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased [text-rendering:optimizeLegibility]">
@@ -527,6 +584,220 @@ export function Landing({ onLaunch }: LandingProps) {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      </section>
+
+      <section id="downtime-alerts" ref={alertsRef} className="border-b border-foreground/20 bg-background relative overflow-hidden">
+        {/* Glow effect */}
+        <div className="wmx-blob bg-destructive/10 w-96 h-96 -right-20 top-20" />
+        <div className="wmx-blob bg-chart-1/5 w-80 h-80 -left-20 bottom-10" />
+
+        <div className="container relative mx-auto px-4 py-20">
+          <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            {/* Left side: Interactive visualization */}
+            <div 
+              key={alertsReplayKey}
+              className="relative rounded-xl border-2 border-black bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] min-h-[380px] flex flex-col justify-between overflow-hidden"
+            >
+              {/* Header/Browser bar */}
+              <div className="flex items-center justify-between border-b border-black/10 pb-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-red-500" />
+                  <span className="h-3 w-3 rounded-full bg-yellow-500" />
+                  <span className="h-3 w-3 rounded-full bg-green-500" />
+                </div>
+                <div className="flex-1 max-w-xs mx-4 px-3 py-1 rounded bg-secondary text-xs text-muted-foreground font-medium text-center truncate">
+                  https://yoursite.com
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping ${alertPhase === 0 ? 'bg-status-up' : 'bg-status-down'}`} />
+                    <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${alertPhase === 0 ? 'bg-status-up' : 'bg-status-down'}`} />
+                  </span>
+                  <span className="text-xs font-semibold uppercase tracking-wider hidden sm:inline">
+                    {alertPhase === 0 ? 'Monitoring' : 'Incident Detected'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Status Display Area */}
+              <div className="flex-1 flex flex-col justify-center items-center py-6 relative z-10">
+                {alertPhase === 0 && (
+                  <div className="text-center space-y-4 animate-[slide-down-fade_0.4s_ease-out]">
+                    <div className="inline-flex p-4 rounded-full bg-green-500/10 text-green-600 border border-green-200">
+                      <Wifi className="h-10 w-10" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-lg font-bold">Website is Operational</h4>
+                      <p className="text-sm text-muted-foreground">HTTP 200 OK • Checked 5s ago</p>
+                    </div>
+                  </div>
+                )}
+
+                {alertPhase === 1 && (
+                  <div className="text-center space-y-4 animate-[bell-shake_0.6s_infinite]">
+                    <div className="inline-flex p-4 rounded-full bg-yellow-500/10 text-yellow-600 border border-yellow-200">
+                      <WifiOff className="h-10 w-10" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-lg font-bold text-yellow-600">Connection Timed Out</h4>
+                      <p className="text-sm text-muted-foreground">Retrying connection... (Attempt 2/3)</p>
+                    </div>
+                  </div>
+                )}
+
+                {(alertPhase === 2 || alertPhase === 3) && (
+                  <div className="text-center space-y-4 animate-[alert-glow_2s_infinite] border border-destructive/30 rounded-xl p-6 bg-destructive/5 max-w-sm">
+                    <div className="relative inline-flex">
+                      <div className="absolute inset-0 rounded-full bg-destructive/20 animate-[alert-ring-pulse_1.5s_infinite]" />
+                      <div className="relative p-4 rounded-full bg-destructive text-white">
+                        <AlertTriangle className="h-10 w-10 animate-bounce" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-lg font-bold text-destructive">Website is DOWN (502 Gateway Error)</h4>
+                      <p className="text-sm text-muted-foreground">Immediate incident alerts triggered!</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Simulated Heartbeat Graph */}
+              <div className="mt-4 border-t border-black/10 pt-4">
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-2">
+                  <span>Connection Heartbeat</span>
+                  <span className={alertPhase === 0 ? 'text-status-up font-bold' : 'text-status-down font-bold'}>
+                    {alertPhase === 0 ? '100% Uptime' : 'Incident Pending'}
+                  </span>
+                </div>
+                <div className="relative h-10 w-full bg-secondary/50 rounded overflow-hidden">
+                  <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 40" preserveAspectRatio="none">
+                    {alertPhase === 0 ? (
+                      // Healthy pulse
+                      <path 
+                        d="M0 20 L50 20 L55 10 L60 30 L65 20 L150 20 L155 5 L160 35 L165 20 L250 20 L255 10 L260 30 L265 20 L350 20 L355 5 L360 35 L365 20 L400 20" 
+                        fill="none" 
+                        stroke="hsl(var(--status-up))" 
+                        strokeWidth="2"
+                        className="animate-[heartbeat-line_1s_infinite]"
+                      />
+                    ) : alertPhase === 1 ? (
+                      // Degraded pulse
+                      <path 
+                        d="M0 20 L50 20 L55 10 L60 30 L65 20 L150 20 L160 20 L170 30 L180 20 L250 20 L260 20 L270 32 L280 20 L400 20" 
+                        fill="none" 
+                        stroke="hsl(var(--status-degraded))" 
+                        strokeWidth="2"
+                      />
+                    ) : (
+                      // Flatline with alert trigger points
+                      <path 
+                        d="M0 20 L50 20 L55 10 L60 30 L65 20 L150 20 L160 32 L170 20 L220 20 L400 20" 
+                        fill="none" 
+                        stroke="hsl(var(--status-down))" 
+                        strokeWidth="2"
+                      />
+                    )}
+                  </svg>
+                </div>
+              </div>
+
+              {/* Notification Overlay Card */}
+              {alertPhase === 3 && (
+                <div className="absolute right-4 bottom-16 left-4 sm:left-auto sm:w-80 bg-white/95 border-2 border-black rounded-lg p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-[notif-slide-in_0.5s_cubic-bezier(0.16,1,0.3,1)_both] z-20">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-destructive text-white rounded-md animate-[bell-shake_0.8s_ease-in-out_infinite]">
+                      <BellRing className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-extrabold uppercase text-destructive tracking-wider">Downtime Alert</span>
+                        <span className="text-[10px] text-muted-foreground">Just Now</span>
+                      </div>
+                      <h5 className="text-sm font-bold text-foreground truncate mt-1">yoursite.com is DOWN!</h5>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-normal">
+                        HTTP 502 Bad Gateway • Alert dispatched to your browser.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right side: Explanation content */}
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1 text-xs font-semibold text-destructive">
+                <Bell className="h-3.5 w-3.5 animate-pulse" />
+                Instant Alerts
+              </div>
+              
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight [text-wrap:balance] leading-[1.1]">
+                Never Miss a Downtime. <br />
+                <span className="text-destructive">Get Notified Instantly.</span>
+              </h2>
+
+              <p className="text-base font-medium leading-relaxed text-muted-foreground">
+                Jab monitoring active ho aur aapki website downtime par jaye, toh hamara engine automatic check execute karta hai. System status degradation detect karte hi instant browser push notification deliver karega taaki aap bina kisi delay ke rescue operations start kar sakein.
+              </p>
+
+              {/* Step indicator pipeline */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border-2 border-black transition-colors ${alertPhase >= 0 ? 'bg-status-up text-white' : 'bg-secondary'}`}>
+                    1
+                  </div>
+                  <span className={`text-sm font-semibold ${alertPhase === 0 ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
+                    Continuous 5s Polling Active
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border-2 border-black transition-colors ${alertPhase >= 1 ? 'bg-status-degraded text-white' : 'bg-secondary'}`}>
+                    2
+                  </div>
+                  <span className={`text-sm font-semibold ${alertPhase === 1 ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
+                    Detecting Outage & Triple Checking
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border-2 border-black transition-colors ${alertPhase >= 2 ? 'bg-status-down text-white' : 'bg-secondary'}`}>
+                    3
+                  </div>
+                  <span className={`text-sm font-semibold ${alertPhase >= 2 ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
+                    Triggering Alert Protocols
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border-2 border-black transition-colors ${alertPhase >= 3 ? 'bg-chart-1 text-white' : 'bg-secondary'}`}>
+                    4
+                  </div>
+                  <span className={`text-sm font-semibold ${alertPhase === 3 ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
+                    Push Notification Dispatched to User
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-4 flex flex-wrap gap-4">
+                <Button 
+                  onClick={handleReplayAlerts} 
+                  variant="outline" 
+                  className="gap-2 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  Replay Alert Demo
+                </Button>
+                <Button 
+                  onClick={onLaunch}
+                  className="gap-2 font-bold bg-destructive hover:bg-destructive/95 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all text-white"
+                >
+                  Configure Alerts
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
