@@ -229,7 +229,7 @@ export function Landing({ onLaunch }: LandingProps) {
                     <span className="absolute inline-flex h-full w-full rounded-full bg-status-up opacity-60 animate-ping" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-status-up" />
                   </span>
-                  Live · 5s polling
+                  Live · 3s polling
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 text-chart-2" /> No signup required
@@ -478,7 +478,7 @@ export function Landing({ onLaunch }: LandingProps) {
               </h2>
 
               <p className="text-base font-medium leading-relaxed text-muted-foreground">
-                WebMetricsX simplifies domain performance audits. Hamara automated builder analysis workflow raw metrics ko convert karke client-ready dashboards aur shareable templates render karta hai, bina configuration errors ke.
+                WebMetricsX simplifies domain performance audits. Our automated analysis workflow converts raw edge metrics into client-ready dashboards and shareable PDF templates, without complex configuration steps.
               </p>
 
               {/* Features list */}
@@ -543,10 +543,23 @@ export function Landing({ onLaunch }: LandingProps) {
             {/* Right side: Interactive Workflow Visualization */}
             <div
               key={`${workflowReplayKey}-${workflowInView}`}
-              className="relative w-full overflow-hidden rounded-xl border border-foreground/35 bg-card p-4 shadow-xl shadow-foreground/[0.04] lg:p-5"
+              className="relative w-full overflow-hidden rounded-xl border border-foreground/35 bg-card p-4 shadow-xl shadow-foreground/[0.04] lg:p-5 flex flex-col justify-between"
             >
+              {/* Header/Browser bar */}
+              <div className="flex items-center justify-between border-b border-black/10 pb-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-red-500" />
+                  <span className="h-3 w-3 rounded-full bg-yellow-500" />
+                  <span className="h-3 w-3 rounded-full bg-green-500" />
+                </div>
+                <div className="flex-1 max-w-xs mx-4 px-3 py-1 rounded bg-secondary text-xs text-muted-foreground font-medium text-center truncate">
+                  webmetricsx.web.app
+                </div>
+                <div className="w-12" /> {/* spacer to balance the dots on the left */}
+              </div>
+
               {workflowInView ? (
-                <div className="mx-auto grid gap-3 text-left">
+                <div className="mx-auto grid gap-3 text-left w-full">
                   <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm md:grid-cols-[140px_1fr] md:items-center">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1 text-white">
@@ -868,7 +881,7 @@ export function Landing({ onLaunch }: LandingProps) {
               </h2>
 
               <p className="text-base font-medium leading-relaxed text-muted-foreground">
-                Jab monitoring active ho aur aapki website downtime par jaye, toh hamara engine automatic check execute karta hai. System status degradation detect karte hi instant browser push notification deliver karega taaki aap bina kisi delay ke rescue operations start kar sakein.
+                When active monitoring detects that your website has gone down, our validation engine runs secure connectivity checks. Upon confirming status degradation, an instant browser push notification is delivered so you can initiate recovery operations without delay.
               </p>
 
               {/* Step indicator pipeline */}
