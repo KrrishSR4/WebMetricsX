@@ -14,7 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      monitoring_alerts: {
+        Row: {
+          id: string
+          fcm_token: string
+          url: string
+          enabled: boolean
+          last_status: string | null
+          last_response_time: number | null
+          last_notified_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          fcm_token: string
+          url: string
+          enabled?: boolean
+          last_status?: string | null
+          last_response_time?: number | null
+          last_notified_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          fcm_token?: string
+          url?: string
+          enabled?: boolean
+          last_status?: string | null
+          last_response_time?: number | null
+          last_notified_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
