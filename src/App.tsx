@@ -65,6 +65,18 @@ const App = () => {
     return "Optimizing visual layout...";
   };
 
+  const getLogs = () => {
+    const logs = [];
+    if (progress >= 5) logs.push("› Initializing WebMetricsX Engine...");
+    if (progress >= 20) logs.push("› Resolving target domain DNS records...");
+    if (progress >= 35) logs.push("› Testing latency connection to Global Edges...");
+    if (progress >= 50) logs.push("› Fetching PageSpeed index (Core Web Vitals)...");
+    if (progress >= 65) logs.push("› Verifying SSL/TLS certificate chains...");
+    if (progress >= 80) logs.push("› Compiling SEO markup audit metrics...");
+    if (progress >= 95) logs.push("› Connection secure. Redirecting to dashboard...");
+    return logs;
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -84,18 +96,38 @@ const App = () => {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-chart-1/10 rounded-full blur-[80px] pointer-events-none" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] bg-chart-2/5 rounded-full blur-[60px] pointer-events-none" />
 
-            <div className={`flex flex-col items-center justify-center transition-opacity duration-300 ${fontReady ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`flex flex-col items-center justify-center transition-opacity duration-300 ${fontReady ? 'opacity-100' : 'opacity-0'} max-w-md w-full px-6`}>
               <div className="mb-6 px-3 py-1 rounded-full border border-chart-1/30 bg-chart-1/5 text-[10px] font-bold uppercase tracking-widest text-chart-1 animate-pulse">
-                System Diagnostic Active
+                WebMetricsX Edge Engine v1.0.4
               </div>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter text-foreground bg-gradient-to-b from-foreground to-foreground/80 bg-clip-text text-transparent select-none">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter text-foreground bg-gradient-to-b from-foreground to-foreground/80 bg-clip-text text-transparent select-none text-center">
                 WebMetricsX
               </h1>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1 font-semibold">Real-Time Monitoring Platform</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1 font-semibold text-center">Real-Time Monitoring Platform</p>
+
+              {/* Server Details Grid */}
+              <div className="grid grid-cols-2 gap-2 w-full mt-6 text-center">
+                <div className="bg-muted/30 border border-black/5 rounded-lg p-2">
+                  <div className="text-[8px] font-bold uppercase text-muted-foreground tracking-wider">Protocol</div>
+                  <div className="text-[10px] font-bold text-foreground mt-0.5">HTTP/3 (QUIC)</div>
+                </div>
+                <div className="bg-muted/30 border border-black/5 rounded-lg p-2">
+                  <div className="text-[8px] font-bold uppercase text-muted-foreground tracking-wider">Latency</div>
+                  <div className="text-[10px] font-bold text-status-up mt-0.5">140ms (Optimal)</div>
+                </div>
+                <div className="bg-muted/30 border border-black/5 rounded-lg p-2">
+                  <div className="text-[8px] font-bold uppercase text-muted-foreground tracking-wider">Encryption</div>
+                  <div className="text-[10px] font-bold text-foreground mt-0.5">TLS 1.3 Secure</div>
+                </div>
+                <div className="bg-muted/30 border border-black/5 rounded-lg p-2">
+                  <div className="text-[8px] font-bold uppercase text-muted-foreground tracking-wider">Global Nodes</div>
+                  <div className="text-[10px] font-bold text-foreground mt-0.5">48 Active</div>
+                </div>
+              </div>
 
               {/* 3 Separate Chart Animations */}
-              <div className="flex items-center justify-center gap-8 mt-10 mb-4 w-72 border-b border-black/5 pb-4">
+              <div className="flex items-center justify-center gap-10 mt-8 mb-2 w-full border-b border-black/5 pb-4">
                 {/* Bar Chart */}
                 <div className="flex flex-col items-center gap-1.5">
                   <div className="flex items-end gap-1 h-8 w-12 justify-center pb-1">
@@ -125,19 +157,38 @@ const App = () => {
                 </div>
               </div>
 
-              <div className="mt-6 w-64 h-1.5 bg-secondary rounded-full overflow-hidden relative border border-foreground/5 shadow-inner">
+              <div className="mt-6 w-full h-1.5 bg-secondary rounded-full overflow-hidden relative border border-foreground/5 shadow-inner">
                 <div 
                   className="h-full bg-chart-1 rounded-full transition-all duration-75 ease-out shadow-[0_0_12px_hsl(var(--chart-1))]"
                   style={{ width: `${progress}%` }}
                 />
               </div>
 
-              <div className="mt-3 flex items-center justify-between w-64 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+              <div className="mt-3 flex items-center justify-between w-full text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 <span>{getStatusText()}</span>
                 <span className="text-chart-1">{Math.round(progress)}%</span>
               </div>
 
-              <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-2.5 w-72 text-xs font-semibold text-muted-foreground border-t border-black/5 pt-6">
+              {/* Diagnostic Console Logs */}
+              <div className="mt-6 w-full bg-black/90 rounded-xl border border-white/5 p-4 h-28 flex flex-col justify-end gap-1.5 font-mono text-[9px] text-green-400/90 shadow-2xl relative select-none">
+                <div className="absolute top-2.5 right-3 flex items-center gap-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-red-500/80" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-yellow-500/80" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-green-500/80" />
+                </div>
+                <div className="absolute top-2 left-3 text-[7px] font-bold uppercase tracking-widest text-muted-foreground/45">
+                  Diagnostic Console Logs
+                </div>
+                <div className="flex flex-col gap-1 overflow-y-auto text-left w-full pr-1">
+                  {getLogs().map((log, idx) => (
+                    <div key={idx} className="animate-[fade-in_0.15s_ease-out]">
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-2.5 w-full text-xs font-semibold text-muted-foreground border-t border-black/5 pt-6">
                 <div className={`flex items-center gap-2 transition-colors duration-300 ${progress >= 25 ? 'text-status-up' : ''}`}>
                   <span className="text-sm">{progress >= 25 ? '●' : '○'}</span>
                   <span>Uptime Probe [3s]</span>
