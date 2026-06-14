@@ -17,32 +17,31 @@ const App = () => {
   const [fontReady, setFontReady] = useState(false);
 
   useEffect(() => {
-    let start = null;
-    const duration = 1700;
-    let animationFrame;
-
     // Wait for fonts to be ready to avoid flash of unstyled text (FOUT)
     if (document && document.fonts) {
       document.fonts.ready.then(() => {
         setFontReady(true);
       }).catch(() => {
-        // Fallback in case of error
         setFontReady(true);
       });
     } else {
       setFontReady(true);
     }
 
-    const step = (timestamp) => {
-      if (!start) start = timestamp;
-      const progressTime = timestamp - start;
-      const percent = Math.min((progressTime / duration) * 100, 100);
-      setProgress(percent);
-      if (progressTime < duration) {
-        animationFrame = window.requestAnimationFrame(step);
-      }
-    };
-    animationFrame = window.requestAnimationFrame(step);
+    // Set progress step-by-step: 1 -> 49 -> 70 -> 100
+    setProgress(1);
+
+    const t1 = setTimeout(() => {
+      setProgress(49);
+    }, 400);
+
+    const t2 = setTimeout(() => {
+      setProgress(70);
+    }, 1000);
+
+    const t3 = setTimeout(() => {
+      setProgress(100);
+    }, 1600);
 
     const timer = setTimeout(() => {
       setFade(true);
@@ -53,7 +52,9 @@ const App = () => {
     }, 2000);
 
     return () => {
-      window.cancelAnimationFrame(animationFrame);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
       clearTimeout(timer);
     };
   }, []);
@@ -159,7 +160,7 @@ const App = () => {
 
               <div className="mt-6 w-full h-1.5 bg-secondary rounded-full overflow-hidden relative border border-foreground/5 shadow-inner">
                 <div 
-                  className="h-full bg-chart-1 rounded-full transition-all duration-75 ease-out shadow-[0_0_12px_hsl(var(--chart-1))]"
+                  className="h-full bg-chart-1 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_hsl(var(--chart-1))]"
                   style={{ width: `${progress}%` }}
                 />
               </div>

@@ -940,6 +940,153 @@ export function Landing({ onLaunch }: LandingProps) {
         </div>
       </section>
 
+      {/* Dynamic SEO Keyword & Resource Glossary Index */}
+      <section id="seo-index" className="sr-only">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-chart-1/30 bg-chart-1/5 px-3 py-1 text-xs font-semibold text-chart-1">
+              Search Engine Index & Resource Glossary
+            </div>
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-foreground">
+              Comprehensive Website Analyzer & Monitoring Glossary
+            </h2>
+            <p className="mt-4 text-sm font-medium text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Explore terms, protocols, and diagnostic methods built into the WebMetricsX website monitoring tool to optimize your platform's search performance, site load times, and security parameters.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 text-left">
+            {/* Category 1: Website Monitoring & Uptime */}
+            <div className="bg-card border border-foreground/20 rounded-xl p-6 hover:shadow-md transition-shadow">
+              <h3 className="text-lg font-bold text-foreground mb-4 border-b pb-2">Website Monitor & Uptime</h3>
+              <ul className="space-y-3.5 text-xs text-muted-foreground font-medium">
+                <li>
+                  <strong className="text-foreground block mb-0.5">Website Monitor</strong>
+                  A comprehensive utility used to check status, verify server operations, and guarantee page reachability across edge nodes.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">Uptime Checker</strong>
+                  An automated uptime monitoring system checking server responses to calculate precise uptime percentages.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">Downtime Alerts</strong>
+                  Real-time notification engine dispatching critical emails or SMS when a server status check fails.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">Server Status Checker</strong>
+                  Probes network connection ports to detect offline database systems or web server process crashes.
+                </li>
+              </ul>
+            </div>
+
+            {/* Category 2: Performance & Latency */}
+            <div className="bg-card border border-foreground/20 rounded-xl p-6 hover:shadow-md transition-shadow">
+              <h3 className="text-lg font-bold text-foreground mb-4 border-b pb-2">Speed & Latency Audits</h3>
+              <ul className="space-y-3.5 text-xs text-muted-foreground font-medium">
+                <li>
+                  <strong className="text-foreground block mb-0.5">Website Analyzer</strong>
+                  Deep diagnostic page speed checker auditing response times, network delay steps, and page loading quality.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">Time to First Byte (TTFB)</strong>
+                  Measures initial backend latency, indicating server configuration efficiency and host resource responsiveness.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">TCP Connect Latency</strong>
+                  Identifies network round-trip delays occurring during target socket connection handshakes.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">DNS Lookup Tracker</strong>
+                  Audits domain name system resolution latency to spot slow server nameservers or root zone lookup lags.
+                </li>
+              </ul>
+            </div>
+
+            {/* Category 3: Security & Encryption */}
+            <div className="bg-card border border-foreground/20 rounded-xl p-6 hover:shadow-md transition-shadow">
+              <h3 className="text-lg font-bold text-foreground mb-4 border-b pb-2">SSL & Trust Protocols</h3>
+              <ul className="space-y-3.5 text-xs text-muted-foreground font-medium">
+                <li>
+                  <strong className="text-foreground block mb-0.5">SSL Monitor</strong>
+                  Track validation details, certificate issuers, and encrypt protocol status to prevent insecure connections.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">SSL Expiry Checker</strong>
+                  Automated checks notifying administrators before an active security certificate expires to avoid web security warnings.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">TLS Handshake Analyzer</strong>
+                  Measures latency during cryptographic key negotiation to ensure rapid page delivery over HTTPS.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">Mixed Content Scanner</strong>
+                  Spots insecure HTTP resources loading on secure HTTPS pages to preserve layout reliability.
+                </li>
+              </ul>
+            </div>
+
+            {/* Category 4: SEO & Core Web Vitals */}
+            <div className="bg-card border border-foreground/20 rounded-xl p-6 hover:shadow-md transition-shadow">
+              <h3 className="text-lg font-bold text-foreground mb-4 border-b pb-2">SEO Optimization</h3>
+              <ul className="space-y-3.5 text-xs text-muted-foreground font-medium">
+                <li>
+                  <strong className="text-foreground block mb-0.5">SEO Analyzer Tool</strong>
+                  Audits semantic HTML headings, title tags, sitemap architectures, and meta description layouts to optimize rankings.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">Core Web Vitals Checker</strong>
+                  Evaluates LCP, FID, and CLS performance to guarantee optimal page loading speeds and user interface stability.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">Robots.txt Validator</strong>
+                  Verifies configuration rules inside root robot directive files to confirm googlebot crawling accessibility.
+                </li>
+                <li>
+                  <strong className="text-foreground block mb-0.5">Sitemap Inspector</strong>
+                  Scans target XML sitemaps to verify that all primary URLs are clean and indexed for search engines.
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Deep Keyword Search Index Container */}
+          <div className="mt-8 bg-card border border-foreground/20 rounded-xl p-6 text-left">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-chart-1 mb-4">WebMetricsX Technical Search Terms & Topic Index</h3>
+            <div className="flex flex-wrap gap-2 text-[10px] font-semibold text-muted-foreground">
+              {[
+                "website analyzer", "website monitoring tool", "website monitor", "free website monitoring", "uptime checker",
+                "downtime alerts", "website status checker", "website performance monitor", "response time checker", "latency monitor",
+                "SSL monitor", "SSL validity checker", "SSL certificate expiry", "TLS handshake test", "security scanner",
+                "core web vitals analyzer", "LCP test", "FID analyzer", "CLS tracker", "performance audit tool",
+                "site speed test", "page speed checker", "PageSpeed Insights auditor", "Lighthouse audit tool", "speed optimizer",
+                "SEO analyzer", "SEO audit tool", "search engine optimization", "crawler checker", "robots.txt validator",
+                "sitemap validator", "meta tag checker", "schema optimizer", "mobile-friendly test", "accessibility score checker",
+                "best practices auditor", "server status checker", "ping test tool", "traceroute analyzer", "DNS health checker",
+                "DNS resolution tracker", "TCP connect latency tool", "TTFB checker", "time to first byte", "broken link checker",
+                "domain health checker", "digital experience monitoring", "site reliability diagnostics", "synthetic monitoring tool",
+                "performance testing framework", "web performance auditing", "web vitals metrics", "ranking tracker", "backlink checker",
+                "keyword research helper", "competition analyzer", "HTTP status code tracker", "error rate detection",
+                "latency spike detection", "response timeline tracker", "real-time analytics tool", "digital experience optimization",
+                "web metrics analyzer", "website load time tool", "server response time checker", "network latency checker",
+                "cloud monitoring tool", "global edge testing", "edge nodes performance", "site reliability engineering",
+                "devops monitoring tool", "uptime monitor api", "status page generator", "incident alert system",
+                "automated uptime checks", "cron job monitor", "port checker tool", "HTTP status checker",
+                "TCP monitoring service", "ping latency checker", "page loading speed test", "mobile performance audit",
+                "desktop performance score", "HTML markup validator", "web standards compliance", "security header checker",
+                "DNS lookup latency", "website resource visualizer", "asset size audit", "image optimization test",
+                "script execution analyzer", "render blocking resource checker", "DOM size auditor", "network payload optimizer",
+                "caching policy checker", "compression validator", "CDN performance test", "redirect loop checker",
+                "SSL cipher suite audit", "mixed content scanner", "website vulnerability checker"
+              ].map((term) => (
+                <span key={term} className="px-2 py-1 bg-muted/40 rounded border border-black/5 hover:bg-muted/80 hover:text-foreground transition-colors cursor-default">
+                  #{term}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <footer className="border-t border-black bg-background/50 py-12 px-4">
         <div className="container mx-auto text-center">
           <div className="mb-6 flex flex-col items-center justify-center gap-4">
