@@ -99,9 +99,16 @@ export function useMonitoring() {
           ? Math.round(responseHistoryRef.current.reduce((sum, item) => sum + item.value, 0) / responseHistoryRef.current.length)
           : null;
 
+        // Override status locally based on response time threshold (> 400ms)
+        let resolvedStatus = data.website?.status || 'up';
+        if (data.website?.responseTime && data.website.responseTime > 400 && resolvedStatus === 'up') {
+          resolvedStatus = 'degraded';
+        }
+
         setMetrics({
           website: {
             ...data.website,
+            status: resolvedStatus,
             responseTimeHistory: responseHistoryRef.current,
             averageResponseTime: avgResponseTime,
             uptime24h,
