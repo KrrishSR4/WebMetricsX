@@ -161,10 +161,10 @@ export function Landing({ onLaunch }: LandingProps) {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased [text-rendering:optimizeLegibility]">
       <header className="sticky top-0 z-40 border-b border-black/10 bg-background/85 backdrop-blur-xl">
-        <div className="container mx-auto flex h-20 items-center justify-between px-4">
+        <div className="w-full mx-auto flex h-20 items-center justify-between px-6 md:px-8">
           <a href="#hero" className="group flex flex-col items-start text-left">
             <span className="text-2xl font-black tracking-tight text-foreground group-hover:text-chart-1 transition-colors">{productName}</span>
-            <span className="mt-1 text-[9px] font-bold uppercase tracking-widest text-chart-1">{productTagline}</span>
+            <span className="mt-1 text-[11px] font-normal uppercase tracking-wider text-chart-1">{productTagline}</span>
           </a>
           <nav className="hidden items-center gap-4 text-sm font-semibold text-muted-foreground md:flex">
             <a href="#features" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-black hover:text-white hover:shadow-sm">Features</a>
