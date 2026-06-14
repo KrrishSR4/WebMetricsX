@@ -5,6 +5,7 @@
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 const PAGESPEED_API_KEY = Deno.env.get('PAGESPEED_API_KEY') || '';
@@ -563,13 +564,88 @@ function calculateSmoothScore(time: number, seed: number): number {
   return Math.max(10, Math.min(100, Math.round(base)));
 }
 
+async function handleRegisterAlert(body: {
+  fcm_token?: string;
+  url?: string;
+  enabled?: boolean;
+}): Promise<Response> {
+  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.49.1');
+
+  const { fcm_token, url, enabled } = body;
+
+  if (!fcm_token || typeof fcm_token !== 'string') {
+    return new Response(JSON.stringify({ error: 'FCM token is required' }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (!url || typeof url !== 'string') {
+    return new Response(JSON.stringify({ error: 'URL is required' }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  let normalizedUrl = url.trim();
+  if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+    normalizedUrl = `https://${normalizedUrl}`;
+  }
+
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  );
+
+  if (enabled === false) {
+    const { error } = await supabase
+      .from('monitoring_alerts')
+      .update({ enabled: false })
+      .eq('fcm_token', fcm_token)
+      .eq('url', normalizedUrl);
+
+    if (error) throw error;
+
+    return new Response(JSON.stringify({ success: true, enabled: false, url: normalizedUrl }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { data, error } = await supabase
+    .from('monitoring_alerts')
+    .upsert(
+      { fcm_token, url: normalizedUrl, enabled: true },
+      { onConflict: 'fcm_token,url' },
+    )
+    .select('id, url, enabled')
+    .single();
+
+  if (error) throw error;
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      enabled: true,
+      alert: data,
+      message: 'Background alerts registered.',
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+  );
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { status: 200, headers: corsHeaders });
   }
 
   try {
-    const { url } = await req.json();
+    const body = await req.json();
+
+    if (body.action === 'register-alert') {
+      return await handleRegisterAlert(body);
+    }
+
+    const { url } = body;
 
     if (!url) {
       return new Response(

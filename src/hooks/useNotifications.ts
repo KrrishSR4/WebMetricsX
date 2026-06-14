@@ -7,6 +7,7 @@ import {
   showDowntimeNotification,
   unregisterBackgroundAlert,
 } from '@/lib/firebase';
+import { firebaseVapidKey } from '@/lib/firebaseConfig';
 import { toast } from 'sonner';
 
 const STORAGE_KEY = 'webmetricsx_notification_urls';
@@ -45,7 +46,7 @@ export const useNotifications = () => {
   const [serverRegisteredUrls, setServerRegisteredUrls] = useState<string[]>(getServerRegisteredUrls);
   const prevStatusRef = useRef<string | null>(null);
 
-  const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+  const VAPID_KEY = firebaseVapidKey;
 
   useEffect(() => {
     if (!('Notification' in window)) {
@@ -118,35 +119,40 @@ export const useNotifications = () => {
         }
       }
 
-      if (!fcmToken) {
-        toast.error('Could not register for push notifications. Check Firebase VAPID key configuration.');
-        return;
-      }
-
-      try {
-        await registerBackgroundAlert(fcmToken, url);
-        const serverUpdated = [...new Set([...serverRegisteredUrls, url])];
-        setServerRegisteredUrls(serverUpdated);
-        saveServerRegisteredUrls(serverUpdated);
-      } catch (err) {
-        console.error('Server alert registration failed:', err);
-        toast.error('Background alerts could not be registered on the server. Try again later.');
-        return;
+      let serverRegistered = false;
+      if (fcmToken) {
+        try {
+          await registerBackgroundAlert(fcmToken, url);
+          const serverUpdated = [...new Set([...serverRegisteredUrls, url])];
+          setServerRegisteredUrls(serverUpdated);
+          saveServerRegisteredUrls(serverUpdated);
+          serverRegistered = true;
+        } catch (err) {
+          console.warn('Server alert registration failed, using browser-only alerts:', err);
+        }
       }
 
       const updated = [...enabledUrls, url];
       setEnabledUrls(updated);
       saveEnabledUrls(updated);
 
-      toast.success(
-        `Background downtime alerts enabled for ${(() => {
-          try {
-            return new URL(url).hostname;
-          } catch {
-            return url;
-          }
-        })()}. You will get notifications even when this tab is closed.`,
-      );
+      const hostname = (() => {
+        try {
+          return new URL(url).hostname;
+        } catch {
+          return url;
+        }
+      })();
+
+      if (serverRegistered) {
+        toast.success(
+          `Background downtime alerts enabled for ${hostname}. You will get notifications even when this tab is closed.`,
+        );
+      } else {
+        toast.success(
+          `Downtime alerts enabled for ${hostname}. Keep this tab open or deploy server alerts for notifications when the tab is closed.`,
+        );
+      }
     },
     [enabledUrls, serverRegisteredUrls, token, VAPID_KEY],
   );
@@ -167,7 +173,6 @@ export const useNotifications = () => {
       const isStatusChanged = prevStatus !== null && prevStatus !== currentStatus;
       const isFirstCheckAndAlerting =
         prevStatus === null && (currentStatus === 'down' || currentStatus === 'degraded');
-      const usesServerPush = serverRegisteredUrls.includes(url);
 
       if (isStatusChanged || isFirstCheckAndAlerting) {
         const hostname = (() => {
@@ -179,14 +184,10 @@ export const useNotifications = () => {
         })();
 
         if (currentStatus === 'down') {
-          if (!usesServerPush) {
-            void showDowntimeNotification(url, 'down');
-          }
+          void showDowntimeNotification(url, 'down');
           toast.error(`🚨 ${hostname} is DOWN!`, { duration: 10000 });
         } else if (currentStatus === 'degraded') {
-          if (!usesServerPush) {
-            void showDowntimeNotification(url, 'degraded');
-          }
+          void showDowntimeNotification(url, 'degraded');
           toast.warning(`⚡ ${hostname} is experiencing issues (Response time: >400ms)`, {
             duration: 8000,
           });
@@ -201,7 +202,7 @@ export const useNotifications = () => {
 
       prevStatusRef.current = currentStatus;
     },
-    [enabledUrls, serverRegisteredUrls],
+    [enabledUrls],
   );
 
   return {

@@ -6,16 +6,7 @@ import {
   isSupported,
   type MessagePayload,
 } from 'firebase/messaging';
-
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
+import { firebaseConfig } from '@/lib/firebaseConfig';
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
@@ -58,7 +49,7 @@ const getMessagingInstance = async () => {
 export const requestNotificationPermission = async (vapidKey: string) => {
   try {
     if (!vapidKey) {
-      console.warn('VITE_FIREBASE_VAPID_KEY is not configured');
+      console.warn('Firebase VAPID key is not configured');
     }
 
     const permission = await Notification.requestPermission();
@@ -153,8 +144,9 @@ export const showDowntimeNotification = async (url: string, status: string) => {
 export const registerBackgroundAlert = async (fcmToken: string, url: string) => {
   const { supabase } = await import('@/integrations/supabase/client');
 
-  const { data, error } = await supabase.functions.invoke('register-alert', {
+  const { data, error } = await supabase.functions.invoke('monitor-website', {
     body: {
+      action: 'register-alert',
       fcm_token: fcmToken,
       url,
       enabled: true,
@@ -163,6 +155,9 @@ export const registerBackgroundAlert = async (fcmToken: string, url: string) => 
 
   if (error) throw new Error(error.message);
   if (data?.error) throw new Error(data.error);
+  if (data?.success !== true) {
+    throw new Error('Server alert registration is not available yet. Redeploy the monitor-website function.');
+  }
 
   return data;
 };
@@ -170,8 +165,9 @@ export const registerBackgroundAlert = async (fcmToken: string, url: string) => 
 export const unregisterBackgroundAlert = async (fcmToken: string, url: string) => {
   const { supabase } = await import('@/integrations/supabase/client');
 
-  const { data, error } = await supabase.functions.invoke('register-alert', {
+  const { data, error } = await supabase.functions.invoke('monitor-website', {
     body: {
+      action: 'register-alert',
       fcm_token: fcmToken,
       url,
       enabled: false,
@@ -180,6 +176,9 @@ export const unregisterBackgroundAlert = async (fcmToken: string, url: string) =
 
   if (error) throw new Error(error.message);
   if (data?.error) throw new Error(data.error);
+  if (data?.success !== true) {
+    throw new Error('Server alert unregistration is not available yet.');
+  }
 
   return data;
 };
