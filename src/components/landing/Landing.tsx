@@ -84,25 +84,37 @@ export function Landing({ onLaunch }: LandingProps) {
   const [alertsReplayKey, setAlertsReplayKey] = useState(0);
   const [alertPhase, setAlertPhase] = useState(0); // 0=monitoring, 1=detecting, 2=alerting, 3=notified
   const alertsRef = React.useRef<HTMLDivElement>(null);
-  const alertPhaseTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const startAlertSequence = React.useCallback(() => {
-    setAlertPhase(0);
-    if (alertPhaseTimerRef.current) clearTimeout(alertPhaseTimerRef.current);
-    
-    // Phase 0 -> 1 (monitoring -> detecting downtime) at 1.5s
-    alertPhaseTimerRef.current = setTimeout(() => {
-      setAlertPhase(1);
-      // Phase 1 -> 2 (detecting -> alert triggered) at 3.5s
-      alertPhaseTimerRef.current = setTimeout(() => {
+  // Downtime alerts state loop
+  React.useEffect(() => {
+    if (!alertsInView) return;
+
+    let timer: NodeJS.Timeout;
+
+    if (alertPhase === 0) {
+      // Phase 0: Normal operation (UP) - runs for 2.2 seconds (exactly 2 heartbeats)
+      timer = setTimeout(() => {
+        setAlertPhase(1);
+      }, 2200);
+    } else if (alertPhase === 1) {
+      // Phase 1: Detecting outage (degraded/checking) - runs for 2 seconds
+      timer = setTimeout(() => {
         setAlertPhase(2);
-        // Phase 2 -> 3 (alert -> notification delivered) at 5.5s
-        alertPhaseTimerRef.current = setTimeout(() => {
-          setAlertPhase(3);
-        }, 2000);
       }, 2000);
-    }, 1500);
-  }, []);
+    } else if (alertPhase === 2) {
+      // Phase 2: Alert triggered (DOWN) - runs for 2 seconds
+      timer = setTimeout(() => {
+        setAlertPhase(3);
+      }, 2000);
+    } else if (alertPhase === 3) {
+      // Phase 3: Notification delivered - runs for 5 seconds then loops back
+      timer = setTimeout(() => {
+        setAlertPhase(0);
+      }, 5000);
+    }
+
+    return () => clearTimeout(timer);
+  }, [alertsInView, alertPhase]);
 
   React.useEffect(() => {
     const observer = new IntersectionObserver(
@@ -127,7 +139,7 @@ export function Landing({ onLaunch }: LandingProps) {
       ([entry]) => {
         if (entry.isIntersecting && !alertsInView) {
           setAlertsInView(true);
-          startAlertSequence();
+          setAlertPhase(0);
         }
       },
       { threshold: 0.25 }
@@ -137,16 +149,12 @@ export function Landing({ onLaunch }: LandingProps) {
       observer.observe(alertsRef.current);
     }
 
-    return () => {
-      observer.disconnect();
-      if (alertPhaseTimerRef.current) clearTimeout(alertPhaseTimerRef.current);
-    };
-  }, [alertsInView, startAlertSequence]);
+    return () => observer.disconnect();
+  }, [alertsInView]);
 
   const handleReplayAlerts = () => {
     setAlertsReplayKey(k => k + 1);
-    setAlertsInView(true);
-    startAlertSequence();
+    setAlertPhase(0);
   };
 
   return (
@@ -676,11 +684,11 @@ export function Landing({ onLaunch }: LandingProps) {
                     {alertPhase === 0 ? (
                       // Healthy pulse
                       <path 
-                        d="M0 20 L50 20 L55 10 L60 30 L65 20 L150 20 L155 5 L160 35 L165 20 L250 20 L255 10 L260 30 L265 20 L350 20 L355 5 L360 35 L365 20 L400 20" 
+                        d="M0 20 L120 20 L125 10 L130 30 L135 20 L250 20 L255 5 L260 35 L265 20 L400 20" 
                         fill="none" 
                         stroke="hsl(var(--status-up))" 
                         strokeWidth="2"
-                        className="animate-[heartbeat-line_1s_infinite]"
+                        className="animate-[heartbeat-line_2.2s_linear_infinite]"
                       />
                     ) : alertPhase === 1 ? (
                       // Degraded pulse
