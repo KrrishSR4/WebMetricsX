@@ -8,9 +8,7 @@ export function Header() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link to="/" className="group flex items-center gap-3 transition-opacity hover:opacity-90">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-chart-1 text-white">
-                <Activity className="h-6 w-6" />
-              </div>
+              <img src="/app.png" alt="WebMetricsX Logo" className="w-10 h-10 object-contain rounded-lg" />
               <div>
                 <h1 className="text-xl font-bold tracking-tight">WebMetricsX</h1>
                 <p className="text-xs text-muted-foreground">Real-time Website Monitoring</p>
