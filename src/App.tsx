@@ -18,7 +18,7 @@ const App = () => {
 
   useEffect(() => {
     let start = null;
-    const duration = 1200;
+    const duration = 1700;
     let animationFrame;
 
     // Wait for fonts to be ready to avoid flash of unstyled text (FOUT)
@@ -50,7 +50,7 @@ const App = () => {
         setLoading(false);
       }, 500);
       return () => clearTimeout(removeTimer);
-    }, 1500);
+    }, 2000);
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
@@ -96,7 +96,7 @@ const App = () => {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-chart-1/10 rounded-full blur-[80px] pointer-events-none" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] bg-chart-2/5 rounded-full blur-[60px] pointer-events-none" />
 
-            <div className={`flex flex-col items-center justify-center transition-opacity duration-300 ${fontReady ? 'opacity-100' : 'opacity-0'} max-w-md w-full px-6`}>
+            <div className={`flex flex-col items-center justify-center transition-opacity duration-300 ${fontReady ? 'opacity-100' : 'opacity-0'} max-w-xl w-full px-6`}>
               <div className="mb-6 px-3 py-1 rounded-full border border-chart-1/30 bg-chart-1/5 text-[10px] font-bold uppercase tracking-widest text-chart-1 animate-pulse">
                 WebMetricsX Edge Engine v1.0.4
               </div>
