@@ -598,7 +598,7 @@ export function Landing({ onLaunch }: LandingProps) {
             {/* Left side: Interactive visualization */}
             <div 
               key={alertsReplayKey}
-              className="relative rounded-xl border-2 border-black bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] min-h-[380px] flex flex-col justify-between overflow-hidden"
+              className="relative rounded-xl border border-foreground/30 bg-card p-6 shadow-sm min-h-[380px] flex flex-col justify-between overflow-hidden"
             >
               {/* Header/Browser bar */}
               <div className="flex items-center justify-between border-b border-black/10 pb-4 mb-4">
@@ -705,7 +705,7 @@ export function Landing({ onLaunch }: LandingProps) {
 
               {/* Notification Overlay Card */}
               {alertPhase === 3 && (
-                <div className="absolute right-4 bottom-16 left-4 sm:left-auto sm:w-80 bg-white/95 border-2 border-black rounded-lg p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-[notif-slide-in_0.5s_cubic-bezier(0.16,1,0.3,1)_both] z-20">
+                <div className="absolute right-4 bottom-16 left-4 sm:left-auto sm:w-80 bg-white/95 border border-foreground/30 rounded-lg p-4 shadow-md animate-[notif-slide-in_0.5s_cubic-bezier(0.16,1,0.3,1)_both] z-20">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-destructive text-white rounded-md animate-[bell-shake_0.8s_ease-in-out_infinite]">
                       <BellRing className="h-5 w-5" />
@@ -744,7 +744,7 @@ export function Landing({ onLaunch }: LandingProps) {
               {/* Step indicator pipeline */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border-2 border-black transition-colors ${alertPhase >= 0 ? 'bg-status-up text-white' : 'bg-secondary'}`}>
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border border-black transition-colors ${alertPhase >= 0 ? 'bg-status-up text-white' : 'bg-secondary'}`}>
                     1
                   </div>
                   <span className={`text-sm font-semibold ${alertPhase === 0 ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
@@ -753,7 +753,7 @@ export function Landing({ onLaunch }: LandingProps) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border-2 border-black transition-colors ${alertPhase >= 1 ? 'bg-status-degraded text-white' : 'bg-secondary'}`}>
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border border-black transition-colors ${alertPhase >= 1 ? 'bg-status-degraded text-white' : 'bg-secondary'}`}>
                     2
                   </div>
                   <span className={`text-sm font-semibold ${alertPhase === 1 ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
@@ -762,7 +762,7 @@ export function Landing({ onLaunch }: LandingProps) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border-2 border-black transition-colors ${alertPhase >= 2 ? 'bg-status-down text-white' : 'bg-secondary'}`}>
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border border-black transition-colors ${alertPhase >= 2 ? 'bg-status-down text-white' : 'bg-secondary'}`}>
                     3
                   </div>
                   <span className={`text-sm font-semibold ${alertPhase >= 2 ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
@@ -771,7 +771,7 @@ export function Landing({ onLaunch }: LandingProps) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border-2 border-black transition-colors ${alertPhase >= 3 ? 'bg-chart-1 text-white' : 'bg-secondary'}`}>
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold border border-black transition-colors ${alertPhase >= 3 ? 'bg-chart-1 text-white' : 'bg-secondary'}`}>
                     4
                   </div>
                   <span className={`text-sm font-semibold ${alertPhase === 3 ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
@@ -784,14 +784,14 @@ export function Landing({ onLaunch }: LandingProps) {
                 <Button 
                   onClick={handleReplayAlerts} 
                   variant="outline" 
-                  className="gap-2 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+                  className="group gap-2 border border-black font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-black hover:text-white"
                 >
                   <RefreshCcw className="h-4 w-4" />
                   Replay Alert Demo
                 </Button>
                 <Button 
                   onClick={onLaunch}
-                  className="gap-2 font-bold bg-destructive hover:bg-destructive/95 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all text-white"
+                  className="group gap-2 bg-destructive hover:bg-destructive/90 text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 border border-transparent"
                 >
                   Configure Alerts
                   <ArrowRight className="h-4 w-4" />
