@@ -164,7 +164,7 @@ export function Landing({ onLaunch }: LandingProps) {
         <div className="w-full mx-auto flex h-20 items-center justify-between px-6 md:px-8">
           <a href="#hero" className="group flex flex-col items-start text-left">
             <span className="text-2xl font-black tracking-tight text-foreground group-hover:text-chart-1 transition-colors">{productName}</span>
-            <span className="mt-1 text-[11px] font-normal uppercase tracking-wider text-chart-1">{productTagline}</span>
+            <span className="mt-1 text-[8px] xs:text-[9px] sm:text-[11px] font-normal uppercase tracking-wider text-chart-1 whitespace-nowrap">{productTagline}</span>
           </a>
           <nav className="hidden items-center gap-4 text-sm font-semibold text-muted-foreground md:flex">
             <a href="#features" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-black hover:text-white hover:shadow-sm">Features</a>

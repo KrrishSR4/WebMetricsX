@@ -62,6 +62,10 @@ const App = () => {
                 0%, 100% { height: 20%; }
                 50% { height: 100%; }
               }
+              @keyframes line-draw {
+                0%, 100% { stroke-dasharray: 60; stroke-dashoffset: 60; }
+                50% { stroke-dasharray: 60; stroke-dashoffset: 0; }
+              }
             `}</style>
 
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-chart-1/10 rounded-full blur-[80px] pointer-events-none" />
@@ -71,24 +75,40 @@ const App = () => {
               System Diagnostic Active
             </div>
 
-            <div className="relative flex items-center justify-center mb-4">
-              <div className="absolute h-36 w-36 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] rounded-full bg-chart-1/10" />
-              <div className="absolute h-24 w-24 animate-pulse rounded-full bg-chart-1/10 border border-chart-1/20" />
-              <img src="/app.png" alt="WebMetricsX Logo" className="relative h-20 w-20 object-contain rounded-2xl shadow-xl border border-black/10 transition-transform duration-300 hover:scale-105" />
-            </div>
-
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-foreground bg-gradient-to-b from-foreground to-foreground/80 bg-clip-text text-transparent select-none">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter text-foreground bg-gradient-to-b from-foreground to-foreground/80 bg-clip-text text-transparent select-none">
               WebMetricsX
-            </h2>
+            </h1>
             <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1 font-semibold">Real-Time Monitoring Platform</p>
 
-            <div className="flex items-end gap-2 h-14 mt-8 justify-center w-64 border-b border-black/5 pb-2">
-              <div className="w-2.5 bg-chart-1 rounded-t animate-[bar-grow_1.2s_ease-in-out_infinite]" style={{ height: '30%', animationDelay: '0.1s' }} />
-              <div className="w-2.5 bg-chart-2 rounded-t animate-[bar-grow_1.2s_ease-in-out_infinite]" style={{ height: '60%', animationDelay: '0.3s' }} />
-              <div className="w-2.5 bg-chart-3 rounded-t animate-[bar-grow_1.2s_ease-in-out_infinite]" style={{ height: '40%', animationDelay: '0.5s' }} />
-              <div className="w-2.5 bg-chart-4 rounded-t animate-[bar-grow_1.2s_ease-in-out_infinite]" style={{ height: '80%', animationDelay: '0.7s' }} />
-              <div className="w-2.5 bg-chart-1 rounded-t animate-[bar-grow_1.2s_ease-in-out_infinite]" style={{ height: '50%', animationDelay: '0.9s' }} />
-              <div className="w-2.5 bg-chart-2 rounded-t animate-[bar-grow_1.2s_ease-in-out_infinite]" style={{ height: '70%', animationDelay: '1.1s' }} />
+            {/* 3 Separate Chart Animations */}
+            <div className="flex items-center justify-center gap-8 mt-10 mb-4 w-72 border-b border-black/5 pb-4">
+              {/* Bar Chart */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex items-end gap-1 h-8 w-12 justify-center pb-1">
+                  <div className="w-1.5 bg-chart-1 rounded-t animate-[bar-grow_1.2s_ease-in-out_infinite]" style={{ height: '30%', animationDelay: '0.1s' }} />
+                  <div className="w-1.5 bg-chart-2 rounded-t animate-[bar-grow_1.2s_ease-in-out_infinite]" style={{ height: '80%', animationDelay: '0.3s' }} />
+                  <div className="w-1.5 bg-chart-3 rounded-t animate-[bar-grow_1.2s_ease-in-out_infinite]" style={{ height: '50%', animationDelay: '0.5s' }} />
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Latency</span>
+              </div>
+
+              {/* Line Graph */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex items-center justify-center h-8 w-12 pb-1">
+                  <svg className="w-10 h-7 text-chart-1" viewBox="0 0 50 30" fill="none">
+                    <path d="M5 25 L15 15 L25 22 L35 8 L45 18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="animate-[line-draw_2s_infinite]" />
+                  </svg>
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Uptime</span>
+              </div>
+
+              {/* Pie Chart / Donut */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex items-center justify-center h-8 w-12 pb-1">
+                  <div className="relative w-6 h-6 rounded-full border-[3px] border-chart-2/20 border-t-chart-3 border-r-chart-4 animate-[spin_1.5s_linear_infinite]" />
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">SEO Index</span>
+              </div>
             </div>
 
             <div className="mt-6 w-64 h-1.5 bg-secondary rounded-full overflow-hidden relative border border-foreground/5 shadow-inner">

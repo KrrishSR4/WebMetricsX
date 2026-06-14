@@ -9,7 +9,7 @@ export function Header() {
           <div className="flex items-center gap-6">
             <Link to="/" className="group flex flex-col items-start text-left transition-opacity hover:opacity-90">
               <span className="text-2xl font-black tracking-tight text-foreground">WebMetricsX</span>
-              <span className="mt-1 text-[11px] font-normal uppercase tracking-wider text-chart-1">Real-time Website Monitoring</span>
+              <span className="mt-1 text-[8px] xs:text-[9px] sm:text-[11px] font-normal uppercase tracking-wider text-chart-1 whitespace-nowrap">Real-time Website Monitoring</span>
             </Link>
             
             <Link to="/" className="hidden md:flex items-center gap-2 rounded-full border border-black bg-background px-4 py-1.5 text-sm font-semibold transition-all hover:bg-black hover:text-white">
