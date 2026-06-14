@@ -120,11 +120,9 @@ export function Landing({ onLaunch }: LandingProps) {
   React.useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setWorkflowInView(true);
-        }
+        setWorkflowInView(entry.isIntersecting);
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     );
 
     if (workflowRef.current) {
@@ -138,12 +136,12 @@ export function Landing({ onLaunch }: LandingProps) {
   React.useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !alertsInView) {
-          setAlertsInView(true);
+        setAlertsInView(entry.isIntersecting);
+        if (entry.isIntersecting) {
           setAlertPhase(0);
         }
       },
-      { threshold: 0.25 }
+      { threshold: 0.15 }
     );
 
     if (alertsRef.current) {
@@ -151,7 +149,7 @@ export function Landing({ onLaunch }: LandingProps) {
     }
 
     return () => observer.disconnect();
-  }, [alertsInView]);
+  }, []);
 
   const handleReplayAlerts = () => {
     setAlertsReplayKey(k => k + 1);
@@ -459,205 +457,262 @@ export function Landing({ onLaunch }: LandingProps) {
       </section>
 
       <section id="workflow" ref={workflowRef} className="border-b border-foreground/20 bg-secondary/30">
-        <div className="container relative mx-auto px-4 py-16">
+        <div className="container relative mx-auto px-4 py-20">
           <div className="pointer-events-none absolute inset-x-4 top-10 -z-10 flex justify-between opacity-[0.035]">
             <img src="/favicon.png" alt="" className="h-28 w-28 rotate-[-8deg] rounded-[1.5rem]" />
             <img src="/favicon.png" alt="" className="hidden h-28 w-28 rotate-[8deg] rounded-[1.5rem] md:block" />
           </div>
-          <div className="mb-10 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-            <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-foreground/30 bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
-                Workflow
+
+          <div className="grid gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+            {/* Left side: Explanation content */}
+            <div className="space-y-6 text-left">
+              <div className="inline-flex items-center gap-2 rounded-full border border-chart-1/30 bg-chart-1/5 px-3 py-1 text-xs font-semibold text-chart-1">
+                <Zap className="h-3.5 w-3.5" />
+                Interactive Pipeline
               </div>
-              <h2 className="text-3xl font-extrabold tracking-tight [text-wrap:balance] sm:text-4xl">Watch a site become a shareable report</h2>
-            </div>
-            <div className="flex flex-col gap-4 lg:items-end">
-              <p className="max-w-2xl font-medium leading-7 text-muted-foreground lg:text-right">
-                See the product flow in motion: enter google.com, generate analytics, read the signal,
-                export the PDF and share the report.
+              
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter [text-wrap:balance] leading-[1.05]">
+                {/* Visual Pipeline Headline */}
+                Watch a site become a <br />
+                <span className="text-chart-1">shareable PDF report.</span>
+              </h2>
+
+              <p className="text-base font-medium leading-relaxed text-muted-foreground">
+                WebMetricsX simplifies domain performance audits. Hamara automated builder analysis workflow raw metrics ko convert karke client-ready dashboards aur shareable templates render karta hai, bina configuration errors ke.
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setWorkflowReplayKey((key) => key + 1)}
-                className="group w-fit gap-2 border-black font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-black hover:text-white"
-              >
-                <RefreshCcw className="h-4 w-4 transition-transform duration-500 group-hover:rotate-180" />
-                Replay Animation
-              </Button>
-            </div>
-          </div>
-          <div
-            key={`${workflowReplayKey}-${workflowInView}`}
-            className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border border-foreground/35 bg-card p-4 shadow-xl shadow-foreground/[0.04] lg:p-5"
-          >
-            {workflowInView ? (
-              <div className="mx-auto grid max-w-4xl gap-3">
-              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm md:grid-cols-[140px_1fr] md:items-center">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1 text-white">
-                    <Globe className="h-5 w-5" />
+
+              {/* Features list */}
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-chart-1/10 text-chart-1 mt-0.5">
+                    <CheckCircle2 className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 01</div>
-                    <div className="text-base font-extrabold tracking-tight">Enter URL</div>
+                    <h4 className="text-sm font-bold text-foreground">Real-Time Core Web Vitals Monitoring</h4>
+                    <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+                      Audit LCP, FID, and CLS scores instantly for desktop and mobile devices.
+                    </p>
                   </div>
                 </div>
-                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_130px] md:items-center">
-                  <div className="flex items-center gap-2 rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2.5 text-sm font-bold text-foreground">
-                    <Search className="h-4 w-4 text-chart-1" />
-                    <span className="inline-block animate-[type-webmetrics-url_0.6s_steps(19)_0.15s_both] overflow-hidden whitespace-nowrap">webmetricsx.web.app</span>
+
+                <div className="flex items-start gap-3">
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-chart-1/10 text-chart-1 mt-0.5">
+                    <CheckCircle2 className="h-4 w-4" />
                   </div>
-                  <div className="animate-[fade-in_0.3s_ease-out_0.8s_both] text-sm font-semibold text-muted-foreground">URL accepted</div>
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground">Instant PDF Performance Audits</h4>
+                    <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+                      Download comprehensive developer reports with speed trends and SSL status logs.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-chart-1/10 text-chart-1 mt-0.5">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground">One-Click Security & Status Sharing</h4>
+                    <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+                      Generate secure link pathways to present uptime verification graphs to stakeholders.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:1200ms] md:grid-cols-[140px_1fr] md:items-center">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
-                    <BarChart3 className="h-5 w-5 animate-pulse" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 02</div>
-                    <div className="text-base font-extrabold tracking-tight">Analytics Running</div>
-                  </div>
-                </div>
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-center">
-                  <div className="rounded-lg border border-foreground/25 bg-secondary/60 p-3">
-                    <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                      <span>Response time graph</span>
-                      <span className="animate-[fade-in_0.3s_ease-out_2.5s_both] text-chart-2">stable</span>
+              <div className="pt-4 flex flex-wrap gap-4">
+                <Button
+                  type="button"
+                  onClick={() => setWorkflowReplayKey((key) => key + 1)}
+                  variant="outline"
+                  className="group gap-2 border border-black font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:bg-black hover:text-white"
+                >
+                  <RefreshCcw className="h-4 w-4 transition-transform duration-500 group-hover:rotate-180" />
+                  Replay Animation
+                </Button>
+                <Button 
+                  onClick={onLaunch}
+                  className="group gap-2 bg-chart-1 hover:bg-chart-1/90 text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 border border-transparent"
+                >
+                  Start Monitoring
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Right side: Interactive Workflow Visualization */}
+            <div
+              key={`${workflowReplayKey}-${workflowInView}`}
+              className="relative w-full overflow-hidden rounded-xl border border-foreground/35 bg-card p-4 shadow-xl shadow-foreground/[0.04] lg:p-5"
+            >
+              {workflowInView ? (
+                <div className="mx-auto grid gap-3 text-left">
+                  <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm md:grid-cols-[140px_1fr] md:items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-1 text-white">
+                        <Globe className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 01</div>
+                        <div className="text-base font-extrabold tracking-tight">Enter URL</div>
+                      </div>
                     </div>
-                    <div className="relative h-20 overflow-hidden rounded-md bg-background/70">
-                      <div className="absolute inset-x-0 top-1/3 border-t border-foreground/10" />
-                      <div className="absolute inset-x-0 top-2/3 border-t border-foreground/10" />
-                      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 360 96" preserveAspectRatio="none" aria-hidden="true">
-                        <path
-                          d="M0 80 L20 75 L40 85 L60 30 L80 45 L100 40 L120 75 L140 55 L160 50 L180 25 L200 35 L220 30 L240 70 L260 45 L280 40 L300 75 L320 50 L340 55 L360 40"
-                          fill="none"
-                          stroke="hsl(var(--chart-1))"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="animate-[draw-line_1.2s_ease-out_1.5s_both]"
-                        />
-                        <path
-                          d="M0 80 L20 75 L40 85 L60 30 L80 45 L100 40 L120 75 L140 55 L160 50 L180 25 L200 35 L220 30 L240 70 L260 45 L280 40 L300 75 L320 50 L340 55 L360 40 L360 96 L0 96 Z"
-                          fill="hsl(var(--chart-1) / 0.1)"
-                          className="animate-[fade-in_0.6s_ease-out_2s_both]"
-                        />
-                      </svg>
-                      {[60, 100, 180, 220, 360].map((x, index) => (
-                        <span
-                          key={x}
-                          className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-1 ring-4 ring-chart-1/15 animate-[pop-in_0.3s_ease-out_both]"
-                          style={{
-                            left: `${(x / 360) * 100}%`,
-                            top: `${[30, 40, 25, 30, 40][index]}%`,
-                            animationDelay: `${2.1 + index * 0.15}s`,
-                          }}
-                        />
+                    <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_130px] md:items-center">
+                      <div className="flex items-center gap-2 rounded-lg border border-foreground/25 bg-secondary/70 px-3 py-2.5 text-sm font-bold text-foreground">
+                        <Search className="h-4 w-4 text-chart-1" />
+                        <span className="inline-block animate-[type-webmetrics-url_0.6s_steps(19)_0.15s_both] overflow-hidden whitespace-nowrap">webmetricsx.web.app</span>
+                      </div>
+                      <div className="animate-[fade-in_0.3s_ease-out_0.8s_both] text-sm font-semibold text-muted-foreground">URL accepted</div>
+                    </div>
+                  </div>
+
+                  <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:1200ms] md:grid-cols-[140px_1fr] md:items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                        <BarChart3 className="h-5 w-5 animate-pulse" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 02</div>
+                        <div className="text-base font-extrabold tracking-tight">Analytics Running</div>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_170px] lg:items-center">
+                      <div className="rounded-lg border border-foreground/25 bg-secondary/60 p-3">
+                        <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                          <span>Response time graph</span>
+                          <span className="animate-[fade-in_0.3s_ease-out_2.5s_both] text-chart-2">stable</span>
+                        </div>
+                        <div className="relative h-20 overflow-hidden rounded-md bg-background/70">
+                          <div className="absolute inset-x-0 top-1/3 border-t border-foreground/10" />
+                          <div className="absolute inset-x-0 top-2/3 border-t border-foreground/10" />
+                          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 360 96" preserveAspectRatio="none" aria-hidden="true">
+                            <path
+                              d="M0 80 L20 75 L40 85 L60 30 L80 45 L100 40 L120 75 L140 55 L160 50 L180 25 L200 35 L220 30 L240 70 L260 45 L280 40 L300 75 L320 50 L340 55 L360 40"
+                              fill="none"
+                              stroke="hsl(var(--chart-1))"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="animate-[draw-line_1.2s_ease-out_1.5s_both]"
+                            />
+                            <path
+                              d="M0 80 L20 75 L40 85 L60 30 L80 45 L100 40 L120 75 L140 55 L160 50 L180 25 L200 35 L220 30 L240 70 L260 45 L280 40 L300 75 L320 50 L340 55 L360 40 L360 96 L0 96 Z"
+                              fill="hsl(var(--chart-1) / 0.1)"
+                              className="animate-[fade-in_0.6s_ease-out_2s_both]"
+                            />
+                          </svg>
+                          {[60, 100, 180, 220, 360].map((x, index) => (
+                            <span
+                              key={x}
+                              className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-1 ring-4 ring-chart-1/15 animate-[pop-in_0.3s_ease-out_both]"
+                              style={{
+                                left: `${(x / 360) * 100}%`,
+                                top: `${[30, 40, 25, 30, 40][index]}%`,
+                                animationDelay: `${2.1 + index * 0.15}s`,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid gap-2">
+                        {[
+                          ['DNS', '18ms', '1.6s'],
+                          ['TCP', '24ms', '1.9s'],
+                          ['TTFB', '68ms', '2.2s'],
+                          ['LCP', '1.8s', '2.5s'],
+                        ].map(([label, value, delay]) => (
+                          <div key={label} className="animate-[fade-in_0.3s_ease-out_both] flex items-center justify-between rounded-md bg-secondary/70 px-3 py-1.5 text-sm" style={{ animationDelay: delay }}>
+                            <span className="font-semibold text-muted-foreground">{label}</span>
+                            <span className="font-bold text-foreground">{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:3000ms] md:grid-cols-[140px_1fr] md:items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
+                        <Activity className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 03</div>
+                        <div className="text-base font-extrabold tracking-tight">Read Signal</div>
+                      </div>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      {[
+                        ['Status', 'Healthy', 'text-status-up'],
+                        ['SEO', '92', 'text-chart-3'],
+                        ['SSL', 'Valid', 'text-status-up'],
+                      ].map(([label, value, color], index) => (
+                        <div key={label} className="animate-[pop-in_0.35s_ease-out_both] rounded-lg border border-foreground/25 bg-secondary/70 p-2.5" style={{ animationDelay: `${3.3 + index * 0.2}s` }}>
+                          <div className="text-xs font-semibold text-muted-foreground">{label}</div>
+                          <div className={`mt-0.5 text-base font-extrabold ${color}`}>{value}</div>
+                        </div>
                       ))}
                     </div>
                   </div>
-                  <div className="grid gap-2">
-                    {[
-                      ['DNS', '18ms', '1.6s'],
-                      ['TCP', '24ms', '1.9s'],
-                      ['TTFB', '68ms', '2.2s'],
-                      ['LCP', '1.8s', '2.5s'],
-                    ].map(([label, value, delay]) => (
-                      <div key={label} className="animate-[fade-in_0.3s_ease-out_both] flex items-center justify-between rounded-md bg-secondary/70 px-3 py-1.5 text-sm" style={{ animationDelay: delay }}>
-                        <span className="font-semibold text-muted-foreground">{label}</span>
-                        <span className="font-bold text-foreground">{value}</span>
+
+                  <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:4500ms] md:grid-cols-[140px_1fr] md:items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                        <Download className="h-5 w-5 animate-bounce" />
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:3000ms] md:grid-cols-[140px_1fr] md:items-center">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
-                    <Activity className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 03</div>
-                    <div className="text-base font-extrabold tracking-tight">Read Signal</div>
-                  </div>
-                </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  {[
-                    ['Status', 'Healthy', 'text-status-up'],
-                    ['SEO', '92', 'text-chart-3'],
-                    ['SSL', 'Valid', 'text-status-up'],
-                  ].map(([label, value, color], index) => (
-                    <div key={label} className="animate-[pop-in_0.35s_ease-out_both] rounded-lg border border-foreground/25 bg-secondary/70 p-2.5" style={{ animationDelay: `${3.3 + index * 0.2}s` }}>
-                      <div className="text-xs font-semibold text-muted-foreground">{label}</div>
-                      <div className={`mt-0.5 text-base font-extrabold ${color}`}>{value}</div>
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 04</div>
+                        <div className="text-base font-extrabold tracking-tight">Export PDF</div>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:4500ms] md:grid-cols-[140px_1fr] md:items-center">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-1">
-                    <Download className="h-5 w-5 animate-bounce" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 04</div>
-                    <div className="text-base font-extrabold tracking-tight">Export PDF</div>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-foreground/25 bg-secondary/70 p-3">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-sm font-bold">
-                      <FileText className="h-4 w-4 text-chart-1" />
-                      webmetricsx-report.pdf
-                    </div>
-                    <span className="animate-[fade-in_0.3s_ease-out_5.5s_both] text-xs font-bold text-muted-foreground">charts + scores included</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-background">
-                    <div className="h-full animate-[fill-bar_1.2s_ease-out_4.8s_both] rounded-full bg-chart-1" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:6000ms] md:grid-cols-[140px_1fr] md:items-center">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
-                    <Share2 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 05</div>
-                    <div className="text-base font-extrabold tracking-tight">Share Report</div>
-                  </div>
-                </div>
-                <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
-                  <div className="rounded-lg border border-foreground/25 bg-secondary/70 px-4 py-2.5">
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="text-sm font-bold text-muted-foreground">Report ready for client or team</span>
-                      <span className="flex h-8 w-8 animate-[pop-in_0.3s_ease-out_6.8s_both] items-center justify-center rounded-full bg-status-up text-white">
-                        <CheckCircle2 className="h-4 w-4" />
-                      </span>
+                    <div className="rounded-lg border border-foreground/25 bg-secondary/70 p-3">
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-sm font-bold">
+                          <FileText className="h-4 w-4 text-chart-1" />
+                          webmetricsx-report.pdf
+                        </div>
+                        <span className="animate-[fade-in_0.3s_ease-out_5.5s_both] text-xs font-bold text-muted-foreground">charts + scores included</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-background">
+                        <div className="h-full animate-[fill-bar_1.2s_ease-out_4.8s_both] rounded-full bg-chart-1" />
+                      </div>
                     </div>
                   </div>
-                  <Button type="button" variant="outline" className="pointer-events-none gap-2 border-foreground/35 font-semibold animate-[fade-in_0.3s_ease-out_7s_both]">
-                    <Share2 className="h-4 w-4" />
-                    Share PDF
-                  </Button>
+
+                  <div className="grid animate-fade-in-up gap-3 rounded-lg border border-foreground/30 bg-background p-3 shadow-sm [animation-delay:6000ms] md:grid-cols-[140px_1fr] md:items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-chart-2">
+                        <Share2 className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Step 05</div>
+                        <div className="text-base font-extrabold tracking-tight">Share Report</div>
+                      </div>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
+                      <div className="rounded-lg border border-foreground/25 bg-secondary/70 px-4 py-2.5">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-sm font-bold text-muted-foreground">Report ready for client or team</span>
+                          <span className="flex h-8 w-8 animate-[pop-in_0.3s_ease-out_6.8s_both] items-center justify-center rounded-full bg-status-up text-white">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </span>
+                        </div>
+                      </div>
+                      <Button type="button" variant="outline" className="pointer-events-none gap-2 border-foreground/35 font-semibold animate-[fade-in_0.3s_ease-out_7s_both]">
+                        <Share2 className="h-4 w-4" />
+                        Share PDF
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex h-96 items-center justify-center">
+                  <div className="flex flex-col items-center gap-4 text-muted-foreground">
+                    <div className="h-12 w-12 animate-pulse rounded-full bg-secondary" />
+                    <p className="text-sm font-medium">Scroll down to start animation...</p>
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-              <div className="flex h-96 items-center justify-center">
-                <div className="flex flex-col items-center gap-4 text-muted-foreground">
-                  <div className="h-12 w-12 animate-pulse rounded-full bg-secondary" />
-                  <p className="text-sm font-medium">Scroll down to start animation...</p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </section>
@@ -806,7 +861,8 @@ export function Landing({ onLaunch }: LandingProps) {
                 Instant Alerts
               </div>
               
-              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight [text-wrap:balance] leading-[1.1]">
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter [text-wrap:balance] leading-[1.05]">
+                {/* Visual Alerts Headline */}
                 Never Miss a Downtime. <br />
                 <span className="text-destructive">Get Notified Instantly.</span>
               </h2>
