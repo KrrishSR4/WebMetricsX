@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Github, Home, Zap } from 'lucide-react';
+import { Activity, BarChart3, Github, Home, Zap, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Header() {
@@ -7,12 +7,9 @@ export function Header() {
       <div className="container py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link to="/" className="group flex items-center gap-3 transition-opacity hover:opacity-90">
-              <img src="/app.png" alt="WebMetricsX Logo" className="w-10 h-10 object-contain rounded-lg" />
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">WebMetricsX</h1>
-                <p className="text-xs text-muted-foreground">Real-time Website Monitoring</p>
-              </div>
+            <Link to="/" className="group flex flex-col transition-opacity hover:opacity-90">
+              <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-foreground to-foreground/85 bg-clip-text text-transparent">WebMetricsX</h1>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-chart-1">Real-time Website Monitoring</p>
             </Link>
             
             <Link to="/" className="hidden md:flex items-center gap-2 rounded-full border border-black bg-background px-4 py-1.5 text-sm font-semibold transition-all hover:bg-black hover:text-white">
@@ -30,6 +27,10 @@ export function Header() {
               <BarChart3 className="h-4 w-4" />
               <span>SEO Insights</span>
             </div>
+            <a href="#downtime-alerts" className="flex items-center gap-2 hover:text-foreground transition-colors">
+              <Bell className="h-4 w-4" />
+              <span>Alerts</span>
+            </a>
             <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-black hover:text-white hover:shadow-sm">
               <Github className="h-4 w-4" />
               <span>GitHub</span>
