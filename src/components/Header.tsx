@@ -1,20 +1,15 @@
-import { Activity, BarChart3, Github, Home, Zap } from 'lucide-react';
+import { Activity, BarChart3, Github, Home, Zap, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Header() {
   return (
     <header className="border-b border-black/10 bg-card">
-      <div className="container py-4">
+      <div className="w-full px-6 md:px-8 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link to="/" className="group flex items-center gap-3 transition-opacity hover:opacity-90">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-chart-1 text-white">
-                <Activity className="h-6 w-6" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">WebMetricsX</h1>
-                <p className="text-xs text-muted-foreground">Real-time Website Monitoring</p>
-              </div>
+            <Link to="/" className="group flex flex-col items-start text-left transition-opacity hover:opacity-90">
+              <span className="text-2xl font-black tracking-tight text-foreground">WebMetricsX</span>
+              <span className="mt-1 text-[8px] xs:text-[9px] sm:text-[11px] font-normal uppercase tracking-wider text-chart-1 whitespace-nowrap">Real-time Website Monitoring</span>
             </Link>
             
             <Link to="/" className="hidden md:flex items-center gap-2 rounded-full border border-black bg-background px-4 py-1.5 text-sm font-semibold transition-all hover:bg-black hover:text-white">
@@ -32,6 +27,10 @@ export function Header() {
               <BarChart3 className="h-4 w-4" />
               <span>SEO Insights</span>
             </div>
+            <a href="#downtime-alerts" className="flex items-center gap-2 hover:text-foreground transition-colors">
+              <Bell className="h-4 w-4" />
+              <span>Alerts</span>
+            </a>
             <a href="https://github.com/KrrishSR4/WebMetricsX" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-full border border-black bg-card px-4 py-1.5 transition-all hover:bg-black hover:text-white hover:shadow-sm">
               <Github className="h-4 w-4" />
               <span>GitHub</span>

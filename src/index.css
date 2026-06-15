@@ -313,4 +313,60 @@
       transform: scale(1);
     }
   }
+
+  /* Downtime Alerts Animation Keyframes */
+  @keyframes alert-ring-pulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.8); opacity: 0; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+  @keyframes bell-shake {
+    0%, 100% { transform: rotate(0deg); }
+    10% { transform: rotate(14deg); }
+    20% { transform: rotate(-12deg); }
+    30% { transform: rotate(10deg); }
+    40% { transform: rotate(-8deg); }
+    50% { transform: rotate(6deg); }
+    60% { transform: rotate(-4deg); }
+    70% { transform: rotate(2deg); }
+    80% { transform: rotate(-1deg); }
+    90% { transform: rotate(0deg); }
+  }
+  @keyframes notif-slide-in {
+    0% { transform: translateX(60px) scale(0.85); opacity: 0; }
+    70% { transform: translateX(-4px) scale(1.02); opacity: 1; }
+    100% { transform: translateX(0) scale(1); opacity: 1; }
+  }
+  @keyframes status-flip {
+    0% { opacity: 1; }
+    45% { opacity: 1; }
+    50% { opacity: 0; transform: scaleY(0); }
+    55% { opacity: 0; transform: scaleY(0); }
+    60% { opacity: 1; transform: scaleY(1); }
+    100% { opacity: 1; }
+  }
+  @keyframes heartbeat-line {
+    0% { transform: scaleX(0); transform-origin: left; }
+    100% { transform: scaleX(1); transform-origin: left; }
+  }
+  @keyframes alert-glow {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(0 72% 51% / 0); }
+    50% { box-shadow: 0 0 20px 6px hsl(0 72% 51% / 0.25); }
+  }
+  @keyframes slide-down-fade {
+    0% { transform: translateY(-12px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes blink-cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  @keyframes border-dash {
+    from {
+      stroke-dashoffset: 0;
+    }
+    to {
+      stroke-dashoffset: -20;
+    }
+  }
 }
