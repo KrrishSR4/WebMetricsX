@@ -1,0 +1,62 @@
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Asia/Kolkata"
+
+    open-pull-requests-limit: 10
+
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+    labels:
+      - "dependencies"
+      - "automated"
+
+    assignees:
+      - "KrrishSR4"
+
+    reviewers:
+      - "KrrishSR4"
+
+    versioning-strategy: increase
+
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+
+      testing:
+        patterns:
+          - "vitest"
+          - "@testing-library/*"
+          - "jsdom"
+
+      radix:
+        patterns:
+          - "@radix-ui/*"
+
+      backend:
+        patterns:
+          - "firebase"
+          - "@supabase/*"
+          - "@tanstack/*"
+
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
