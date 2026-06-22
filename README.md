@@ -23,60 +23,89 @@ The platform delivers **accurate, continuously updating insights every 5 seconds
 
 ##  How WebMetrics Works (High-Level Flow)
 
+```mermaid
+graph TD
+
+    USER[Browser Client]
+
+    USER --> FRONTEND[React + Tailwind Dashboard]
+
+    FRONTEND --> API[FastAPI Backend]
+
+    API --> MONITOR[Real-Time Monitoring Engine]
+
+    MONITOR --> HTTPCHECK[HTTP Monitor]
+    MONITOR --> DNSCHECK[DNS Analysis]
+    MONITOR --> TLSCHECK[SSL Certificate Monitor]
+    MONITOR --> SEOCHECK[SEO Analyzer]
+    MONITOR --> CWVCHECK[Core Web Vitals Monitor]
+    MONITOR --> PERFCHECK[Performance Analyzer]
+
+    HTTPCHECK --> ENGINE[Metrics Engine]
+    DNSCHECK --> ENGINE
+    TLSCHECK --> ENGINE
+    SEOCHECK --> ENGINE
+    CWVCHECK --> ENGINE
+    PERFCHECK --> ENGINE
+
+    ENGINE --> DATABASE[(SQLite Database)]
+
+    DATABASE --> ANALYTICS[Analytics Processor]
+
+    ANALYTICS --> DASHBOARD[Live Dashboard]
+
+    DASHBOARD --> SCORE[Website Health Score]
+    DASHBOARD --> CHARTS[Performance Charts]
+    DASHBOARD --> HISTORY[Historical Trends]
+    DASHBOARD --> UPTIME[Uptime Statistics]
+
+    DASHBOARD --> REPORTS[PDF Report Generator]
+
+    REPORTS --> DOWNLOAD[Export Analytics Report]
+
+    DASHBOARD --> ALERTS[Alert Engine]
+
+    ALERTS --> RULE{Response Time > 400ms}
+
+    RULE -->|Yes| NOTIFY[Web Notification]
+
+    RULE -->|No| CONTINUE[Continue Monitoring]
+
+    NOTIFY --> TOAST[Toast Alert]
+
+    TOAST --> BANNER[Dashboard Alert Banner]
 ```
-┌────────────┐
-│   User     │
-│ Pastes URL │
-└─────┬──────┘
-      │
-      ▼
-┌────────────────────┐
-│ Auto URL Detection │
-└─────┬──────────────┘
-      │
-      ▼
-┌──────────────────────────────┐
-│ Real-Time Monitoring Engine  │
-│ (HTTP, DNS, TLS, SEO, CWV)   │
-└─────┬────────────────────────┘
-      │
-      ▼
-┌──────────────────────────────┐
-│ Live Dashboard (5s Updates)  │
-│ Charts • Metrics • Alerts   │
-└─────┬────────────────────────┘
-      │
-      ▼
-┌──────────────────────────────┐
-│ Export Analytics as PDF      │
-└──────────────────────────────┘
-```
+
 
 ---
 
 ##  System Architecture (ASCII Diagram)
 
+
+
+```mermaid
+graph TD
+
+    USER([Browser Client])
+
+    USER --> FRONTEND[Frontend Layer]
+
+    FRONTEND --> BACKEND[Backend API]
+
+    BACKEND --> MONITORING[Monitoring Services]
+
+    MONITORING --> STORAGE[(Metrics Database)]
+
+    STORAGE --> ANALYTICS[Analytics Engine]
+
+    ANALYTICS --> DASHBOARD[Live Dashboard]
+
+    DASHBOARD --> ALERTS[Notifications]
+
+    DASHBOARD --> REPORTS[Report Export]
 ```
-┌───────────────────────┐
-│       Frontend        │
-│  React / UI Layer    │
-│  Charts & Dashboard  │
-└───────────┬──────────┘
-            │
-            ▼
-┌─────────────────────────────┐
-│        Backend (Cloud)      │
-│  Real HTTP Probing Engine   │
-│  Performance Collectors     │
-│  SEO & Lighthouse APIs      │
-└───────────┬─────────────────┘
-            │
-            ▼
-┌──────────────────────────────┐
-│ External Real APIs & Targets │
-│ Websites • DNS • SSL • SEO   │
-└──────────────────────────────┘
-```
+
+
 
 ---
 
