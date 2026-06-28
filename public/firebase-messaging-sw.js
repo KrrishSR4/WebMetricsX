@@ -29,6 +29,17 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 self.addEventListener('message', (event) => {
+  const sourceUrl = event.source?.url;
+  if (!sourceUrl) return;
+
+  let sourceOrigin;
+  try {
+    sourceOrigin = new URL(sourceUrl).origin;
+  } catch (_) {
+    return;
+  }
+
+  if (sourceOrigin !== self.location.origin) return;
   if (event.data?.type !== 'SHOW_DOWNTIME_ALERT') return;
 
   const { title, body, tag, requireInteraction } = event.data;
