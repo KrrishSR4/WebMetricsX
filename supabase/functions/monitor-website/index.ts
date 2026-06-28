@@ -721,7 +721,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { response, body, headers, timing } = fetchResult;
+    const { response, body: responseBody, headers, timing } = fetchResult;
 
     let status: 'up' | 'down' | 'degraded' = 'up';
     if (!response.ok) {
@@ -730,7 +730,7 @@ Deno.serve(async (req: Request) => {
       status = 'degraded';
     }
 
-    const seoAnalysis = analyzeSEO(body, targetUrl, headers);
+    const seoAnalysis = analyzeSEO(responseBody, targetUrl, headers);
     seoAnalysis.robotsTxt = robotsTxt;
     seoAnalysis.sitemap = sitemap;
 
