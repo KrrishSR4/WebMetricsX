@@ -551,7 +551,7 @@ function hashCode(str: string): number {
 
 function calculateSmoothScore(time: number, seed: number): number {
   const variance = (seed % 5) - 2; // stable variance between -2 and +2
-  let base = 90;
+  let base: number;
   if (time <= 250) {
     base = 98 + variance;
   } else if (time <= 1000) {
