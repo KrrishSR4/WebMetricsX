@@ -1,7 +1,7 @@
 #  WebMetricsX
 ### Real-Time Website Monitoring & SEO Analytics Platform
 
-WebMetrics is a **production-ready, enterprise-grade web application** that provides **REAL-TIME website monitoring and SEO analytics** using **live APIs, real network requests, and continuous polling**.
+WebMetricsX is a **production-ready, enterprise-grade web application** that provides **REAL-TIME website monitoring and SEO analytics** using **live APIs, real network requests, and continuous polling**.
 
 The platform delivers **accurate, continuously updating insights every 5 seconds** without requiring any authentication.
 
@@ -21,7 +21,7 @@ The platform delivers **accurate, continuously updating insights every 5 seconds
 
 ---
 
-##  How WebMetrics Works (High-Level Flow)
+##  How WebMetricsX Works (High-Level Flow)
 
 ```mermaid
 graph TD
@@ -341,4 +341,4 @@ fullstack
 ---
 
 
-> **WebMetrics — Measure the Web. In Real Time.**
+> **WebMetricsX — Measure the Web. In Real Time.**
