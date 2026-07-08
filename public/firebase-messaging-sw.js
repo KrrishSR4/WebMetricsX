@@ -29,6 +29,8 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 self.addEventListener('message', (event) => {
+  if (!event.origin || event.origin !== self.location.origin) return;
+
   const sourceUrl = event.source?.url;
   if (!sourceUrl) return;
 
