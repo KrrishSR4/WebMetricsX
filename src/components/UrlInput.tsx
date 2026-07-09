@@ -8,8 +8,6 @@ import { Globe, Loader2, StopCircle, Search, History, X, Clock, Trash2 } from 'l
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-import { useNotifications } from '@/hooks/useNotifications';
-
 import { Bell, BellOff } from 'lucide-react';
 
 import type { HistoryItem } from '@/hooks/useUrlHistory';
