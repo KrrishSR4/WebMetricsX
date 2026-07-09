@@ -13,13 +13,6 @@ const getScoreColor = (score: number | null): string => {
   return 'text-status-down';
 };
 
-const getScoreBgColor = (score: number | null): string => {
-  if (score === null) return 'bg-muted';
-  if (score >= 90) return 'bg-status-up';
-  if (score >= 50) return 'bg-status-degraded';
-  return 'bg-status-down';
-};
-
 const sizeConfig = {
   sm: { container: 'w-16 h-16', text: 'text-lg', label: 'text-xs' },
   md: { container: 'w-24 h-24', text: 'text-2xl', label: 'text-sm' },
