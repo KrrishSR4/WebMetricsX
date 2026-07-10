@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Github, Home, Zap, Bell } from 'lucide-react';
+import { BarChart3, Github, Home, Zap, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Header() {
