@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Calendar, AlertTriangle, Check } from 'lucide-react';
+import { Shield, AlertTriangle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SSLCertificateCardProps {
