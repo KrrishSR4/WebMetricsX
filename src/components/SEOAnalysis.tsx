@@ -100,12 +100,6 @@ export function SEOAnalysis({ data }: SEOAnalysisProps) {
     return order[a.severity] - order[b.severity];
   });
 
-  const issuesByCategory = sortedIssues.reduce((acc, issue) => {
-    if (!acc[issue.category]) acc[issue.category] = [];
-    acc[issue.category].push(issue);
-    return acc;
-  }, {} as Record<string, SEOIssue[]>);
-
   const highCount = sortedIssues.filter(i => i.severity === 'high').length;
   const mediumCount = sortedIssues.filter(i => i.severity === 'medium').length;
   const lowCount = sortedIssues.filter(i => i.severity === 'low').length;
