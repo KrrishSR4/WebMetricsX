@@ -1,0 +1,7 @@
+# Example Terraform variables for Neon PostgreSQL Setup
+# Rename this file to terraform.tfvars or pass values via TF_VAR_ environment variables.
+
+neon_api_key      = "YOUR_NEON_API_KEY_HERE"
+neon_project_id   = "lingering-frog-19169886"
+neon_project_name = "WebMetricsX"
+pg_database_name  = "webmetricsx"
