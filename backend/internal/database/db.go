@@ -41,6 +41,18 @@ func NewDB(dbURL string, logger *slog.Logger) (*DB, error) {
 	}
 
 	logger.Info("PostgreSQL database connected successfully")
+
+	// Ensure targets schema table has the correct column layout (Phase 2.5 Migration)
+	migrationQueries := []string{
+		`ALTER TABLE targets ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE';`,
+		`ALTER TABLE targets ADD COLUMN IF NOT EXISTS next_checked_at TIMESTAMP WITH TIME ZONE;`,
+	}
+	for _, q := range migrationQueries {
+		if _, mErr := db.ExecContext(ctx, q); mErr != nil {
+			logger.Warn("Database schema auto-migration warning", slog.String("query", q), slog.String("error", mErr.Error()))
+		}
+	}
+
 	return &DB{pool: db, logger: logger, active: true}, nil
 }
 

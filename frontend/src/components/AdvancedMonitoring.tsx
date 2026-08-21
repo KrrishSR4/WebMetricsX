@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Activity,
   Cpu,
   Globe,
   RefreshCw,
@@ -50,9 +49,7 @@ export const AdvancedMonitoring: React.FC = () => {
   const [nextCheckTime, setNextCheckTime] = useState<string | null>(null);
   const [targetsList, setTargetsList] = useState<string[]>([]);
 
-  const [loadingCheck, setLoadingCheck] = useState<boolean>(false);
   const [loadingToggle, setLoadingToggle] = useState<boolean>(false);
-  const [loadingStep, setLoadingStep] = useState<string>('');
   
   const [latestCheck, setLatestCheck] = useState<GoMonitoringResult | null>(null);
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
@@ -208,33 +205,7 @@ export const AdvancedMonitoring: React.FC = () => {
     }
   };
 
-  // Execute Single Manual Live Check
-  const handleRunCheck = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!url || url.trim() === '') return;
 
-    setLoadingCheck(true);
-    setError(null);
-
-    setLoadingStep('Resolving DNS target...');
-    const t1 = setTimeout(() => setLoadingStep('Establishing TCP connection...'), 300);
-    const t2 = setTimeout(() => setLoadingStep('Performing TLS handshake & SSL check...'), 600);
-    const t3 = setTimeout(() => setLoadingStep('Sending HTTP GET & measuring TTFB...'), 900);
-
-    try {
-      const data = await runGoMonitoringCheck(url);
-      handleCheckReceived(data);
-      await loadAnalytics(url, timeRange);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while probing the website.');
-    } finally {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      setLoadingCheck(false);
-      setLoadingStep('');
-    }
-  };
 
   // Dynamically calculate full AnalyticsSummary from local history state if backend DB has no data
   const computeAnalyticsSummary = (historyList: GoMonitoringResult[], targetUrl: string, range: string): AnalyticsSummary => {
@@ -454,7 +425,7 @@ export const AdvancedMonitoring: React.FC = () => {
       </div>
 
         {/* Input & Filter Controls Form */}
-        <form onSubmit={handleRunCheck} className="mt-6 flex flex-wrap items-stretch gap-3">
+        <form onSubmit={(e) => { e.preventDefault(); handleToggleMonitoring(); }} className="mt-6 flex flex-wrap items-stretch gap-3">
           <div className="relative flex-1 min-w-[280px]">
             <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
@@ -587,30 +558,7 @@ export const AdvancedMonitoring: React.FC = () => {
               </Button>
             </div>
           )}
-
-          {/* Single Manual Run Check Button */}
-          <Button
-            type="submit"
-            disabled={loadingCheck}
-            variant="outline"
-            className="h-12 px-4 border-black/10 font-mono text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 shrink-0"
-          >
-            {loadingCheck ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <Activity className="w-4 h-4 text-chart-1" />
-            )}
-            Single Probe
-          </Button>
         </form>
-
-        {/* Loading Step Animation */}
-        {loadingCheck && (
-          <div className="mt-4 p-3 rounded-xl bg-chart-1/10 border border-chart-1/20 flex items-center gap-3 text-xs font-mono text-chart-1 animate-pulse">
-            <RefreshCw className="w-4 h-4 animate-spin" />
-            <span>{loadingStep || 'Executing Go probes...'}</span>
-          </div>
-        )}
       </div>
 
       {/* Error Alert */}
