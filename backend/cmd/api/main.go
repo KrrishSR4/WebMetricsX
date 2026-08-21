@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/cache"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/config"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/middleware"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/routes"
@@ -36,24 +37,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 3. Set Gin Mode based on Environment
+	// 3. Initialize Redis Cache Service
+	cacheService, err := cache.NewRedisCache(cfg.RedisURL, logger)
+	if err != nil {
+		logger.Warn("Failed to initialize Redis client; running without cache", slog.String("error", err.Error()))
+	} else {
+		defer cacheService.Close()
+	}
+
+	// 4. Set Gin Mode based on Environment
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
 
-	// 4. Initialize Router & Middlewares
+	// 5. Initialize Router & Middlewares
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(middleware.Logger(logger))
 	router.Use(middleware.CORS(cfg.CORSAllowedOrigins))
 	router.Use(middleware.ErrorHandler(logger))
 
-	// 5. Register Routes
-	routes.Setup(router, AppVersion)
+	// 6. Register Routes
+	routes.Setup(router, AppVersion, cacheService)
 
-	// 6. HTTP Server Setup
+	// 7. HTTP Server Setup
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Port),
 		Handler:      router,
@@ -62,7 +71,7 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// 7. Start Server in a Goroutine
+	// 8. Start Server in a Goroutine
 	go func() {
 		logger.Info("HTTP server running", slog.String("port", cfg.Port), slog.String("env", cfg.Environment))
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -71,7 +80,7 @@ func main() {
 		}
 	}()
 
-	// 8. Graceful Shutdown
+	// 9. Graceful Shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit

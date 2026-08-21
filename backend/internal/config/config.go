@@ -30,8 +30,9 @@ func LoadConfig() (*Config, error) {
 		Environment:        getEnv("ENVIRONMENT", "development"),
 		CORSAllowedOrigins: origins,
 		DatabaseURL:        getEnv("DATABASE_URL", ""),
-		RedisURL:           getEnv("REDIS_URL", ""),
+		RedisURL:           getEnv("REDIS_URL", "redis://localhost:6379/0"),
 	}, nil
+
 }
 
 func getEnv(key, fallback string) string {
