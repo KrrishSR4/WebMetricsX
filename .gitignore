@@ -7,9 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 .env
+
+# Dependencies & Builds
 node_modules
 dist
 dist-ssr
+frontend/node_modules
+frontend/dist
+backend/bin/
+*.exe
 *.local
 
 # Editor directories and files
@@ -25,4 +31,3 @@ dist-ssr
 
 # Memory / Context
 AGENTS.md
-
