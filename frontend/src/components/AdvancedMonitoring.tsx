@@ -31,7 +31,7 @@ import { LatencyDistribution } from '@/components/analytics/LatencyDistribution'
 import { PerformanceWaterfall } from '@/components/analytics/PerformanceWaterfall';
 import { PhaseBreakdownDonut } from '@/components/analytics/PhaseBreakdownDonut';
 import { StatusCodeDistribution } from '@/components/analytics/StatusCodeDistribution';
-import { D3LatencyScatterPlot } from '@/components/analytics/D3LatencyScatterPlot';
+import { D3PerformanceRadar } from '@/components/analytics/D3PerformanceRadar';
 import { D3PerformanceHeatmap } from '@/components/analytics/D3PerformanceHeatmap';
 import { TTFBAnalysis } from '@/components/analytics/TTFBAnalysis';
 import { UptimeTimeline } from '@/components/analytics/UptimeTimeline';
@@ -501,9 +501,9 @@ export const AdvancedMonitoring: React.FC = () => {
         <StatusCodeDistribution summary={activeSummary} />
       </div>
 
-      {/* 5. TWO-COLUMN: D3 SCATTER PLOT + D3 HEATMAP */}
+      {/* 5. TWO-COLUMN: D3 PERFORMANCE RADAR + D3 HEATMAP */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <D3LatencyScatterPlot summary={activeSummary} />
+        <D3PerformanceRadar summary={activeSummary} />
         <D3PerformanceHeatmap summary={activeSummary} />
       </div>
 
