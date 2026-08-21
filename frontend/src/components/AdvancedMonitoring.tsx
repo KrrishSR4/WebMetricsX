@@ -10,9 +10,15 @@ import {
   Zap,
   AlertTriangle,
   Clock,
+  Play,
+  Square,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   runGoMonitoringCheck,
+  startContinuousMonitoring,
+  stopContinuousMonitoring,
+  connectMonitoringSSE,
   fetchAnalyticsSummary,
   fetchMonitoredTargets,
   GoMonitoringResult,
@@ -33,11 +39,12 @@ import { UptimeTimeline } from '@/components/analytics/UptimeTimeline';
 export const AdvancedMonitoring: React.FC = () => {
   const [url, setUrl] = useState<string>('https://google.com');
   const [timeRange, setTimeRange] = useState<string>('24h');
-  const [autoRefreshInterval, setAutoRefreshInterval] = useState<number>(0); // 0 = Off
+  const [monitoringInterval, setMonitoringInterval] = useState<number>(30); // 30s default
+  const [isMonitoringActive, setIsMonitoringActive] = useState<boolean>(false);
   const [targetsList, setTargetsList] = useState<string[]>([]);
 
   const [loadingCheck, setLoadingCheck] = useState<boolean>(false);
-  const [loadingAnalytics, setLoadingAnalytics] = useState<boolean>(false);
+  const [loadingToggle, setLoadingToggle] = useState<boolean>(false);
   const [loadingStep, setLoadingStep] = useState<string>('');
   
   const [latestCheck, setLatestCheck] = useState<GoMonitoringResult | null>(null);
@@ -56,14 +63,11 @@ export const AdvancedMonitoring: React.FC = () => {
   // Fetch Analytics Summary for current URL and timeRange
   const loadAnalytics = useCallback(async (targetUrl: string, range: string) => {
     if (!targetUrl) return;
-    setLoadingAnalytics(true);
     try {
       const data = await fetchAnalyticsSummary(targetUrl, range);
       setSummary(data);
     } catch (err: any) {
       console.warn('Analytics fetch error:', err.message);
-    } finally {
-      setLoadingAnalytics(false);
     }
   }, []);
 
@@ -71,16 +75,48 @@ export const AdvancedMonitoring: React.FC = () => {
     loadAnalytics(url, timeRange);
   }, [url, timeRange, loadAnalytics]);
 
-  // Auto-Refresh Effect
+  // Connect Server-Sent Events (SSE) Live Telemetry Stream when Monitoring is Active
   useEffect(() => {
-    if (autoRefreshInterval <= 0) return;
-    const interval = setInterval(() => {
-      loadAnalytics(url, timeRange);
-    }, autoRefreshInterval * 1000);
-    return () => clearInterval(interval);
-  }, [autoRefreshInterval, url, timeRange, loadAnalytics]);
+    if (!isMonitoringActive || !url) return;
 
-  // Execute Live Check
+    console.log(`[SSE] Establishing live telemetry stream for ${url}`);
+    const cleanupSSE = connectMonitoringSSE(url, (newCheck) => {
+      console.log('[SSE] Live probe tick received:', newCheck);
+      setLatestCheck(newCheck);
+      // Reload analytics to update all charts dynamically
+      loadAnalytics(url, timeRange);
+    });
+
+    return () => {
+      console.log(`[SSE] Closing stream for ${url}`);
+      cleanupSSE();
+    };
+  }, [isMonitoringActive, url, timeRange, loadAnalytics]);
+
+  // Start Continuous Backend Monitoring
+  const handleToggleMonitoring = async () => {
+    if (!url || url.trim() === '') return;
+    setLoadingToggle(true);
+    setError(null);
+
+    try {
+      if (isMonitoringActive) {
+        await stopContinuousMonitoring(url);
+        setIsMonitoringActive(false);
+      } else {
+        await startContinuousMonitoring(url, monitoringInterval);
+        setIsMonitoringActive(true);
+        // Immediately fetch latest analytics
+        await loadAnalytics(url, timeRange);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to update continuous monitoring state.');
+    } finally {
+      setLoadingToggle(false);
+    }
+  };
+
+  // Execute Single Manual Live Check
   const handleRunCheck = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!url || url.trim() === '') return;
@@ -96,7 +132,6 @@ export const AdvancedMonitoring: React.FC = () => {
     try {
       const data = await runGoMonitoringCheck(url);
       setLatestCheck(data);
-      // Immediately reload analytics to include this new probe result
       await loadAnalytics(url, timeRange);
     } catch (err: any) {
       setError(err.message || 'An error occurred while probing the website.');
@@ -169,19 +204,28 @@ export const AdvancedMonitoring: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-chart-1/30 bg-chart-1/10 text-xs font-bold uppercase tracking-wider text-chart-1 mb-3">
               <Zap className="w-3.5 h-3.5" />
-              Go Observability Engine (V2.0 Analytics)
+              Go Continuous Monitoring Engine (V2.0 Scheduler)
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
-              Real-Time Monitoring Dashboard
+              Real-Time Continuous Monitoring
             </h2>
             <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-              Live HTTP, TTFB, DNS, TCP, and TLS metrics powered by Go probes &amp; Neon PostgreSQL telemetry.
+              Background Go worker tickers execute continuous network probes and stream telemetry live via SSE.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 bg-muted/40 border border-black/5 rounded-xl px-4 py-2 text-xs font-mono text-muted-foreground">
-            <Server className="w-4 h-4 text-chart-2 animate-pulse" />
-            <span>API: {import.meta.env.VITE_API_URL || 'http://localhost:8081'}</span>
+          <div className="flex items-center gap-3">
+            {isMonitoringActive && (
+              <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono text-xs px-3 py-1.5 rounded-xl font-bold animate-pulse">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span>WORKER ACTIVE ({monitoringInterval}s Ticker)</span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 bg-muted/40 border border-black/5 rounded-xl px-4 py-2 text-xs font-mono text-muted-foreground">
+              <Server className="w-4 h-4 text-chart-2" />
+              <span>API: {import.meta.env.VITE_API_URL || 'http://localhost:8081'}</span>
+            </div>
           </div>
         </div>
 
@@ -214,6 +258,22 @@ export const AdvancedMonitoring: React.FC = () => {
             </select>
           )}
 
+          {/* Monitoring Interval Selector */}
+          <div className="flex items-center gap-1.5 bg-background border border-black/10 rounded-xl px-3 py-2 font-mono text-xs shrink-0">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase">Interval:</span>
+            <select
+              value={monitoringInterval}
+              onChange={(e) => setMonitoringInterval(Number(e.target.value))}
+              disabled={isMonitoringActive}
+              className="bg-transparent font-bold focus:outline-none cursor-pointer disabled:opacity-50"
+            >
+              <option value={30}>30 sec</option>
+              <option value={60}>1 min</option>
+              <option value={300}>5 min</option>
+            </select>
+          </div>
+
           {/* Time Range Filter */}
           <div className="flex items-center gap-1 bg-background border border-black/10 rounded-xl p-1 font-mono text-xs shrink-0">
             {['1h', '6h', '24h', '7d', '30d'].map((range) => (
@@ -232,37 +292,45 @@ export const AdvancedMonitoring: React.FC = () => {
             ))}
           </div>
 
-          {/* Auto Refresh Filter */}
-          <div className="flex items-center gap-1.5 bg-background border border-black/10 rounded-xl px-3 py-2 font-mono text-xs shrink-0">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            <select
-              value={autoRefreshInterval}
-              onChange={(e) => setAutoRefreshInterval(Number(e.target.value))}
-              className="bg-transparent font-bold focus:outline-none cursor-pointer"
-            >
-              <option value={0}>Auto-Refresh: Off</option>
-              <option value={15}>15s</option>
-              <option value={30}>30s</option>
-              <option value={60}>60s</option>
-            </select>
-          </div>
-
+          {/* Continuous Worker Start/Stop Button */}
           <Button
-            type="submit"
-            disabled={loadingCheck}
-            className="h-12 px-6 bg-chart-1 hover:bg-chart-1/90 text-white font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 shrink-0"
+            type="button"
+            onClick={handleToggleMonitoring}
+            disabled={loadingToggle}
+            className={`h-12 px-5 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 shrink-0 ${
+              isMonitoringActive
+                ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+            }`}
           >
-            {loadingCheck ? (
+            {loadingToggle ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : isMonitoringActive ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Probing...
+                <Square className="w-4 h-4 fill-current" />
+                Stop Monitoring
               </>
             ) : (
               <>
-                <Activity className="w-4 h-4" />
-                Run Go Check
+                <Play className="w-4 h-4 fill-current" />
+                Start Continuous Monitoring
               </>
             )}
+          </Button>
+
+          {/* Single Manual Run Check Button */}
+          <Button
+            type="submit"
+            disabled={loadingCheck}
+            variant="outline"
+            className="h-12 px-4 border-black/10 font-mono text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 shrink-0"
+          >
+            {loadingCheck ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Activity className="w-4 h-4 text-chart-1" />
+            )}
+            Single Probe
           </Button>
         </form>
 
@@ -280,7 +348,7 @@ export const AdvancedMonitoring: React.FC = () => {
         <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-6 flex items-start gap-4 text-destructive animate-fade-in shadow-md">
           <AlertTriangle className="w-6 h-6 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <h3 className="font-bold text-base">Monitoring Probe Failed</h3>
+            <h3 className="font-bold text-base">Monitoring Operation Error</h3>
             <p className="text-sm opacity-90 leading-relaxed font-mono">{error}</p>
           </div>
         </div>

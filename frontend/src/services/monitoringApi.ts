@@ -131,6 +131,101 @@ export const runGoMonitoringCheck = async (
   }
 };
 
+export const startContinuousMonitoring = async (
+  targetUrl: string,
+  intervalSec: number = 30
+): Promise<{ target_id: string; status: string }> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/start`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        interval_sec: intervalSec,
+      }),
+    });
+
+    const data: GoApiResponse<{ target_id: string; status: string }> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      const errorMsg = data.error?.message || `HTTP ${response.status}: Failed to start continuous monitoring`;
+      throw new Error(errorMsg);
+    }
+
+    return data.data;
+  } catch (err: any) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error(
+        `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
+      );
+    }
+    throw err;
+  }
+};
+
+export const stopContinuousMonitoring = async (
+  targetUrl: string
+): Promise<{ status: string }> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/stop`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+      }),
+    });
+
+    const data: GoApiResponse<{ status: string }> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      const errorMsg = data.error?.message || `HTTP ${response.status}: Failed to stop continuous monitoring`;
+      throw new Error(errorMsg);
+    }
+
+    return data.data;
+  } catch (err: any) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error(
+        `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
+      );
+    }
+    throw err;
+  }
+};
+
+export const connectMonitoringSSE = (
+  targetUrl: string,
+  onCheckResult: (res: GoMonitoringResult) => void
+): (() => void) => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/stream?url=${encodeURIComponent(targetUrl)}`;
+
+  const eventSource = new EventSource(endpoint);
+
+  eventSource.addEventListener('telemetry', (event: MessageEvent) => {
+    try {
+      const data: GoMonitoringResult = JSON.parse(event.data);
+      onCheckResult(data);
+    } catch (err) {
+      console.warn('Failed to parse SSE telemetry event:', err);
+    }
+  });
+
+  return () => {
+    eventSource.close();
+  };
+};
+
 export const fetchAnalyticsSummary = async (
   targetUrl: string,
   timeRange: string = '24h'

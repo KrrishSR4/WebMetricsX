@@ -101,6 +101,79 @@ func GenerateID(input string) string {
 	return hex.EncodeToString(hash[:16])
 }
 
+type TargetRecord struct {
+	ID          string    `json:"id"`
+	URL         string    `json:"url"`
+	Name        string    `json:"name"`
+	IsActive    bool      `json:"is_active"`
+	IntervalSec int       `json:"interval_sec"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// UpsertTarget creates or updates a target in PostgreSQL with active status and interval
+func (r *Repository) UpsertTarget(ctx context.Context, targetURL string, intervalSec int, isActive bool) (string, error) {
+	if r.db == nil || !r.db.IsAvailable() {
+		return GenerateID(targetURL), nil
+	}
+
+	targetID := GenerateID(targetURL)
+	now := time.Now().UTC()
+
+	query := `
+		INSERT INTO targets (id, url, name, is_active, interval_sec, updated_at)
+		VALUES ($1, $2, $2, $3, $4, $5)
+		ON CONFLICT (url) DO UPDATE SET
+			is_active = EXCLUDED.is_active,
+			interval_sec = EXCLUDED.interval_sec,
+			updated_at = EXCLUDED.updated_at
+		RETURNING id;
+	`
+
+	var actualID string
+	err := r.db.Pool().QueryRowContext(ctx, query, targetID, targetURL, isActive, intervalSec, now).Scan(&actualID)
+	if err != nil {
+		r.logger.Warn("Failed to upsert target record", slog.String("url", targetURL), slog.String("error", err.Error()))
+		return targetID, err
+	}
+
+	return actualID, nil
+}
+
+// SetTargetActiveStatus updates the active monitoring status of a target
+func (r *Repository) SetTargetActiveStatus(ctx context.Context, targetURL string, isActive bool) error {
+	if r.db == nil || !r.db.IsAvailable() {
+		return nil
+	}
+
+	query := `UPDATE targets SET is_active = $1, updated_at = $2 WHERE url = $3;`
+	_, err := r.db.Pool().ExecContext(ctx, query, isActive, time.Now().UTC(), targetURL)
+	return err
+}
+
+// GetActiveTargets retrieves all targets marked as active for automatic worker recovery on boot
+func (r *Repository) GetActiveTargets(ctx context.Context) ([]*TargetRecord, error) {
+	if r.db == nil || !r.db.IsAvailable() {
+		return []*TargetRecord{}, nil
+	}
+
+	query := `SELECT id, url, name, is_active, interval_sec, created_at, updated_at FROM targets WHERE is_active = TRUE;`
+	rows, err := r.db.Pool().QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var targets []*TargetRecord
+	for rows.Next() {
+		var t TargetRecord
+		if err := rows.Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.IntervalSec, &t.CreatedAt, &t.UpdatedAt); err == nil {
+			targets = append(targets, &t)
+		}
+	}
+	return targets, nil
+}
+
 // SaveCheckResult persists check telemetry into Neon PostgreSQL
 func (r *Repository) SaveCheckResult(ctx context.Context, res *monitoring.CheckResult) error {
 	if r.db == nil || !r.db.IsAvailable() {
@@ -113,6 +186,7 @@ func (r *Repository) SaveCheckResult(ctx context.Context, res *monitoring.CheckR
 		targetID = GenerateID(res.URL)
 	}
 
+	// Ensure target record exists
 	targetQuery := `
 		INSERT INTO targets (id, url, name, updated_at)
 		VALUES ($1, $2, $2, $3)

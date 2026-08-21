@@ -17,6 +17,7 @@ import (
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/middleware"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/routes"
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/scheduler"
 	"github.com/gin-gonic/gin"
 )
 
@@ -56,8 +57,13 @@ func main() {
 	}
 	repo := database.NewRepository(db, logger)
 
-	// 5. Initialize Monitoring Engine
+	// 5. Initialize Monitoring Engine & Scheduler
 	engine := monitoring.NewEngine(logger, 10)
+	sched := scheduler.NewScheduler(engine, repo, cacheService, logger)
+	defer sched.Close()
+
+	// Load active monitoring targets from DB and restart background workers
+	sched.LoadActiveTargetsFromDB(context.Background())
 
 	// 6. Set Gin Mode based on Environment
 	if cfg.Environment == "production" {
@@ -74,7 +80,7 @@ func main() {
 	router.Use(middleware.ErrorHandler(logger))
 
 	// 8. Register Routes
-	routes.Setup(router, AppVersion, cacheService, engine, repo, logger)
+	routes.Setup(router, AppVersion, cacheService, engine, repo, sched, logger)
 
 	// 9. HTTP Server Setup
 	server := &http.Server{

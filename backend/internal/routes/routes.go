@@ -7,6 +7,7 @@ import (
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/database"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/handlers"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/scheduler"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,10 +17,11 @@ func Setup(
 	cacheService cache.CacheService,
 	engine *monitoring.Engine,
 	repo *database.Repository,
+	sched *scheduler.Scheduler,
 	logger *slog.Logger,
 ) {
 	healthHandler := handlers.NewHealthHandler(appVersion, cacheService)
-	monitoringHandler := handlers.NewMonitoringHandler(engine, repo, cacheService, logger)
+	monitoringHandler := handlers.NewMonitoringHandler(engine, repo, cacheService, sched, logger)
 	analyticsHandler := handlers.NewAnalyticsHandler(repo, logger)
 
 	// Direct Health Endpoint
@@ -30,6 +32,10 @@ func Setup(
 	{
 		v1.GET("/health", healthHandler.Check)
 		v1.POST("/monitoring/check", monitoringHandler.RunCheck)
+		v1.POST("/monitoring/start", monitoringHandler.StartMonitoring)
+		v1.POST("/monitoring/stop", monitoringHandler.StopMonitoring)
+		v1.GET("/monitoring/stream", monitoringHandler.StreamMonitoring)
+
 		v1.GET("/monitoring/analytics", analyticsHandler.GetAnalytics)
 		v1.GET("/monitoring/targets", analyticsHandler.GetTargets)
 	}

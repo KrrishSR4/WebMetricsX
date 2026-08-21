@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"net/http"
 	"time"
@@ -9,18 +10,21 @@ import (
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/cache"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/database"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/scheduler"
 	"github.com/gin-gonic/gin"
 )
 
 type CheckRequest struct {
-	URL      string `json:"url" binding:"required"`
-	TargetID string `json:"target_id,omitempty"`
+	URL         string `json:"url" binding:"required"`
+	TargetID    string `json:"target_id,omitempty"`
+	IntervalSec int    `json:"interval_sec,omitempty"`
 }
 
 type MonitoringHandler struct {
 	engine       *monitoring.Engine
 	repo         *database.Repository
 	cacheService cache.CacheService
+	scheduler    *scheduler.Scheduler
 	logger       *slog.Logger
 }
 
@@ -28,12 +32,14 @@ func NewMonitoringHandler(
 	engine *monitoring.Engine,
 	repo *database.Repository,
 	cacheService cache.CacheService,
+	scheduler *scheduler.Scheduler,
 	logger *slog.Logger,
 ) *MonitoringHandler {
 	return &MonitoringHandler{
 		engine:       engine,
 		repo:         repo,
 		cacheService: cacheService,
+		scheduler:    scheduler,
 		logger:       logger,
 	}
 }
@@ -97,5 +103,131 @@ func (h *MonitoringHandler) RunCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    res,
+	})
+}
+
+// StartMonitoring starts continuous background probing for a target URL
+func (h *MonitoringHandler) StartMonitoring(c *gin.Context) {
+	var req CheckRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_INPUT",
+				"message": "Valid website URL is required in JSON payload",
+			},
+		})
+		return
+	}
+
+	interval := req.IntervalSec
+	if interval <= 0 {
+		interval = 30
+	}
+
+	targetID, err := h.scheduler.StartWorker(c.Request.Context(), req.URL, interval)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "START_FAILED",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"target_id":    targetID,
+			"url":          req.URL,
+			"interval_sec": interval,
+			"status":       "active",
+		},
+	})
+}
+
+// StopMonitoring halts the background monitoring worker for a target URL
+func (h *MonitoringHandler) StopMonitoring(c *gin.Context) {
+	var req CheckRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_INPUT",
+				"message": "Valid website URL is required in JSON payload",
+			},
+		})
+		return
+	}
+
+	err := h.scheduler.StopWorker(c.Request.Context(), req.URL)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "STOP_FAILED",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"url":    req.URL,
+			"status": "stopped",
+		},
+	})
+}
+
+// StreamMonitoring streams live probe telemetry via Server-Sent Events (SSE)
+func (h *MonitoringHandler) StreamMonitoring(c *gin.Context) {
+	rawURL := c.Query("url")
+	if rawURL == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "MISSING_URL",
+				"message": "Query parameter 'url' is required for SSE telemetry stream",
+			},
+		})
+		return
+	}
+
+	parsedURL, err := monitoring.ValidateAndSanitizeURL(rawURL)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_URL",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	targetURL := parsedURL.String()
+	eventCh, unsubscribe := h.scheduler.EventBus().Subscribe(targetURL)
+	defer unsubscribe()
+
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("Transfer-Encoding", "chunked")
+
+	c.Stream(func(w io.Writer) bool {
+		select {
+		case <-c.Request.Context().Done():
+			return false
+		case res, ok := <-eventCh:
+			if !ok {
+				return false
+			}
+			c.SSEvent("telemetry", res)
+			return true
+		}
 	})
 }
