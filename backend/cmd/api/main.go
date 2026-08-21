@@ -13,7 +13,9 @@ import (
 
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/cache"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/config"
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/database"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/middleware"
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/routes"
 	"github.com/gin-gonic/gin"
 )
@@ -45,24 +47,36 @@ func main() {
 		defer cacheService.Close()
 	}
 
-	// 4. Set Gin Mode based on Environment
+	// 4. Initialize Database Connection (Neon PostgreSQL)
+	db, err := database.NewDB(cfg.DatabaseURL, logger)
+	if err != nil {
+		logger.Warn("Failed to initialize PostgreSQL pool", slog.String("error", err.Error()))
+	} else {
+		defer db.Close()
+	}
+	repo := database.NewRepository(db, logger)
+
+	// 5. Initialize Monitoring Engine
+	engine := monitoring.NewEngine(logger, 10)
+
+	// 6. Set Gin Mode based on Environment
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
 
-	// 5. Initialize Router & Middlewares
+	// 7. Initialize Router & Middlewares
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(middleware.Logger(logger))
 	router.Use(middleware.CORS(cfg.CORSAllowedOrigins))
 	router.Use(middleware.ErrorHandler(logger))
 
-	// 6. Register Routes
-	routes.Setup(router, AppVersion, cacheService)
+	// 8. Register Routes
+	routes.Setup(router, AppVersion, cacheService, engine, repo, logger)
 
-	// 7. HTTP Server Setup
+	// 9. HTTP Server Setup
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Port),
 		Handler:      router,
@@ -71,7 +85,7 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// 8. Start Server in a Goroutine
+	// 10. Start Server in a Goroutine
 	go func() {
 		logger.Info("HTTP server running", slog.String("port", cfg.Port), slog.String("env", cfg.Environment))
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -80,7 +94,7 @@ func main() {
 		}
 	}()
 
-	// 9. Graceful Shutdown
+	// 11. Graceful Shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
