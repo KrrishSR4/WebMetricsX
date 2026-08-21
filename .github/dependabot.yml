@@ -8,7 +8,7 @@ updates:
       day: "monday"
       time: "04:00"
       timezone: "Asia/Kolkata"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 30
     commit-message:
       prefix: "deps"
       include: "scope"
