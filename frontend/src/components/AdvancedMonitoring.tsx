@@ -85,7 +85,19 @@ export const AdvancedMonitoring: React.FC = () => {
     if (!url) return;
     try {
       const list = await listContinuousMonitors();
-      const matched = list.find((m) => m.url === url);
+      const normalizeUrl = (u: string) => {
+        try {
+          let cleaned = u.trim();
+          if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+            cleaned = 'https://' + cleaned;
+          }
+          const parsed = new URL(cleaned);
+          return parsed.href.replace(/\/$/, '').toLowerCase();
+        } catch {
+          return u.trim().replace(/\/$/, '').toLowerCase();
+        }
+      };
+      const matched = list.find((m) => normalizeUrl(m.url) === normalizeUrl(url));
       if (matched) {
         setMonitoringStatus(matched.status as any);
         setLastCheckTime(matched.last_checked_at || null);

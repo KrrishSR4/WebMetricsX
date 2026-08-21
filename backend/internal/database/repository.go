@@ -96,6 +96,11 @@ func NewRepository(db *DB, logger *slog.Logger) *Repository {
 	}
 }
 
+// IsAvailable checks if the underlying database connection pool is active and ready
+func (r *Repository) IsAvailable() bool {
+	return r != nil && r.db != nil && r.db.IsAvailable()
+}
+
 func GenerateID(input string) string {
 	hash := sha256.Sum256([]byte(input))
 	return hex.EncodeToString(hash[:16])

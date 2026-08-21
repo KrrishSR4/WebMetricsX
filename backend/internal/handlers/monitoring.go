@@ -323,13 +323,37 @@ func (h *MonitoringHandler) GetMonitoringStatus(c *gin.Context) {
 		return
 	}
 
-	if h.repo == nil {
+	if !h.repo.IsAvailable() {
+		workers := h.scheduler.GetActiveWorkers()
+		var matched *scheduler.Worker
+		for _, w := range workers {
+			if w.TargetID == targetID || w.URL == targetID {
+				matched = &w
+				break
+			}
+		}
+
+		if matched != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data": gin.H{
+					"id":           matched.TargetID,
+					"url":          matched.URL,
+					"name":         matched.URL,
+					"is_active":    true,
+					"status":       "ACTIVE",
+					"interval_sec": matched.IntervalSec,
+				},
+			})
+			return
+		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"data": gin.H{
 				"id":           targetID,
-				"is_active":    true,
-				"status":       "ACTIVE",
+				"is_active":    false,
+				"status":       "STOPPED",
 				"interval_sec": 30,
 			},
 		})
@@ -356,7 +380,7 @@ func (h *MonitoringHandler) GetMonitoringStatus(c *gin.Context) {
 
 // ListActiveMonitors lists all monitoring targets in WebMetricsX
 func (h *MonitoringHandler) ListActiveMonitors(c *gin.Context) {
-	if h.repo == nil {
+	if !h.repo.IsAvailable() {
 		workers := h.scheduler.GetActiveWorkers()
 		records := make([]database.TargetRecord, 0, len(workers))
 		for _, w := range workers {
