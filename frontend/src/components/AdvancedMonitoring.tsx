@@ -27,6 +27,7 @@ import {
   fetchMonitoredTargets,
   GoMonitoringResult,
   AnalyticsSummary,
+  HeatmapCell,
 } from '@/services/monitoringApi';
 
 import { KPISummaryCards } from '@/components/analytics/KPISummaryCards';
