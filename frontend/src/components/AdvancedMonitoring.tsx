@@ -39,7 +39,7 @@ import { UptimeTimeline } from '@/components/analytics/UptimeTimeline';
 export const AdvancedMonitoring: React.FC = () => {
   const [url, setUrl] = useState<string>('https://google.com');
   const [timeRange, setTimeRange] = useState<string>('24h');
-  const [monitoringInterval, setMonitoringInterval] = useState<number>(30); // 30s default
+  const [monitoringInterval, setMonitoringInterval] = useState<number>(3); // 3s default
   const [isMonitoringActive, setIsMonitoringActive] = useState<boolean>(false);
   const [targetsList, setTargetsList] = useState<string[]>([]);
 
@@ -395,6 +395,7 @@ export const AdvancedMonitoring: React.FC = () => {
               disabled={isMonitoringActive}
               className="bg-transparent font-bold focus:outline-none cursor-pointer disabled:opacity-50"
             >
+              <option value={3}>3 sec</option>
               <option value={30}>30 sec</option>
               <option value={60}>1 min</option>
               <option value={300}>5 min</option>
