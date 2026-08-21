@@ -231,3 +231,153 @@ func (h *MonitoringHandler) StreamMonitoring(c *gin.Context) {
 		}
 	})
 }
+
+// PauseMonitoring pausescontinuous checks for a URL without removing its database target record
+func (h *MonitoringHandler) PauseMonitoring(c *gin.Context) {
+	var req CheckRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_INPUT",
+				"message": "Valid website URL is required in JSON payload",
+			},
+		})
+		return
+	}
+
+	err := h.scheduler.PauseWorker(c.Request.Context(), req.URL)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "PAUSE_FAILED",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"url":    req.URL,
+			"status": "paused",
+		},
+	})
+}
+
+// ResumeMonitoring resumes paused continuous probing for a target URL
+func (h *MonitoringHandler) ResumeMonitoring(c *gin.Context) {
+	var req CheckRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_INPUT",
+				"message": "Valid website URL is required in JSON payload",
+			},
+		})
+		return
+	}
+
+	interval := req.IntervalSec
+	if interval <= 0 {
+		interval = 30
+	}
+
+	targetID, err := h.scheduler.ResumeWorker(c.Request.Context(), req.URL, interval)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "RESUME_FAILED",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"target_id":    targetID,
+			"url":          req.URL,
+			"interval_sec": interval,
+			"status":       "active",
+		},
+	})
+}
+
+// GetMonitoringStatus fetches targets active properties, last check and next check timestamps
+func (h *MonitoringHandler) GetMonitoringStatus(c *gin.Context) {
+	targetID := c.Param("id")
+	if targetID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "MISSING_ID",
+				"message": "Target parameter ID is required",
+			},
+		})
+		return
+	}
+
+	if h.repo == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"data": gin.H{
+				"id":           targetID,
+				"is_active":    true,
+				"status":       "ACTIVE",
+				"interval_sec": 30,
+			},
+		})
+		return
+	}
+
+	record, err := h.repo.GetTargetByID(c.Request.Context(), targetID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "TARGET_NOT_FOUND",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    record,
+	})
+}
+
+// ListActiveMonitors lists all monitoring targets in WebMetricsX
+func (h *MonitoringHandler) ListActiveMonitors(c *gin.Context) {
+	if h.repo == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"data":    []interface{}{},
+		})
+		return
+	}
+
+	list, err := h.repo.GetAllMonitoredTargets(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "LIST_FAILED",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    list,
+	})
+}

@@ -102,13 +102,16 @@ func GenerateID(input string) string {
 }
 
 type TargetRecord struct {
-	ID          string    `json:"id"`
-	URL         string    `json:"url"`
-	Name        string    `json:"name"`
-	IsActive    bool      `json:"is_active"`
-	IntervalSec int       `json:"interval_sec"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID            string     `json:"id"`
+	URL           string     `json:"url"`
+	Name          string     `json:"name"`
+	IsActive      bool       `json:"is_active"`
+	Status        string     `json:"status"`
+	IntervalSec   int        `json:"interval_sec"`
+	LastCheckedAt *time.Time `json:"last_checked_at"`
+	NextCheckedAt *time.Time `json:"next_checked_at"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
 }
 
 // UpsertTarget creates or updates a target in PostgreSQL with active status and interval
@@ -119,19 +122,24 @@ func (r *Repository) UpsertTarget(ctx context.Context, targetURL string, interva
 
 	targetID := GenerateID(targetURL)
 	now := time.Now().UTC()
+	status := "ACTIVE"
+	if !isActive {
+		status = "STOPPED"
+	}
 
 	query := `
-		INSERT INTO targets (id, url, name, is_active, interval_sec, updated_at)
-		VALUES ($1, $2, $2, $3, $4, $5)
+		INSERT INTO targets (id, url, name, is_active, status, interval_sec, updated_at)
+		VALUES ($1, $2, $2, $3, $4, $5, $6)
 		ON CONFLICT (url) DO UPDATE SET
 			is_active = EXCLUDED.is_active,
+			status = EXCLUDED.status,
 			interval_sec = EXCLUDED.interval_sec,
 			updated_at = EXCLUDED.updated_at
 		RETURNING id;
 	`
 
 	var actualID string
-	err := r.db.Pool().QueryRowContext(ctx, query, targetID, targetURL, isActive, intervalSec, now).Scan(&actualID)
+	err := r.db.Pool().QueryRowContext(ctx, query, targetID, targetURL, isActive, status, intervalSec, now).Scan(&actualID)
 	if err != nil {
 		r.logger.Warn("Failed to upsert target record", slog.String("url", targetURL), slog.String("error", err.Error()))
 		return targetID, err
@@ -140,14 +148,41 @@ func (r *Repository) UpsertTarget(ctx context.Context, targetURL string, interva
 	return actualID, nil
 }
 
+// UpdateTargetStatus sets target state (is_active, status) in the database
+func (r *Repository) UpdateTargetStatus(ctx context.Context, targetURL string, status string, isActive bool) error {
+	if r.db == nil || !r.db.IsAvailable() {
+		return nil
+	}
+
+	query := `UPDATE targets SET status = $1, is_active = $2, updated_at = $3 WHERE url = $4;`
+	_, err := r.db.Pool().ExecContext(ctx, query, status, isActive, time.Now().UTC(), targetURL)
+	return err
+}
+
 // SetTargetActiveStatus updates the active monitoring status of a target
 func (r *Repository) SetTargetActiveStatus(ctx context.Context, targetURL string, isActive bool) error {
 	if r.db == nil || !r.db.IsAvailable() {
 		return nil
 	}
 
-	query := `UPDATE targets SET is_active = $1, updated_at = $2 WHERE url = $3;`
-	_, err := r.db.Pool().ExecContext(ctx, query, isActive, time.Now().UTC(), targetURL)
+	status := "ACTIVE"
+	if !isActive {
+		status = "STOPPED"
+	}
+
+	query := `UPDATE targets SET is_active = $1, status = $2, updated_at = $3 WHERE url = $4;`
+	_, err := r.db.Pool().ExecContext(ctx, query, isActive, status, time.Now().UTC(), targetURL)
+	return err
+}
+
+// UpdateCheckTimestamps updates target check timestamps in PostgreSQL
+func (r *Repository) UpdateCheckTimestamps(ctx context.Context, targetID string, lastCheck time.Time, nextCheck time.Time) error {
+	if r.db == nil || !r.db.IsAvailable() {
+		return nil
+	}
+
+	query := `UPDATE targets SET last_checked_at = $1, next_checked_at = $2, updated_at = $3 WHERE id = $4;`
+	_, err := r.db.Pool().ExecContext(ctx, query, lastCheck, nextCheck, time.Now().UTC(), targetID)
 	return err
 }
 
@@ -157,7 +192,7 @@ func (r *Repository) GetActiveTargets(ctx context.Context) ([]*TargetRecord, err
 		return []*TargetRecord{}, nil
 	}
 
-	query := `SELECT id, url, name, is_active, interval_sec, created_at, updated_at FROM targets WHERE is_active = TRUE;`
+	query := `SELECT id, url, name, is_active, status, interval_sec, last_checked_at, next_checked_at, created_at, updated_at FROM targets WHERE is_active = TRUE;`
 	rows, err := r.db.Pool().QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -167,7 +202,45 @@ func (r *Repository) GetActiveTargets(ctx context.Context) ([]*TargetRecord, err
 	var targets []*TargetRecord
 	for rows.Next() {
 		var t TargetRecord
-		if err := rows.Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.IntervalSec, &t.CreatedAt, &t.UpdatedAt); err == nil {
+		if err := rows.Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.Status, &t.IntervalSec, &t.LastCheckedAt, &t.NextCheckedAt, &t.CreatedAt, &t.UpdatedAt); err == nil {
+			targets = append(targets, &t)
+		}
+	}
+	return targets, nil
+}
+
+// GetTargetByID retrieves target details by ID
+func (r *Repository) GetTargetByID(ctx context.Context, id string) (*TargetRecord, error) {
+	if r.db == nil || !r.db.IsAvailable() {
+		return nil, fmt.Errorf("database unavailable")
+	}
+
+	query := `SELECT id, url, name, is_active, status, interval_sec, last_checked_at, next_checked_at, created_at, updated_at FROM targets WHERE id = $1;`
+	var t TargetRecord
+	err := r.db.Pool().QueryRowContext(ctx, query, id).Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.Status, &t.IntervalSec, &t.LastCheckedAt, &t.NextCheckedAt, &t.CreatedAt, &t.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+// GetAllMonitoredTargets retrieves all targets logged in the system
+func (r *Repository) GetAllMonitoredTargets(ctx context.Context) ([]*TargetRecord, error) {
+	if r.db == nil || !r.db.IsAvailable() {
+		return []*TargetRecord{}, nil
+	}
+
+	query := `SELECT id, url, name, is_active, status, interval_sec, last_checked_at, next_checked_at, created_at, updated_at FROM targets ORDER BY created_at DESC;`
+	rows, err := r.db.Pool().QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var targets []*TargetRecord
+	for rows.Next() {
+		var t TargetRecord
+		if err := rows.Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.Status, &t.IntervalSec, &t.LastCheckedAt, &t.NextCheckedAt, &t.CreatedAt, &t.UpdatedAt); err == nil {
 			targets = append(targets, &t)
 		}
 	}

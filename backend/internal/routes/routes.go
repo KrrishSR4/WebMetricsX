@@ -34,6 +34,10 @@ func Setup(
 		v1.POST("/monitoring/check", monitoringHandler.RunCheck)
 		v1.POST("/monitoring/start", monitoringHandler.StartMonitoring)
 		v1.POST("/monitoring/stop", monitoringHandler.StopMonitoring)
+		v1.POST("/monitoring/pause", monitoringHandler.PauseMonitoring)
+		v1.POST("/monitoring/resume", monitoringHandler.ResumeMonitoring)
+		v1.GET("/monitoring/status/:id", monitoringHandler.GetMonitoringStatus)
+		v1.GET("/monitoring/list", monitoringHandler.ListActiveMonitors)
 		v1.GET("/monitoring/stream", monitoringHandler.StreamMonitoring)
 
 		v1.GET("/monitoring/analytics", analyticsHandler.GetAnalytics)

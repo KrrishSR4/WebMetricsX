@@ -19,6 +19,12 @@ type Worker struct {
 	cancel      context.CancelFunc
 }
 
+type Job struct {
+	TargetID    string
+	URL         string
+	IntervalSec int
+}
+
 type EventBus struct {
 	subscribers map[string][]chan *monitoring.CheckResult
 	mu          sync.RWMutex
@@ -74,6 +80,11 @@ type Scheduler struct {
 	logger       *slog.Logger
 	workers      map[string]*Worker
 	eventBus     *EventBus
+	jobQueue     chan *Job
+	workerCount  int
+	ctx          context.Context
+	cancel       context.CancelFunc
+	wg           sync.WaitGroup
 	mu           sync.RWMutex
 }
 
@@ -83,21 +94,52 @@ func NewScheduler(
 	cacheService cache.CacheService,
 	logger *slog.Logger,
 ) *Scheduler {
-	return &Scheduler{
+	ctx, cancel := context.WithCancel(context.Background())
+	s := &Scheduler{
 		engine:       engine,
 		repo:         repo,
 		cacheService: cacheService,
 		logger:       logger,
 		workers:      make(map[string]*Worker),
 		eventBus:     NewEventBus(),
+		jobQueue:     make(chan *Job, 1000),
+		workerCount:  10, // Default bounded pool count
+		ctx:          ctx,
+		cancel:       cancel,
 	}
+
+	// Start consumer worker pool
+	for i := 0; i < s.workerCount; i++ {
+		s.wg.Add(1)
+		go s.workerConsumer(i)
+	}
+
+	return s
 }
 
 func (s *Scheduler) EventBus() *EventBus {
 	return s.eventBus
 }
 
-// StartWorker starts a continuous background monitoring worker for a URL
+func (s *Scheduler) workerConsumer(id int) {
+	defer s.wg.Done()
+	s.logger.Info("[SCHEDULER] Worker pool consumer started", slog.Int("worker_id", id))
+
+	for {
+		select {
+		case <-s.ctx.Done():
+			s.logger.Info("[SCHEDULER] Worker pool consumer exiting", slog.Int("worker_id", id))
+			return
+		case j, ok := <-s.jobQueue:
+			if !ok {
+				return
+			}
+			s.executeProbeTick(j)
+		}
+	}
+}
+
+// StartWorker starts (or resumes) continuous background monitoring for a URL
 func (s *Scheduler) StartWorker(ctx context.Context, rawURL string, intervalSec int) (string, error) {
 	parsedURL, err := monitoring.ValidateAndSanitizeURL(rawURL)
 	if err != nil {
@@ -109,11 +151,10 @@ func (s *Scheduler) StartWorker(ctx context.Context, rawURL string, intervalSec 
 		intervalSec = 30
 	}
 
-	// 1. Check if worker is already active in memory or Redis lock to prevent duplicate workers
 	s.mu.Lock()
 	if _, exists := s.workers[targetURL]; exists {
 		s.mu.Unlock()
-		s.logger.Info("[MONITOR] Worker already active for target; skipping duplicate launch", slog.String("url", targetURL))
+		s.logger.Info("[MONITOR] Worker already active for target; skipping launch", slog.String("url", targetURL))
 		var targetID string
 		if s.repo != nil {
 			targetID, _ = s.repo.UpsertTarget(ctx, targetURL, intervalSec, true)
@@ -141,7 +182,7 @@ func (s *Scheduler) StartWorker(ctx context.Context, rawURL string, intervalSec 
 		return targetID, nil
 	}
 
-	workerCtx, cancel := context.WithCancel(context.Background())
+	workerCtx, cancel := context.WithCancel(s.ctx)
 	worker := &Worker{
 		TargetID:    targetID,
 		URL:         targetURL,
@@ -165,7 +206,11 @@ func (s *Scheduler) StartWorker(ctx context.Context, rawURL string, intervalSec 
 	s.logger.Info("[MONITOR] target started continuous monitoring worker", slog.String("target_id", targetID), slog.String("url", targetURL), slog.Int("interval_sec", intervalSec))
 
 	// Launch background goroutine ticker loop
-	go s.runWorkerLoop(workerCtx, worker)
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		s.runWorkerLoop(workerCtx, worker)
+	}()
 
 	return targetID, nil
 }
@@ -183,7 +228,7 @@ func (s *Scheduler) StopWorker(ctx context.Context, rawURL string) error {
 	if !exists {
 		s.mu.Unlock()
 		if s.repo != nil {
-			_ = s.repo.SetTargetActiveStatus(ctx, targetURL, false)
+			_ = s.repo.UpdateTargetStatus(ctx, targetURL, "STOPPED", false)
 		}
 		return nil
 	}
@@ -194,7 +239,7 @@ func (s *Scheduler) StopWorker(ctx context.Context, rawURL string) error {
 
 	// Update PostgreSQL database
 	if s.repo != nil {
-		_ = s.repo.SetTargetActiveStatus(ctx, targetURL, false)
+		_ = s.repo.UpdateTargetStatus(ctx, targetURL, "STOPPED", false)
 	}
 
 	// Remove worker lock from Redis
@@ -206,70 +251,136 @@ func (s *Scheduler) StopWorker(ctx context.Context, rawURL string) error {
 	return nil
 }
 
+// PauseWorker pauses scheduled checks without removing the target from database records
+func (s *Scheduler) PauseWorker(ctx context.Context, rawURL string) error {
+	parsedURL, err := monitoring.ValidateAndSanitizeURL(rawURL)
+	if err != nil {
+		return err
+	}
+	targetURL := parsedURL.String()
+
+	s.mu.Lock()
+	worker, exists := s.workers[targetURL]
+	if !exists {
+		s.mu.Unlock()
+		if s.repo != nil {
+			_ = s.repo.UpdateTargetStatus(ctx, targetURL, "PAUSED", false)
+		}
+		return nil
+	}
+
+	worker.cancel()
+	delete(s.workers, targetURL)
+	s.mu.Unlock()
+
+	if s.repo != nil {
+		_ = s.repo.UpdateTargetStatus(ctx, targetURL, "PAUSED", false)
+	}
+
+	if s.cacheService != nil && s.cacheService.IsAvailable() {
+		_ = s.cacheService.Delete(ctx, cache.WorkerStateKey(worker.TargetID))
+	}
+
+	s.logger.Info("[MONITOR] target paused worker", slog.String("url", targetURL))
+	return nil
+}
+
+// ResumeWorker restores worker monitoring checks for a paused target URL
+func (s *Scheduler) ResumeWorker(ctx context.Context, rawURL string, intervalSec int) (string, error) {
+	parsedURL, err := monitoring.ValidateAndSanitizeURL(rawURL)
+	if err != nil {
+		return "", err
+	}
+	targetURL := parsedURL.String()
+
+	if s.repo != nil {
+		_ = s.repo.UpdateTargetStatus(ctx, targetURL, "ACTIVE", true)
+	}
+
+	return s.StartWorker(ctx, targetURL, intervalSec)
+}
+
 func (s *Scheduler) runWorkerLoop(ctx context.Context, w *Worker) {
 	ticker := time.NewTicker(time.Duration(w.IntervalSec) * time.Second)
 	defer ticker.Stop()
 
-	// Perform initial immediate probe check tick
-	s.executeProbeTick(ctx, w)
+	// Initial immediate job dispatch
+	s.queueJob(ctx, w)
 
 	for {
 		select {
 		case <-ctx.Done():
-			s.logger.Info("[WORKER] continuous worker context cancelled", slog.String("url", w.URL))
+			s.logger.Info("[WORKER] continuous worker ticker loop finished", slog.String("url", w.URL))
 			return
 		case <-ticker.C:
-			s.logger.Debug("[WORKER] next probe scheduled tick", slog.String("url", w.URL))
-			s.executeProbeTick(ctx, w)
+			s.queueJob(ctx, w)
 		}
 	}
 }
 
-func (s *Scheduler) executeProbeTick(ctx context.Context, w *Worker) {
+func (s *Scheduler) queueJob(ctx context.Context, w *Worker) {
+	select {
+	case <-ctx.Done():
+		return
+	case s.jobQueue <- &Job{TargetID: w.TargetID, URL: w.URL, IntervalSec: w.IntervalSec}:
+		s.logger.Debug("[SCHEDULER] Queued check job", slog.String("url", w.URL))
+	default:
+		s.logger.Warn("[SCHEDULER] Job queue full; skipping check", slog.String("url", w.URL))
+	}
+}
+
+func (s *Scheduler) executeProbeTick(j *Job) {
 	opts := monitoring.DefaultCheckOptions()
 	opts.Timeout = 12 * time.Second
 
-	s.logger.Info("[PROBE] executing network probe", slog.String("url", w.URL))
-	res, err := s.engine.ExecuteCheck(ctx, w.URL, opts)
+	s.logger.Info("[PROBE] executing network probe", slog.String("url", j.URL))
+	res, err := s.engine.ExecuteCheck(s.ctx, j.URL, opts)
 
+	now := time.Now().UTC()
 	if err != nil {
-		s.logger.Warn("[PROBE] probe failed", slog.String("url", w.URL), slog.String("error", err.Error()))
+		s.logger.Warn("[PROBE] probe failed", slog.String("url", j.URL), slog.String("error", err.Error()))
 		res = &monitoring.CheckResult{
-			TargetID:     w.TargetID,
-			URL:          w.URL,
+			TargetID:     j.TargetID,
+			URL:          j.URL,
 			Available:    false,
 			StatusCode:   0,
 			ErrorMessage: err.Error(),
-			CheckedAt:    time.Now().UTC(),
+			CheckedAt:    now,
 		}
 	} else {
-		res.TargetID = w.TargetID
-		s.logger.Info("[PROBE] probe completed", slog.String("url", w.URL), slog.Int("status", res.StatusCode), slog.Int64("response_ms", res.ResponseTimeMs))
+		res.TargetID = j.TargetID
+		s.logger.Info("[PROBE] probe completed", slog.String("url", j.URL), slog.Int("status", res.StatusCode), slog.Int64("response_ms", res.ResponseTimeMs))
 	}
+
+	nextCheck := now.Add(time.Duration(j.IntervalSec) * time.Second)
 
 	// 1. Insert Telemetry into Neon PostgreSQL
 	if s.repo != nil {
 		pCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		if dbErr := s.repo.SaveCheckResult(pCtx, res); dbErr == nil {
-			s.logger.Debug("[DB] telemetry inserted into postgresql", slog.String("target_id", w.TargetID))
+			s.logger.Debug("[DB] telemetry inserted into postgresql", slog.String("target_id", j.TargetID))
 		}
+		_ = s.repo.UpdateCheckTimestamps(pCtx, j.TargetID, now, nextCheck)
 		cancel()
 	}
 
 	// 2. Cache Latest State in Redis
 	if s.cacheService != nil && s.cacheService.IsAvailable() {
 		rCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		_ = s.cacheService.Set(rCtx, cache.CheckStateKey(w.TargetID), res, 10*time.Minute)
+		_ = s.cacheService.Set(rCtx, cache.CheckStateKey(j.TargetID), res, 10*time.Minute)
 		cancel()
 	}
 
 	// 3. Publish Telemetry Event to SSE Event Bus
-	s.eventBus.Publish(w.URL, res)
-	s.logger.Debug("[EVENT] telemetry published to SSE subscribers", slog.String("url", w.URL))
+	s.eventBus.Publish(j.URL, res)
+	s.logger.Debug("[EVENT] telemetry published to SSE subscribers", slog.String("url", j.URL))
 }
 
 // LoadActiveTargetsFromDB queries PostgreSQL on backend startup and restarts continuous workers
 func (s *Scheduler) LoadActiveTargetsFromDB(ctx context.Context) {
+	if s.repo == nil {
+		return
+	}
 	targets, err := s.repo.GetActiveTargets(ctx)
 	if err != nil {
 		s.logger.Warn("[SCHEDULER] Failed to load active targets from DB", slog.String("error", err.Error()))
@@ -284,14 +395,19 @@ func (s *Scheduler) LoadActiveTargetsFromDB(ctx context.Context) {
 	s.logger.Info("[SCHEDULER] Restored active workers on startup", slog.Int("active_count", len(targets)))
 }
 
-// Close gracefully cancels all active workers on server shutdown
+// Close gracefully cancels all active workers and shuts down the pool cleanly
 func (s *Scheduler) Close() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.cancel() // Cancel context to stop all tickers and worker consumers
 
-	for u, worker := range s.workers {
-		worker.cancel()
+	s.wg.Wait() // Wait for all worker ticker goroutines and pool consumers to exit
+
+	s.mu.Lock()
+	for u := range s.workers {
 		delete(s.workers, u)
 	}
-	s.logger.Info("[SCHEDULER] Stopped all continuous background workers cleanly")
+	s.mu.Unlock()
+
+	close(s.jobQueue)
+
+	s.logger.Info("[SCHEDULER] Stopped all worker consumers and continuous tickers cleanly")
 }

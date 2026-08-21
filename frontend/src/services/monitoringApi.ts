@@ -270,3 +270,126 @@ export const fetchMonitoredTargets = async (): Promise<string[]> => {
     return [];
   }
 };
+
+export const pauseContinuousMonitoring = async (
+  targetUrl: string
+): Promise<{ status: string }> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/pause`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+      }),
+    });
+
+    const data: GoApiResponse<{ status: string }> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      const errorMsg = data.error?.message || `HTTP ${response.status}: Failed to pause monitoring`;
+      throw new Error(errorMsg);
+    }
+
+    return data.data;
+  } catch (err: any) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error(
+        `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
+      );
+    }
+    throw err;
+  }
+};
+
+export const resumeContinuousMonitoring = async (
+  targetUrl: string,
+  intervalSec: number = 30
+): Promise<{ target_id: string; status: string }> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/resume`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        interval_sec: intervalSec,
+      }),
+    });
+
+    const data: GoApiResponse<{ target_id: string; status: string }> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      const errorMsg = data.error?.message || `HTTP ${response.status}: Failed to resume monitoring`;
+      throw new Error(errorMsg);
+    }
+
+    return data.data;
+  } catch (err: any) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error(
+        `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
+      );
+    }
+    throw err;
+  }
+};
+
+export interface TargetDetails {
+	id: string;
+	url: string;
+	name: string;
+	is_active: boolean;
+	status: string;
+	interval_sec: number;
+	last_checked_at?: string;
+	next_checked_at?: string;
+	created_at: string;
+	updated_at: string;
+}
+
+export const fetchMonitorStatus = async (
+  targetId: string
+): Promise<TargetDetails | null> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/status/${encodeURIComponent(targetId)}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<TargetDetails> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return null;
+    }
+
+    return data.data;
+  } catch {
+    return null;
+  }
+};
+
+export const listContinuousMonitors = async (): Promise<TargetDetails[]> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/list`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<TargetDetails[]> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return [];
+    }
+
+    return data.data;
+  } catch {
+    return [];
+  }
+};

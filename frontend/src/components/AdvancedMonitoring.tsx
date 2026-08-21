@@ -12,12 +12,17 @@ import {
   Clock,
   Play,
   Square,
+  Pause,
   CheckCircle2,
 } from 'lucide-react';
 import {
   runGoMonitoringCheck,
   startContinuousMonitoring,
   stopContinuousMonitoring,
+  pauseContinuousMonitoring,
+  resumeContinuousMonitoring,
+  fetchMonitorStatus,
+  listContinuousMonitors,
   connectMonitoringSSE,
   fetchAnalyticsSummary,
   fetchMonitoredTargets,
@@ -40,7 +45,9 @@ export const AdvancedMonitoring: React.FC = () => {
   const [url, setUrl] = useState<string>('https://google.com');
   const [timeRange, setTimeRange] = useState<string>('24h');
   const [monitoringInterval, setMonitoringInterval] = useState<number>(3); // 3s default
-  const [isMonitoringActive, setIsMonitoringActive] = useState<boolean>(false);
+  const [monitoringStatus, setMonitoringStatus] = useState<'ACTIVE' | 'PAUSED' | 'STOPPED'>('STOPPED');
+  const [lastCheckTime, setLastCheckTime] = useState<string | null>(null);
+  const [nextCheckTime, setNextCheckTime] = useState<string | null>(null);
   const [targetsList, setTargetsList] = useState<string[]>([]);
 
   const [loadingCheck, setLoadingCheck] = useState<boolean>(false);
@@ -51,6 +58,8 @@ export const AdvancedMonitoring: React.FC = () => {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [localHistory, setLocalHistory] = useState<GoMonitoringResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const isMonitoringActive = monitoringStatus === 'ACTIVE';
 
   // Clear local history when url changes to keep data clean
   useEffect(() => {
@@ -73,6 +82,26 @@ export const AdvancedMonitoring: React.FC = () => {
     });
   }, []);
 
+  // Fetch current monitor status for the URL
+  const loadMonitorStatus = useCallback(async () => {
+    if (!url) return;
+    try {
+      const list = await listContinuousMonitors();
+      const matched = list.find((m) => m.url === url);
+      if (matched) {
+        setMonitoringStatus(matched.status as any);
+        setLastCheckTime(matched.last_checked_at || null);
+        setNextCheckTime(matched.next_checked_at || null);
+      } else {
+        setMonitoringStatus('STOPPED');
+        setLastCheckTime(null);
+        setNextCheckTime(null);
+      }
+    } catch {
+      // Fallback
+    }
+  }, [url]);
+
   // Load target list on mount
   useEffect(() => {
     fetchMonitoredTargets().then((list) => {
@@ -81,6 +110,13 @@ export const AdvancedMonitoring: React.FC = () => {
       }
     });
   }, []);
+
+  // Refresh status on URL change and periodically
+  useEffect(() => {
+    loadMonitorStatus();
+    const interval = setInterval(loadMonitorStatus, 4000);
+    return () => clearInterval(interval);
+  }, [loadMonitorStatus]);
 
   // Fetch Analytics Summary for current URL and timeRange
   const loadAnalytics = useCallback(async (targetUrl: string, range: string) => {
@@ -105,34 +141,68 @@ export const AdvancedMonitoring: React.FC = () => {
     const cleanupSSE = connectMonitoringSSE(url, (newCheck) => {
       console.log('[SSE] Live probe tick received:', newCheck);
       handleCheckReceived(newCheck);
-      // Reload analytics to update all charts dynamically
       loadAnalytics(url, timeRange);
+      loadMonitorStatus();
     });
 
     return () => {
       console.log(`[SSE] Closing stream for ${url}`);
       cleanupSSE();
     };
-  }, [isMonitoringActive, url, timeRange, loadAnalytics, handleCheckReceived]);
+  }, [isMonitoringActive, url, timeRange, loadAnalytics, handleCheckReceived, loadMonitorStatus]);
 
-  // Start Continuous Backend Monitoring
+  // Start/Stop Continuous Backend Monitoring
   const handleToggleMonitoring = async () => {
     if (!url || url.trim() === '') return;
     setLoadingToggle(true);
     setError(null);
 
     try {
-      if (isMonitoringActive) {
+      if (monitoringStatus === 'ACTIVE' || monitoringStatus === 'PAUSED') {
         await stopContinuousMonitoring(url);
-        setIsMonitoringActive(false);
+        setMonitoringStatus('STOPPED');
       } else {
         await startContinuousMonitoring(url, monitoringInterval);
-        setIsMonitoringActive(true);
-        // Immediately fetch latest analytics
+        setMonitoringStatus('ACTIVE');
         await loadAnalytics(url, timeRange);
       }
+      await loadMonitorStatus();
     } catch (err: any) {
       setError(err.message || 'Failed to update continuous monitoring state.');
+    } finally {
+      setLoadingToggle(false);
+    }
+  };
+
+  // Pause continuous checks
+  const handlePauseMonitoring = async () => {
+    if (!url || url.trim() === '') return;
+    setLoadingToggle(true);
+    setError(null);
+
+    try {
+      await pauseContinuousMonitoring(url);
+      setMonitoringStatus('PAUSED');
+      await loadMonitorStatus();
+    } catch (err: any) {
+      setError(err.message || 'Failed to pause monitoring.');
+    } finally {
+      setLoadingToggle(false);
+    }
+  };
+
+  // Resume continuous checks
+  const handleResumeMonitoring = async () => {
+    if (!url || url.trim() === '') return;
+    setLoadingToggle(true);
+    setError(null);
+
+    try {
+      await resumeContinuousMonitoring(url, monitoringInterval);
+      setMonitoringStatus('ACTIVE');
+      await loadMonitorStatus();
+    } catch (err: any) {
+      setError(err.message || 'Failed to resume monitoring.');
     } finally {
       setLoadingToggle(false);
     }
@@ -342,19 +412,46 @@ export const AdvancedMonitoring: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {isMonitoringActive && (
-              <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono text-xs px-3 py-1.5 rounded-xl font-bold animate-pulse">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span>WORKER ACTIVE ({monitoringInterval}s Ticker)</span>
+          {/* Live Worker Status Indicators */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className={`flex items-center gap-2 border font-mono text-xs px-3 py-1.5 rounded-xl font-bold ${
+              monitoringStatus === 'ACTIVE'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                : monitoringStatus === 'PAUSED'
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
+                : 'bg-muted/60 border-black/10 text-muted-foreground'
+            }`}>
+              <span className={`w-2 h-2 rounded-full ${
+                monitoringStatus === 'ACTIVE'
+                  ? 'bg-emerald-500 animate-pulse'
+                  : monitoringStatus === 'PAUSED'
+                  ? 'bg-amber-500'
+                  : 'bg-slate-400'
+              }`} />
+              <span>{monitoringStatus === 'ACTIVE' ? `ACTIVE (${monitoringInterval}s Ticker)` : monitoringStatus}</span>
+            </div>
+
+            {lastCheckTime && (
+              <div className="flex items-center gap-2 bg-muted/40 border border-black/5 rounded-xl px-3 py-1.5 text-xs font-mono text-muted-foreground">
+                <Clock className="w-3.5 h-3.5 text-chart-1" />
+                <span>Last Check: {new Date(lastCheckTime).toLocaleTimeString()}</span>
               </div>
             )}
 
-            <div className="flex items-center gap-2 bg-muted/40 border border-black/5 rounded-xl px-4 py-2 text-xs font-mono text-muted-foreground">
+            {nextCheckTime && monitoringStatus === 'ACTIVE' && (
+              <div className="flex items-center gap-2 bg-muted/40 border border-black/5 rounded-xl px-3 py-1.5 text-xs font-mono text-muted-foreground">
+                <Clock className="w-3.5 h-3.5 text-chart-2 animate-spin-slow" />
+                <span>Next Check: {new Date(nextCheckTime).toLocaleTimeString()}</span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 bg-muted/40 border border-black/5 rounded-xl px-4 py-1.5 text-xs font-mono text-muted-foreground">
               <Server className="w-4 h-4 text-chart-2" />
               <span>API: {import.meta.env.VITE_API_URL || 'http://localhost:8081'}</span>
             </div>
           </div>
         </div>
+      </div>
 
         {/* Input & Filter Controls Form */}
         <form onSubmit={handleRunCheck} className="mt-6 flex flex-wrap items-stretch gap-3">
@@ -392,7 +489,7 @@ export const AdvancedMonitoring: React.FC = () => {
             <select
               value={monitoringInterval}
               onChange={(e) => setMonitoringInterval(Number(e.target.value))}
-              disabled={isMonitoringActive}
+              disabled={monitoringStatus !== 'STOPPED'}
               className="bg-transparent font-bold focus:outline-none cursor-pointer disabled:opacity-50"
             >
               <option value={3}>3 sec</option>
@@ -420,31 +517,76 @@ export const AdvancedMonitoring: React.FC = () => {
             ))}
           </div>
 
-          {/* Continuous Worker Start/Stop Button */}
-          <Button
-            type="button"
-            onClick={handleToggleMonitoring}
-            disabled={loadingToggle}
-            className={`h-12 px-5 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 shrink-0 ${
-              isMonitoringActive
-                ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-            }`}
-          >
-            {loadingToggle ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : isMonitoringActive ? (
-              <>
-                <Square className="w-4 h-4 fill-current" />
-                Stop Monitoring
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4 fill-current" />
-                Start Continuous Monitoring
-              </>
-            )}
-          </Button>
+          {/* Continuous Worker Controls: Start, Pause, Resume, Stop */}
+          {monitoringStatus === 'STOPPED' ? (
+            <Button
+              type="button"
+              onClick={handleToggleMonitoring}
+              disabled={loadingToggle}
+              className="h-12 px-5 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {loadingToggle ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Play className="w-4 h-4 fill-current" />
+                  Start Continuous Monitoring
+                </>
+              )}
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2 shrink-0">
+              {monitoringStatus === 'ACTIVE' ? (
+                <Button
+                  type="button"
+                  onClick={handlePauseMonitoring}
+                  disabled={loadingToggle}
+                  className="h-12 px-4 font-bold rounded-xl shadow-md transition-all flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  {loadingToggle ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Pause className="w-4 h-4 fill-current" />
+                      Pause
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handleResumeMonitoring}
+                  disabled={loadingToggle}
+                  className="h-12 px-4 font-bold rounded-xl shadow-md transition-all flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  {loadingToggle ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 fill-current" />
+                      Resume
+                    </>
+                  )}
+                </Button>
+              )}
+
+              <Button
+                type="button"
+                onClick={handleToggleMonitoring}
+                disabled={loadingToggle}
+                className="h-12 px-4 font-bold rounded-xl shadow-md transition-all flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                {loadingToggle ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Square className="w-4 h-4 fill-current" />
+                    Stop
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
 
           {/* Single Manual Run Check Button */}
           <Button

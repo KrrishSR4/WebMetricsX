@@ -59,7 +59,22 @@ func TestScheduler_WorkerLifecycle(t *testing.T) {
 		t.Errorf("Timed out waiting for probe tick event")
 	}
 
-	// 5. Stop Worker
+	// 5. Pause Worker
+	err = sched.PauseWorker(ctx, ts.URL)
+	if err != nil {
+		t.Errorf("Failed to pause worker: %v", err)
+	}
+
+	// 6. Resume Worker
+	resID, err := sched.ResumeWorker(ctx, ts.URL, 1)
+	if err != nil {
+		t.Errorf("Failed to resume worker: %v", err)
+	}
+	if resID != targetID {
+		t.Errorf("Expected target ID %s on resume, got %s", targetID, resID)
+	}
+
+	// 7. Stop Worker
 	err = sched.StopWorker(ctx, ts.URL)
 	if err != nil {
 		t.Errorf("Failed to stop worker: %v", err)
