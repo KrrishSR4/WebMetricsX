@@ -1,4 +1,4 @@
-import { BarChart3, Github, Home, Zap, Bell } from 'lucide-react';
+import { BarChart3, Cpu, Github, Home, Zap, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Header() {
@@ -19,6 +19,10 @@ export function Header() {
           </div>
 
           <div className="hidden sm:flex items-center gap-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-chart-1 font-semibold">
+              <Cpu className="h-4 w-4" />
+              <span>Go Engine V2.0</span>
+            </div>
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4" />
               <span>Real-time Analytics</span>

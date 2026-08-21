@@ -5,12 +5,14 @@ import { useUrlHistory } from '@/hooks/useUrlHistory';
 import { useNotifications } from '@/hooks/useNotifications';
 import { UrlInput } from '@/components/UrlInput';
 import { Dashboard } from '@/components/Dashboard';
+import { AdvancedMonitoring } from '@/components/AdvancedMonitoring';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import {
   Activity,
   BarChart3,
   CheckCircle2,
+  Cpu,
   Globe,
   Home,
   Search,
@@ -53,6 +55,8 @@ const featureCards = [
 
 const Monitor = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'pagespeed' | 'advanced'>('pagespeed');
+
   const {
     isMonitoring,
     isLoading,
@@ -107,119 +111,157 @@ const Monitor = () => {
       <Header />
 
       <main className="flex-1">
-        <div className="container mx-auto px-4">
-          {!showStopped && (
+        <div className="container mx-auto px-4 py-8">
+          {/* Top Engine Selector Tabs */}
+          <div className="max-w-md mx-auto mb-8 p-1.5 rounded-2xl bg-card border border-black/10 flex items-center shadow-sm">
+            <button
+              onClick={() => setActiveTab('pagespeed')}
+              className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                activeTab === 'pagespeed'
+                  ? 'bg-chart-1 text-white shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Zap className="w-4 h-4" />
+              PageSpeed & SEO (V1.0)
+            </button>
+            <button
+              onClick={() => setActiveTab('advanced')}
+              className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                activeTab === 'advanced'
+                  ? 'bg-chart-1 text-white shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Cpu className="w-4 h-4" />
+              Go Probing Engine (V2.0)
+            </button>
+          </div>
+
+          {/* TAB 1: PageSpeed & SEO Audit (V1.0) */}
+          {activeTab === 'pagespeed' && (
             <>
-              {!isMonitoring && (
-                <section className="pt-20 pb-16 text-center animate-fade-in-up">
-                  <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground mb-5 leading-[1.05]">
-                    Monitor Any Website
-                    <br />
-                    <span className="text-chart-1">In Real-Time</span>
-                  </h1>
-                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-20">
-                    Professional website monitoring with live metrics, performance analysis, SSL
-                    validation, and SEO insights. Updated every 5 seconds.
-                  </p>
-                  <UrlInput
-                    onSubmit={handleStart}
-                    onStop={handleStop}
-                    isMonitoring={isMonitoring}
-                    isLoading={isLoading}
-                    history={history}
-                    onSelectHistory={handleSelectFromHistory}
-                    onRemoveHistory={removeFromHistory}
-                    onClearHistory={clearHistory}
-                    currentUrl={currentUrl}
-                    notificationsEnabled={notificationsEnabled}
-                    onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
-                    isNotificationSupported={isSupported}
-                  />
-                </section>
+              {!showStopped && (
+                <>
+                  {!isMonitoring && (
+                    <section className="pt-10 pb-16 text-center animate-fade-in-up">
+                      <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground mb-5 leading-[1.05]">
+                        Monitor Any Website
+                        <br />
+                        <span className="text-chart-1">In Real-Time</span>
+                      </h1>
+                      <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-20">
+                        Professional website monitoring with live metrics, performance analysis, SSL
+                        validation, and SEO insights. Updated every 5 seconds.
+                      </p>
+                      <UrlInput
+                        onSubmit={handleStart}
+                        onStop={handleStop}
+                        isMonitoring={isMonitoring}
+                        isLoading={isLoading}
+                        history={history}
+                        onSelectHistory={handleSelectFromHistory}
+                        onRemoveHistory={removeFromHistory}
+                        onClearHistory={clearHistory}
+                        currentUrl={currentUrl}
+                        notificationsEnabled={notificationsEnabled}
+                        onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
+                        isNotificationSupported={isSupported}
+                      />
+                    </section>
+                  )}
+
+                  {isMonitoring && (
+                    <section className="max-w-4xl mx-auto py-10">
+                      <UrlInput
+                        onSubmit={handleStart}
+                        onStop={handleStop}
+                        isMonitoring={isMonitoring}
+                        isLoading={isLoading}
+                        history={history}
+                        onSelectHistory={handleSelectFromHistory}
+                        onRemoveHistory={removeFromHistory}
+                        onClearHistory={clearHistory}
+                        currentUrl={currentUrl}
+                        notificationsEnabled={notificationsEnabled}
+                        onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
+                        isNotificationSupported={isSupported}
+                      />
+                    </section>
+                  )}
+
+                  {error && (
+                    <div className="mt-4 text-center">
+                      <p className="text-status-down">{error}</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {showStopped && (
+                <div className="text-center space-y-6 py-16 animate-fade-in max-w-4xl mx-auto">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-chart-2/10">
+                      <CheckCircle2 className="h-8 w-8 text-chart-2" />
+                    </div>
+                    <h1 className="text-2xl font-bold">Monitoring Stopped</h1>
+                    <p className="text-muted-foreground max-w-md">
+                      You've stopped monitoring{' '}
+                      <span className="font-medium text-foreground">
+                        {(() => {
+                          try {
+                            return new URL(currentUrl).hostname;
+                          } catch {
+                            return currentUrl || 'the website';
+                          }
+                        })()}
+                      </span>
+                      . You can start monitoring another website or return to the home page.
+                    </p>
+                    <Button onClick={handleReturnHome} size="lg" className="h-12 px-8 gap-2 mt-2">
+                      <Home className="h-5 w-5" />
+                      Return to Home
+                    </Button>
+                  </div>
+                </div>
               )}
 
               {isMonitoring && (
-                <section className="max-w-4xl mx-auto py-10">
-                  <UrlInput
-                    onSubmit={handleStart}
-                    onStop={handleStop}
-                    isMonitoring={isMonitoring}
-                    isLoading={isLoading}
-                    history={history}
-                    onSelectHistory={handleSelectFromHistory}
-                    onRemoveHistory={removeFromHistory}
-                    onClearHistory={clearHistory}
-                    currentUrl={currentUrl}
-                    notificationsEnabled={notificationsEnabled}
-                    onToggleNotification={() => currentUrl && toggleNotificationForUrl(currentUrl)}
-                    isNotificationSupported={isSupported}
-                  />
-                </section>
+                <div className="max-w-4xl mx-auto animate-fade-in-up pb-12">
+                  <Dashboard data={metrics} />
+                </div>
               )}
 
-              {error && (
-                <div className="mt-4 text-center">
-                  <p className="text-status-down">{error}</p>
-                </div>
+              {!isMonitoring && !showStopped && (
+                <section className="pb-20">
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {featureCards.map((feature) => (
+                      <article
+                        key={feature.title}
+                        className="rounded-lg border border-black/10 bg-card p-6 shadow-sm hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-chart-1">
+                            <feature.icon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h2 className="mb-4 text-base font-semibold text-foreground">{feature.title}</h2>
+                            <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
               )}
             </>
           )}
 
-          {showStopped && (
-            <div className="text-center space-y-6 py-16 animate-fade-in max-w-4xl mx-auto">
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-chart-2/10">
-                  <CheckCircle2 className="h-8 w-8 text-chart-2" />
-                </div>
-                <h1 className="text-2xl font-bold">Monitoring Stopped</h1>
-                <p className="text-muted-foreground max-w-md">
-                  You've stopped monitoring{' '}
-                  <span className="font-medium text-foreground">
-                    {(() => {
-                      try {
-                        return new URL(currentUrl).hostname;
-                      } catch {
-                        return currentUrl || 'the website';
-                      }
-                    })()}
-                  </span>
-                  . You can start monitoring another website or return to the home page.
-                </p>
-                <Button onClick={handleReturnHome} size="lg" className="h-12 px-8 gap-2 mt-2">
-                  <Home className="h-5 w-5" />
-                  Return to Home
-                </Button>
-              </div>
+          {/* TAB 2: Go Backend Advanced Monitoring (V2.0) */}
+          {activeTab === 'advanced' && (
+            <div className="max-w-4xl mx-auto py-6">
+              <AdvancedMonitoring />
             </div>
-          )}
-
-          {isMonitoring && (
-            <div className="max-w-4xl mx-auto animate-fade-in-up pb-12">
-              <Dashboard data={metrics} />
-            </div>
-          )}
-
-          {!isMonitoring && !showStopped && (
-            <section className="pb-20">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {featureCards.map((feature) => (
-                  <article
-                    key={feature.title}
-                    className="rounded-lg border border-black/10 bg-card p-6 shadow-sm hover:shadow-md transition-all"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-chart-1">
-                        <feature.icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h2 className="mb-4 text-base font-semibold text-foreground">{feature.title}</h2>
-                        <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
           )}
         </div>
       </main>

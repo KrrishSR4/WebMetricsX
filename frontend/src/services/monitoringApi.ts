@@ -1,0 +1,177 @@
+export interface GoMonitoringResult {
+  target_id?: string;
+  url: string;
+  available: boolean;
+  status_code: number;
+  dns_latency_ms: number;
+  tcp_latency_ms: number;
+  tls_latency_ms: number;
+  ttfb_ms: number;
+  response_time_ms: number;
+  ssl_valid: boolean;
+  ssl_expiry_date?: string;
+  ssl_issuer?: string;
+  error_message?: string;
+  checked_at: string;
+}
+
+export interface LatencyBucket {
+  label: string;
+  min_ms: number;
+  max_ms: number;
+  count: number;
+}
+
+export interface PhaseBreakdown {
+  dns_ms: number;
+  dns_pct: number;
+  tcp_ms: number;
+  tcp_pct: number;
+  tls_ms: number;
+  tls_pct: number;
+  ttfb_ms: number;
+  ttfb_pct: number;
+  download_ms: number;
+  download_pct: number;
+  total_ms: number;
+}
+
+export interface StatusDistribution {
+  status_code: number;
+  category: string;
+  count: number;
+}
+
+export interface HeatmapCell {
+  day_of_week: string;
+  hour_of_day: number;
+  avg_ms: number;
+  p95_ms: number;
+  count: number;
+}
+
+export interface AnalyticsSummary {
+  target_url: string;
+  time_range: string;
+  total_checks: number;
+  successful_checks: number;
+  failed_checks: number;
+  degraded_checks: number;
+  uptime_percentage: number;
+  avg_response_time_ms: number;
+  p50_response_time_ms: number;
+  p75_response_time_ms: number;
+  p95_response_time_ms: number;
+  p99_response_time_ms: number;
+  min_response_time_ms: number;
+  max_response_time_ms: number;
+  avg_ttfb_ms: number;
+  p50_ttfb_ms: number;
+  p95_ttfb_ms: number;
+  p99_ttfb_ms: number;
+  longest_incident_sec: number;
+  latency_buckets: LatencyBucket[];
+  phase_breakdown: PhaseBreakdown;
+  status_distribution: StatusDistribution[];
+  heatmap: HeatmapCell[];
+  history: GoMonitoringResult[];
+}
+
+export interface GoApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+const getApiBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && envUrl.trim() !== '') {
+    return envUrl.replace(/\/+$/, '');
+  }
+  return 'http://localhost:8081';
+};
+
+export const runGoMonitoringCheck = async (
+  targetUrl: string,
+  targetId?: string
+): Promise<GoMonitoringResult> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/check`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        target_id: targetId,
+      }),
+    });
+
+    const data: GoApiResponse<GoMonitoringResult> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      const errorMsg = data.error?.message || `HTTP ${response.status}: Failed to run monitoring check`;
+      throw new Error(errorMsg);
+    }
+
+    return data.data;
+  } catch (err: any) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error(
+        `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
+      );
+    }
+    throw err;
+  }
+};
+
+export const fetchAnalyticsSummary = async (
+  targetUrl: string,
+  timeRange: string = '24h'
+): Promise<AnalyticsSummary> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/analytics?url=${encodeURIComponent(targetUrl)}&range=${encodeURIComponent(timeRange)}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<AnalyticsSummary> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      const errorMsg = data.error?.message || `HTTP ${response.status}: Failed to fetch analytics summary`;
+      throw new Error(errorMsg);
+    }
+
+    return data.data;
+  } catch (err: any) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error(
+        `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
+      );
+    }
+    throw err;
+  }
+};
+
+export const fetchMonitoredTargets = async (): Promise<string[]> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/targets`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<string[]> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return [];
+    }
+
+    return data.data;
+  } catch {
+    return [];
+  }
+};
