@@ -20,6 +20,7 @@ func Setup(
 ) {
 	healthHandler := handlers.NewHealthHandler(appVersion, cacheService)
 	monitoringHandler := handlers.NewMonitoringHandler(engine, repo, cacheService, logger)
+	analyticsHandler := handlers.NewAnalyticsHandler(repo, logger)
 
 	// Direct Health Endpoint
 	router.GET("/health", healthHandler.Check)
@@ -29,5 +30,7 @@ func Setup(
 	{
 		v1.GET("/health", healthHandler.Check)
 		v1.POST("/monitoring/check", monitoringHandler.RunCheck)
+		v1.GET("/monitoring/analytics", analyticsHandler.GetAnalytics)
+		v1.GET("/monitoring/targets", analyticsHandler.GetTargets)
 	}
 }
