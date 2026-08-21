@@ -259,7 +259,7 @@ const Monitor = () => {
 
           {/* TAB 2: Go Backend Advanced Monitoring (V2.0) */}
           {activeTab === 'advanced' && (
-            <div className="max-w-4xl mx-auto py-6">
+            <div className="max-w-7xl mx-auto py-6">
               <AdvancedMonitoring />
             </div>
           )}

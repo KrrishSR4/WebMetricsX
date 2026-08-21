@@ -49,7 +49,29 @@ export const AdvancedMonitoring: React.FC = () => {
   
   const [latestCheck, setLatestCheck] = useState<GoMonitoringResult | null>(null);
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [localHistory, setLocalHistory] = useState<GoMonitoringResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Clear local history when url changes to keep data clean
+  useEffect(() => {
+    setLocalHistory([]);
+    setLatestCheck(null);
+  }, [url]);
+
+  const handleCheckReceived = useCallback((check: GoMonitoringResult) => {
+    setLatestCheck(check);
+    setLocalHistory((prev) => {
+      // Prevent duplicate timestamps in local history state
+      if (prev.some((p) => p.checked_at === check.checked_at)) {
+        return prev;
+      }
+      const updated = [...prev, check];
+      if (updated.length > 50) {
+        updated.shift();
+      }
+      return updated;
+    });
+  }, []);
 
   // Load target list on mount
   useEffect(() => {
@@ -82,7 +104,7 @@ export const AdvancedMonitoring: React.FC = () => {
     console.log(`[SSE] Establishing live telemetry stream for ${url}`);
     const cleanupSSE = connectMonitoringSSE(url, (newCheck) => {
       console.log('[SSE] Live probe tick received:', newCheck);
-      setLatestCheck(newCheck);
+      handleCheckReceived(newCheck);
       // Reload analytics to update all charts dynamically
       loadAnalytics(url, timeRange);
     });
@@ -91,7 +113,7 @@ export const AdvancedMonitoring: React.FC = () => {
       console.log(`[SSE] Closing stream for ${url}`);
       cleanupSSE();
     };
-  }, [isMonitoringActive, url, timeRange, loadAnalytics]);
+  }, [isMonitoringActive, url, timeRange, loadAnalytics, handleCheckReceived]);
 
   // Start Continuous Backend Monitoring
   const handleToggleMonitoring = async () => {
@@ -131,7 +153,7 @@ export const AdvancedMonitoring: React.FC = () => {
 
     try {
       const data = await runGoMonitoringCheck(url);
-      setLatestCheck(data);
+      handleCheckReceived(data);
       await loadAnalytics(url, timeRange);
     } catch (err: any) {
       setError(err.message || 'An error occurred while probing the website.');
@@ -144,53 +166,158 @@ export const AdvancedMonitoring: React.FC = () => {
     }
   };
 
-  // Construct fallback summary if database has 0 historical points yet
-  const activeSummary: AnalyticsSummary = summary && summary.total_checks > 0 ? summary : {
-    target_url: url,
-    time_range: timeRange,
-    total_checks: latestCheck ? 1 : 0,
-    successful_checks: latestCheck && latestCheck.available ? 1 : 0,
-    failed_checks: latestCheck && !latestCheck.available ? 1 : 0,
-    degraded_checks: 0,
-    uptime_percentage: latestCheck && latestCheck.available ? 100 : 0,
-    avg_response_time_ms: latestCheck ? latestCheck.response_time_ms : 0,
-    p50_response_time_ms: latestCheck ? latestCheck.response_time_ms : 0,
-    p75_response_time_ms: latestCheck ? latestCheck.response_time_ms : 0,
-    p95_response_time_ms: latestCheck ? latestCheck.response_time_ms : 0,
-    p99_response_time_ms: latestCheck ? latestCheck.response_time_ms : 0,
-    min_response_time_ms: latestCheck ? latestCheck.response_time_ms : 0,
-    max_response_time_ms: latestCheck ? latestCheck.response_time_ms : 0,
-    avg_ttfb_ms: latestCheck ? latestCheck.ttfb_ms : 0,
-    p50_ttfb_ms: latestCheck ? latestCheck.ttfb_ms : 0,
-    p95_ttfb_ms: latestCheck ? latestCheck.ttfb_ms : 0,
-    p99_ttfb_ms: latestCheck ? latestCheck.ttfb_ms : 0,
-    longest_incident_sec: 0,
-    latency_buckets: [
-      { label: '0-50ms', min_ms: 0, max_ms: 50, count: latestCheck && latestCheck.response_time_ms <= 50 ? 1 : 0 },
-      { label: '50-100ms', min_ms: 50, max_ms: 100, count: latestCheck && latestCheck.response_time_ms > 50 && latestCheck.response_time_ms <= 100 ? 1 : 0 },
-      { label: '100-200ms', min_ms: 100, max_ms: 200, count: latestCheck && latestCheck.response_time_ms > 100 && latestCheck.response_time_ms <= 200 ? 1 : 0 },
-      { label: '200-300ms', min_ms: 200, max_ms: 300, count: latestCheck && latestCheck.response_time_ms > 200 && latestCheck.response_time_ms <= 300 ? 1 : 0 },
-      { label: '300-500ms', min_ms: 300, max_ms: 500, count: latestCheck && latestCheck.response_time_ms > 300 && latestCheck.response_time_ms <= 500 ? 1 : 0 },
-      { label: '500ms-1s', min_ms: 500, max_ms: 1000, count: latestCheck && latestCheck.response_time_ms > 500 && latestCheck.response_time_ms <= 1000 ? 1 : 0 },
-      { label: '1s+', min_ms: 1000, max_ms: 999999, count: latestCheck && latestCheck.response_time_ms > 1000 ? 1 : 0 },
-    ],
-    phase_breakdown: {
-      dns_ms: latestCheck ? latestCheck.dns_latency_ms : 0,
-      dns_pct: 0,
-      tcp_ms: latestCheck ? latestCheck.tcp_latency_ms : 0,
-      tcp_pct: 0,
-      tls_ms: latestCheck ? latestCheck.tls_latency_ms : 0,
-      tls_pct: 0,
-      ttfb_ms: latestCheck ? latestCheck.ttfb_ms : 0,
-      ttfb_pct: 0,
-      download_ms: latestCheck ? Math.max(0, latestCheck.response_time_ms - latestCheck.ttfb_ms) : 0,
-      download_pct: 0,
-      total_ms: latestCheck ? latestCheck.response_time_ms : 1,
-    },
-    status_distribution: latestCheck ? [{ status_code: latestCheck.status_code, category: '2xx Success', count: 1 }] : [],
-    heatmap: [],
-    history: latestCheck ? [latestCheck] : [],
+  // Dynamically calculate full AnalyticsSummary from local history state if backend DB has no data
+  const computeAnalyticsSummary = (historyList: GoMonitoringResult[], targetUrl: string, range: string): AnalyticsSummary => {
+    const total = historyList.length;
+    if (total === 0) {
+      return {
+        target_url: targetUrl,
+        time_range: range,
+        total_checks: 0,
+        successful_checks: 0,
+        failed_checks: 0,
+        degraded_checks: 0,
+        uptime_percentage: 100,
+        avg_response_time_ms: 0,
+        p50_response_time_ms: 0,
+        p75_response_time_ms: 0,
+        p95_response_time_ms: 0,
+        p99_response_time_ms: 0,
+        min_response_time_ms: 0,
+        max_response_time_ms: 0,
+        avg_ttfb_ms: 0,
+        p50_ttfb_ms: 0,
+        p95_ttfb_ms: 0,
+        p99_ttfb_ms: 0,
+        longest_incident_sec: 0,
+        latency_buckets: [
+          { label: '0-50ms', min_ms: 0, max_ms: 50, count: 0 },
+          { label: '50-100ms', min_ms: 50, max_ms: 100, count: 0 },
+          { label: '100-200ms', min_ms: 100, max_ms: 200, count: 0 },
+          { label: '200-300ms', min_ms: 200, max_ms: 300, count: 0 },
+          { label: '300-500ms', min_ms: 300, max_ms: 500, count: 0 },
+          { label: '500ms-1s', min_ms: 500, max_ms: 1000, count: 0 },
+          { label: '1s+', min_ms: 1000, max_ms: 999999, count: 0 },
+        ],
+        phase_breakdown: {
+          dns_ms: 0, dns_pct: 0, tcp_ms: 0, tcp_pct: 0, tls_ms: 0, tls_pct: 0,
+          ttfb_ms: 0, ttfb_pct: 0, download_ms: 0, download_pct: 0, total_ms: 0
+        },
+        status_distribution: [],
+        heatmap: [],
+        history: [],
+      };
+    }
+
+    const sortedLatency = [...historyList].map((h) => h.response_time_ms).sort((a, b) => a - b);
+    const sortedTTFB = [...historyList].map((h) => h.ttfb_ms).sort((a, b) => a - b);
+
+    const getPercentile = (arr: number[], p: number) => {
+      if (arr.length === 0) return 0;
+      const idx = Math.ceil((p / 100) * arr.length) - 1;
+      return arr[Math.max(0, idx)];
+    };
+
+    const successful = historyList.filter((h) => h.available && h.status_code < 400).length;
+    const failed = historyList.filter((h) => !h.available || h.status_code >= 500).length;
+    const degraded = historyList.filter((h) => h.response_time_ms > 400 && h.status_code < 500).length;
+
+    const uptime = (successful / total) * 100;
+
+    const avgResponse = Math.round(historyList.reduce((sum, h) => sum + h.response_time_ms, 0) / total);
+    const avgTTFB = Math.round(historyList.reduce((sum, h) => sum + h.ttfb_ms, 0) / total);
+
+    const avgDNS = Math.round(historyList.reduce((sum, h) => sum + h.dns_latency_ms, 0) / total);
+    const avgTCP = Math.round(historyList.reduce((sum, h) => sum + h.tcp_latency_ms, 0) / total);
+    const avgTLS = Math.round(historyList.reduce((sum, h) => sum + h.tls_latency_ms, 0) / total);
+
+    const buckets = [
+      { label: '0-50ms', min_ms: 0, max_ms: 50, count: historyList.filter(h => h.response_time_ms <= 50).length },
+      { label: '50-100ms', min_ms: 50, max_ms: 100, count: historyList.filter(h => h.response_time_ms > 50 && h.response_time_ms <= 100).length },
+      { label: '100-200ms', min_ms: 100, max_ms: 200, count: historyList.filter(h => h.response_time_ms > 100 && h.response_time_ms <= 200).length },
+      { label: '200-300ms', min_ms: 200, max_ms: 300, count: historyList.filter(h => h.response_time_ms > 200 && h.response_time_ms <= 300).length },
+      { label: '300-500ms', min_ms: 300, max_ms: 500, count: historyList.filter(h => h.response_time_ms > 300 && h.response_time_ms <= 500).length },
+      { label: '500ms-1s', min_ms: 500, max_ms: 1000, count: historyList.filter(h => h.response_time_ms > 500 && h.response_time_ms <= 1000).length },
+      { label: '1s+', min_ms: 1000, max_ms: 999999, count: historyList.filter(h => h.response_time_ms > 1000).length },
+    ];
+
+    const statusMap: Record<number, number> = {};
+    historyList.forEach((h) => {
+      statusMap[h.status_code] = (statusMap[h.status_code] || 0) + 1;
+    });
+    const statusDistribution = Object.entries(statusMap).map(([code, count]) => ({
+      status_code: Number(code),
+      category: Number(code) >= 200 && Number(code) < 300 ? '2xx Success' : 'Error',
+      count,
+    }));
+
+    // Heatmap calculation
+    const heatmap: HeatmapCell[] = [];
+    const heatmapMap: Record<string, { sum: number; p95s: number[]; count: number }> = {};
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    historyList.forEach((h) => {
+      const d = new Date(h.checked_at);
+      const day = days[d.getDay()];
+      const hour = d.getHours();
+      const key = `${day}-${hour}`;
+      if (!heatmapMap[key]) {
+        heatmapMap[key] = { sum: 0, p95s: [], count: 0 };
+      }
+      heatmapMap[key].sum += h.response_time_ms;
+      heatmapMap[key].p95s.push(h.response_time_ms);
+      heatmapMap[key].count++;
+    });
+    Object.entries(heatmapMap).forEach(([key, val]) => {
+      const [day, hour] = key.split('-');
+      val.p95s.sort((a, b) => a - b);
+      const p95 = getPercentile(val.p95s, 95);
+      heatmap.push({
+        day_of_week: day,
+        hour_of_day: Number(hour),
+        avg_ms: Math.round(val.sum / val.count),
+        p95_ms: p95,
+        count: val.count,
+      });
+    });
+
+    return {
+      target_url: targetUrl,
+      time_range: range,
+      total_checks: total,
+      successful_checks: successful,
+      failed_checks: failed,
+      degraded_checks: degraded,
+      uptime_percentage: uptime,
+      avg_response_time_ms: avgResponse,
+      p50_response_time_ms: getPercentile(sortedLatency, 50),
+      p75_response_time_ms: getPercentile(sortedLatency, 75),
+      p95_response_time_ms: getPercentile(sortedLatency, 95),
+      p99_response_time_ms: getPercentile(sortedLatency, 99),
+      min_response_time_ms: sortedLatency[0],
+      max_response_time_ms: sortedLatency[sortedLatency.length - 1],
+      avg_ttfb_ms: avgTTFB,
+      p50_ttfb_ms: getPercentile(sortedTTFB, 50),
+      p95_ttfb_ms: getPercentile(sortedTTFB, 95),
+      p99_ttfb_ms: getPercentile(sortedTTFB, 99),
+      longest_incident_sec: 0,
+      latency_buckets: buckets,
+      phase_breakdown: {
+        dns_ms: avgDNS, dns_pct: 0,
+        tcp_ms: avgTCP, tcp_pct: 0,
+        tls_ms: avgTLS, tls_pct: 0,
+        ttfb_ms: avgTTFB, ttfb_pct: 0,
+        download_ms: Math.max(0, avgResponse - avgTTFB), download_pct: 0,
+        total_ms: avgResponse,
+      },
+      status_distribution: statusDistribution,
+      heatmap,
+      history: historyList,
+    };
   };
+
+  const activeSummary: AnalyticsSummary = summary && summary.total_checks > 0
+    ? summary
+    : computeAnalyticsSummary(localHistory, url, timeRange);
 
   return (
     <div className="w-full space-y-8 animate-fade-in pb-16">
@@ -230,15 +357,15 @@ export const AdvancedMonitoring: React.FC = () => {
         </div>
 
         {/* Input & Filter Controls Form */}
-        <form onSubmit={handleRunCheck} className="mt-6 flex flex-col lg:flex-row gap-3">
-          <div className="relative flex-1">
+        <form onSubmit={handleRunCheck} className="mt-6 flex flex-wrap items-stretch gap-3">
+          <div className="relative flex-1 min-w-[280px]">
             <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Enter website URL (e.g. https://google.com)"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="pl-11 h-12 text-sm bg-background border-black/10 focus:border-chart-1 rounded-xl shadow-inner font-mono"
+              className="pl-11 h-12 text-sm bg-background border-black/10 focus:border-chart-1 rounded-xl shadow-inner font-mono w-full"
             />
           </div>
 
@@ -247,7 +374,7 @@ export const AdvancedMonitoring: React.FC = () => {
             <select
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="h-12 px-3 text-xs bg-background border border-black/10 rounded-xl font-mono cursor-pointer"
+              className="h-12 px-3 text-xs bg-background border border-black/10 rounded-xl font-mono cursor-pointer min-w-[160px] shrink-0"
             >
               <option value={url}>Select Saved Target...</option>
               {targetsList.map((t) => (

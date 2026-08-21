@@ -114,13 +114,31 @@ func (s *Scheduler) StartWorker(ctx context.Context, rawURL string, intervalSec 
 	if _, exists := s.workers[targetURL]; exists {
 		s.mu.Unlock()
 		s.logger.Info("[MONITOR] Worker already active for target; skipping duplicate launch", slog.String("url", targetURL))
-		targetID, _ := s.repo.UpsertTarget(ctx, targetURL, intervalSec, true)
+		var targetID string
+		if s.repo != nil {
+			targetID, _ = s.repo.UpsertTarget(ctx, targetURL, intervalSec, true)
+		} else {
+			targetID = database.GenerateID(targetURL)
+		}
 		return targetID, nil
 	}
+	s.mu.Unlock()
 
-	targetID, err := s.repo.UpsertTarget(ctx, targetURL, intervalSec, true)
-	if err != nil {
-		s.logger.Warn("[MONITOR] Target database upsert warning", slog.String("url", targetURL), slog.String("error", err.Error()))
+	var targetID string
+	if s.repo != nil {
+		var upsertErr error
+		targetID, upsertErr = s.repo.UpsertTarget(ctx, targetURL, intervalSec, true)
+		if upsertErr != nil {
+			s.logger.Warn("[MONITOR] Target database upsert warning", slog.String("url", targetURL), slog.String("error", upsertErr.Error()))
+		}
+	} else {
+		targetID = database.GenerateID(targetURL)
+	}
+
+	s.mu.Lock()
+	if _, exists := s.workers[targetURL]; exists {
+		s.mu.Unlock()
+		return targetID, nil
 	}
 
 	workerCtx, cancel := context.WithCancel(context.Background())
@@ -164,7 +182,9 @@ func (s *Scheduler) StopWorker(ctx context.Context, rawURL string) error {
 	worker, exists := s.workers[targetURL]
 	if !exists {
 		s.mu.Unlock()
-		_ = s.repo.SetTargetActiveStatus(ctx, targetURL, false)
+		if s.repo != nil {
+			_ = s.repo.SetTargetActiveStatus(ctx, targetURL, false)
+		}
 		return nil
 	}
 
@@ -173,7 +193,9 @@ func (s *Scheduler) StopWorker(ctx context.Context, rawURL string) error {
 	s.mu.Unlock()
 
 	// Update PostgreSQL database
-	_ = s.repo.SetTargetActiveStatus(ctx, targetURL, false)
+	if s.repo != nil {
+		_ = s.repo.SetTargetActiveStatus(ctx, targetURL, false)
+	}
 
 	// Remove worker lock from Redis
 	if s.cacheService != nil && s.cacheService.IsAvailable() {
