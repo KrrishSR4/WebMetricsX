@@ -357,9 +357,21 @@ func (h *MonitoringHandler) GetMonitoringStatus(c *gin.Context) {
 // ListActiveMonitors lists all monitoring targets in WebMetricsX
 func (h *MonitoringHandler) ListActiveMonitors(c *gin.Context) {
 	if h.repo == nil {
+		workers := h.scheduler.GetActiveWorkers()
+		records := make([]database.TargetRecord, 0, len(workers))
+		for _, w := range workers {
+			records = append(records, database.TargetRecord{
+				ID:          w.TargetID,
+				URL:         w.URL,
+				Name:        w.URL,
+				IsActive:    true,
+				Status:      "ACTIVE",
+				IntervalSec: w.IntervalSec,
+			})
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"data":    []interface{}{},
+			"data":    records,
 		})
 		return
 	}

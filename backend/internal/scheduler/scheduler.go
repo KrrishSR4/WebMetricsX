@@ -395,6 +395,22 @@ func (s *Scheduler) LoadActiveTargetsFromDB(ctx context.Context) {
 	s.logger.Info("[SCHEDULER] Restored active workers on startup", slog.Int("active_count", len(targets)))
 }
 
+// GetActiveWorkers returns copies of all currently running in-memory workers
+func (s *Scheduler) GetActiveWorkers() []Worker {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	workers := make([]Worker, 0, len(s.workers))
+	for _, w := range s.workers {
+		workers = append(workers, Worker{
+			TargetID:    w.TargetID,
+			URL:         w.URL,
+			IntervalSec: w.IntervalSec,
+		})
+	}
+	return workers
+}
+
 // Close gracefully cancels all active workers and shuts down the pool cleanly
 func (s *Scheduler) Close() {
 	s.cancel() // Cancel context to stop all tickers and worker consumers
