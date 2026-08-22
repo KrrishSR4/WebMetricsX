@@ -89,8 +89,8 @@ export const AdvancedMonitoring: React.FC = () => {
     addToHistory({
       url: check.url,
       lastChecked: check.checked_at,
-      status: check.status === 'ACTIVE' || check.status === 'up' ? 'up' : (check.status === 'degraded' ? 'degraded' : 'down'),
-      responseTime: check.response_ms,
+      status: !check.available ? 'down' : (check.response_time_ms > 400 ? 'degraded' : 'up'),
+      responseTime: check.response_time_ms,
     });
   }, [addToHistory]);
 
@@ -113,7 +113,7 @@ export const AdvancedMonitoring: React.FC = () => {
       };
       const matched = list.find((m) => normalizeUrl(m.url) === normalizeUrl(url));
       if (matched) {
-        setMonitoringStatus(matched.status as any);
+        setMonitoringStatus(matched.status as 'ACTIVE' | 'PAUSED' | 'STOPPED');
         setLastCheckTime(matched.last_checked_at || null);
         setNextCheckTime(matched.next_checked_at || null);
       } else {
@@ -148,8 +148,9 @@ export const AdvancedMonitoring: React.FC = () => {
     try {
       const data = await fetchAnalyticsSummary(targetUrl, range);
       setSummary(data);
-    } catch (err: any) {
-      console.warn('Analytics fetch error:', err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.warn('Analytics fetch error:', message);
     }
   }, []);
 
@@ -192,8 +193,9 @@ export const AdvancedMonitoring: React.FC = () => {
       });
       await loadAnalytics(targetUrl, timeRange);
       await loadMonitorStatus();
-    } catch (err: any) {
-      setError(err.message || 'Failed to start continuous monitoring.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to start continuous monitoring.';
+      setError(message);
     } finally {
       setLoadingToggle(false);
     }
@@ -208,8 +210,9 @@ export const AdvancedMonitoring: React.FC = () => {
       await stopContinuousMonitoring(url);
       setMonitoringStatus('STOPPED');
       await loadMonitorStatus();
-    } catch (err: any) {
-      setError(err.message || 'Failed to stop continuous monitoring.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to stop continuous monitoring.';
+      setError(message);
     } finally {
       setLoadingToggle(false);
     }
@@ -230,8 +233,9 @@ export const AdvancedMonitoring: React.FC = () => {
       await pauseContinuousMonitoring(url);
       setMonitoringStatus('PAUSED');
       await loadMonitorStatus();
-    } catch (err: any) {
-      setError(err.message || 'Failed to pause monitoring.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to pause monitoring.';
+      setError(message);
     } finally {
       setLoadingToggle(false);
     }
@@ -247,8 +251,9 @@ export const AdvancedMonitoring: React.FC = () => {
       await resumeContinuousMonitoring(url, monitoringInterval);
       setMonitoringStatus('ACTIVE');
       await loadMonitorStatus();
-    } catch (err: any) {
-      setError(err.message || 'Failed to resume monitoring.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to resume monitoring.';
+      setError(message);
     } finally {
       setLoadingToggle(false);
     }
