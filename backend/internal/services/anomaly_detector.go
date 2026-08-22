@@ -80,6 +80,7 @@ type AnomalyDetector struct {
 	memConsecutiveCounts map[string]int
 	memAnomalyStates     map[string]*database.AnomalyEventRecord
 	memCheckHistory      map[string][]*monitoring.CheckResult
+	memLatestChecks      map[string]*monitoring.CheckResult
 }
 
 func NewAnomalyDetector(repo *database.Repository, cacheService cache.CacheService, logger *slog.Logger) *AnomalyDetector {
@@ -96,6 +97,7 @@ func NewAnomalyDetector(repo *database.Repository, cacheService cache.CacheServi
 		memConsecutiveCounts: make(map[string]int),
 		memAnomalyStates:     make(map[string]*database.AnomalyEventRecord),
 		memCheckHistory:      make(map[string][]*monitoring.CheckResult),
+		memLatestChecks:      make(map[string]*monitoring.CheckResult),
 	}
 }
 
@@ -318,6 +320,15 @@ func (ad *AnomalyDetector) ProcessCheckResult(ctx context.Context, check *monito
 	if !check.Available || check.StatusCode >= 400 || check.StatusCode == 0 {
 		overallStatus = "ANOMALY"
 		maxSeverity = "CRITICAL"
+		check.AnomalyState = overallStatus
+		check.AnomalySeverity = maxSeverity
+		check.RCA = ad.runRCA(check, baseline)
+		check.Regressions = ad.runRegressionDetection(check, baseline)
+
+		ad.mu.Lock()
+		ad.memLatestChecks[check.TargetID] = check
+		ad.mu.Unlock()
+
 		ad.triggerAvailabilityAnomaly(ctx, check)
 		return overallStatus, maxSeverity, nil
 	}
@@ -325,6 +336,13 @@ func (ad *AnomalyDetector) ProcessCheckResult(ctx context.Context, check *monito
 	ad.resolveAvailabilityAnomaly(ctx, check)
 
 	if baseline.InsufficientData {
+		check.AnomalyState = "NORMAL"
+		check.AnomalySeverity = "NONE"
+
+		ad.mu.Lock()
+		ad.memLatestChecks[check.TargetID] = check
+		ad.mu.Unlock()
+
 		return "NORMAL", "NONE", nil
 	}
 
@@ -399,6 +417,17 @@ func (ad *AnomalyDetector) ProcessCheckResult(ctx context.Context, check *monito
 			ad.resolveActiveAnomaly(ctx, check.TargetID, metricKey, val)
 		}
 	}
+
+	check.AnomalyState = overallStatus
+	check.AnomalySeverity = maxSeverity
+	if overallStatus != "NORMAL" {
+		check.RCA = ad.runRCA(check, baseline)
+	}
+	check.Regressions = ad.runRegressionDetection(check, baseline)
+
+	ad.mu.Lock()
+	ad.memLatestChecks[check.TargetID] = check
+	ad.mu.Unlock()
 
 	return overallStatus, maxSeverity, nil
 }
@@ -606,4 +635,217 @@ func (ad *AnomalyDetector) GetAnomalyHistory(ctx context.Context, targetID strin
 	}
 
 	return nil, nil
+}
+
+func (ad *AnomalyDetector) GetLatestCheck(ctx context.Context, targetID string) (*monitoring.CheckResult, error) {
+	if ad.cacheService != nil && ad.cacheService.IsAvailable() {
+		cacheKey := fmt.Sprintf("webmetricsx:check:latest:%s", targetID)
+		var check monitoring.CheckResult
+		if err := ad.cacheService.Get(ctx, cacheKey, &check); err == nil {
+			return &check, nil
+		}
+	}
+
+	ad.mu.RLock()
+	defer ad.mu.RUnlock()
+	check, exists := ad.memLatestChecks[targetID]
+	if !exists {
+		return nil, fmt.Errorf("no recent checks found for target %s", targetID)
+	}
+	return check, nil
+}
+
+func (ad *AnomalyDetector) runRCA(check *monitoring.CheckResult, baseline *TargetBaseline) *monitoring.RCAData {
+	if baseline == nil || baseline.InsufficientData {
+		return nil
+	}
+
+	if !check.Available || check.StatusCode == 0 {
+		return &monitoring.RCAData{
+			LikelyCause:    "Origin/Network Outage",
+			AffectedMetric: "availability",
+			Evidence:       fmt.Sprintf("Probe failed to connect. Error: %s", check.ErrorMessage),
+			Confidence:     95.0,
+			Severity:       "CRITICAL",
+		}
+	}
+
+	if check.StatusCode >= 500 {
+		return &monitoring.RCAData{
+			LikelyCause:    "Origin Server Failure",
+			AffectedMetric: "status_code",
+			Evidence:       fmt.Sprintf("Origin returned server status code %d", check.StatusCode),
+			Confidence:     90.0,
+			Severity:       "CRITICAL",
+		}
+	}
+
+	dns := float64(check.DNSLatencyMs)
+	tcp := float64(check.TCPLatencyMs)
+	tls := float64(check.TLSLatencyMs)
+	ttfb := float64(check.TTFBMs)
+	resp := float64(check.ResponseTimeMs)
+
+	var dnsMean, tcpMean, tlsMean, ttfbMean, respMean float64
+	var dnsStd, tcpStd, tlsStd, ttfbStd, respStd float64
+
+	if m, ok := baseline.Metrics["dns_latency"]; ok {
+		dnsMean, dnsStd = m.Mean, m.StdDev
+	}
+	if m, ok := baseline.Metrics["tcp_latency"]; ok {
+		tcpMean, tcpStd = m.Mean, m.StdDev
+	}
+	if m, ok := baseline.Metrics["tls_latency"]; ok {
+		tlsMean, tlsStd = m.Mean, m.StdDev
+	}
+	if m, ok := baseline.Metrics["ttfb"]; ok {
+		ttfbMean, ttfbStd = m.Mean, m.StdDev
+	}
+	if m, ok := baseline.Metrics["response_time"]; ok {
+		respMean, respStd = m.Mean, m.StdDev
+	}
+
+	dnsDiff := dns - dnsMean
+	tcpDiff := tcp - tcpMean
+	tlsDiff := tls - tlsMean
+	ttfbDiff := ttfb - ttfbMean
+	respDiff := resp - respMean
+
+	dnsHigh := dnsDiff > math.Max(15.0, dnsStd*2.5) && dns > dnsMean*1.5
+	tcpHigh := tcpDiff > math.Max(15.0, tcpStd*2.5) && tcp > tcpMean*1.5
+	tlsHigh := tlsDiff > math.Max(20.0, tlsStd*2.5) && tls > tlsMean*1.5
+	ttfbHigh := ttfbDiff > math.Max(60.0, ttfbStd*2.5) && ttfb > ttfbMean*1.5
+
+	if dnsHigh && !tcpHigh && !tlsHigh && !ttfbHigh {
+		return &monitoring.RCAData{
+			LikelyCause:    "DNS Latency",
+			AffectedMetric: "dns_latency",
+			Evidence:       fmt.Sprintf("DNS lookup took %dms (mean baseline %dms), while other handshake latency phases were normal", check.DNSLatencyMs, int(dnsMean)),
+			Confidence:     85.0,
+			Severity:       check.AnomalySeverity,
+		}
+	}
+
+	if tcpHigh && !dnsHigh && !tlsHigh && !ttfbHigh {
+		return &monitoring.RCAData{
+			LikelyCause:    "Network/TCP Latency",
+			AffectedMetric: "tcp_latency",
+			Evidence:       fmt.Sprintf("TCP connect latency spiked to %dms (mean baseline %dms), suggesting raw network transport/congestion issue", check.TCPLatencyMs, int(tcpMean)),
+			Confidence:     80.0,
+			Severity:       check.AnomalySeverity,
+		}
+	}
+
+	if tlsHigh && !tcpHigh && !dnsHigh && !ttfbHigh {
+		return &monitoring.RCAData{
+			LikelyCause:    "TLS/SSL Handshake Latency",
+			AffectedMetric: "tls_latency",
+			Evidence:       fmt.Sprintf("TLS Handshake negotiation took %dms (mean baseline %dms), indicating SSL negotiation overhead or cryptographic delay", check.TLSLatencyMs, int(tlsMean)),
+			Confidence:     85.0,
+			Severity:       check.AnomalySeverity,
+		}
+	}
+
+	if ttfbHigh && !dnsHigh && !tcpHigh && !tlsHigh {
+		return &monitoring.RCAData{
+			LikelyCause:    "Origin Server Latency",
+			AffectedMetric: "ttfb",
+			Evidence:       fmt.Sprintf("Time To First Byte (TTFB) spiked to %dms (mean baseline %dms), while DNS/TCP/TLS handshake components remained healthy", check.TTFBMs, int(ttfbMean)),
+			Confidence:     90.0,
+			Severity:       check.AnomalySeverity,
+		}
+	}
+
+	networkPhasesHighCount := 0
+	if dnsHigh {
+		networkPhasesHighCount++
+	}
+	if tcpHigh {
+		networkPhasesHighCount++
+	}
+	if tlsHigh {
+		networkPhasesHighCount++
+	}
+
+	if networkPhasesHighCount >= 2 {
+		return &monitoring.RCAData{
+			LikelyCause:    "Network Degradation",
+			AffectedMetric: "response_time",
+			Evidence:       fmt.Sprintf("Multiple network transport components (DNS: %dms, TCP: %dms, TLS: %dms) are highly degraded", check.DNSLatencyMs, check.TCPLatencyMs, check.TLSLatencyMs),
+			Confidence:     75.0,
+			Severity:       check.AnomalySeverity,
+		}
+	}
+
+	if respDiff > respStd*2.0 {
+		return &monitoring.RCAData{
+			LikelyCause:    "Unspecified Latency Spike",
+			AffectedMetric: "response_time",
+			Evidence:       fmt.Sprintf("Total response time spiked to %dms (mean baseline %dms) due to minor increases across multiple connection segments", check.ResponseTimeMs, int(respMean)),
+			Confidence:     55.0,
+			Severity:       check.AnomalySeverity,
+		}
+	}
+
+	return nil
+}
+
+func (ad *AnomalyDetector) runRegressionDetection(check *monitoring.CheckResult, baseline *TargetBaseline) []monitoring.PerformanceRegression {
+	if baseline == nil || baseline.InsufficientData {
+		return nil
+	}
+
+	var regressions []monitoring.PerformanceRegression
+
+	metrics := []string{"response_time", "ttfb", "dns_latency", "tcp_latency", "tls_latency"}
+	minDiffs := map[string]float64{
+		"response_time": 50.0,
+		"ttfb":          40.0,
+		"dns_latency":   15.0,
+		"tcp_latency":   15.0,
+		"tls_latency":   15.0,
+	}
+
+	for _, metricKey := range metrics {
+		bm, exists := baseline.Metrics[metricKey]
+		if !exists {
+			continue
+		}
+
+		var val float64
+		switch metricKey {
+		case "response_time":
+			val = float64(check.ResponseTimeMs)
+		case "ttfb":
+			val = float64(check.TTFBMs)
+		case "dns_latency":
+			val = float64(check.DNSLatencyMs)
+		case "tcp_latency":
+			val = float64(check.TCPLatencyMs)
+		case "tls_latency":
+			val = float64(check.TLSLatencyMs)
+		}
+
+		mean := bm.Mean
+		diff := val - mean
+		pct := 0.0
+		if mean > 0 {
+			pct = (diff / mean) * 100.0
+		}
+
+		status := "Normal"
+		if diff > minDiffs[metricKey] && pct > 50.0 {
+			status = "Performance Regression"
+		}
+
+		regressions = append(regressions, monitoring.PerformanceRegression{
+			MetricType:       metricKey,
+			BaselineValue:    mean,
+			CurrentValue:     val,
+			PercentageChange: pct,
+			Status:           status,
+		})
+	}
+
+	return regressions
 }

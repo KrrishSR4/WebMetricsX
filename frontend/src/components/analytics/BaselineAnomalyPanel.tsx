@@ -13,11 +13,13 @@ import {
 import {
   fetchBaseline,
   fetchAnomalyStatus,
+  fetchAnalysis,
   MetricBaseline,
   AnomalyEvent,
   GoMonitoringResult,
   TargetBaseline,
   AnomalyStatus,
+  AnalysisResponse,
 } from '@/services/monitoringApi';
 
 interface BaselineAnomalyPanelProps {
@@ -32,19 +34,22 @@ export const BaselineAnomalyPanel: React.FC<BaselineAnomalyPanelProps> = ({
   const [windowRange, setWindowRange] = useState<string>('24h');
   const [baselineData, setBaselineData] = useState<TargetBaseline | null>(null);
   const [anomalyStatus, setAnomalyStatus] = useState<AnomalyStatus | null>(null);
+  const [analysisData, setAnalysisData] = useState<AnalysisResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Load baseline and anomaly status
+  // Load baseline, anomaly status and analysis results
   const loadData = useCallback(async () => {
     if (!url) return;
     try {
       setLoading(true);
-      const [baseline, status] = await Promise.all([
+      const [baseline, status, analysis] = await Promise.all([
         fetchBaseline(url, windowRange),
         fetchAnomalyStatus(url),
+        fetchAnalysis(url),
       ]);
       setBaselineData(baseline);
       setAnomalyStatus(status);
+      setAnalysisData(analysis);
     } catch (err) {
       console.warn('Failed to load baseline and anomaly status:', err);
     } finally {
@@ -59,6 +64,12 @@ export const BaselineAnomalyPanel: React.FC<BaselineAnomalyPanelProps> = ({
   // Refresh status and baseline on new real-time SSE tick
   useEffect(() => {
     if (latestCheck) {
+      if (latestCheck.rca || latestCheck.regressions) {
+        setAnalysisData({
+          rca: latestCheck.rca || null,
+          regressions: latestCheck.regressions || null,
+        });
+      }
       // Small delayed refresh to let DB save complete
       const timeout = setTimeout(() => {
         loadData();
@@ -126,7 +137,8 @@ export const BaselineAnomalyPanel: React.FC<BaselineAnomalyPanelProps> = ({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Status widget */}
           <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm space-y-6 flex flex-col justify-between">
             <div className="space-y-2">
@@ -334,6 +346,139 @@ export const BaselineAnomalyPanel: React.FC<BaselineAnomalyPanelProps> = ({
             </div>
           </div>
         </div>
+
+        {/* RCA & Performance Regression Row (Phase 2.6) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* RCA Card */}
+          <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm space-y-4 flex flex-col justify-between">
+            <div className="space-y-2">
+              <h4 className="text-sm font-bold text-muted-foreground uppercase font-mono tracking-wider flex items-center gap-1.5">
+                <ShieldAlert className="w-4 h-4 text-chart-1" />
+                Root Cause Diagnosis (RCA)
+              </h4>
+              <p className="text-[10px] text-muted-foreground font-mono">
+                Automated rule-based diagnostics correlating performance phases to locate the primary bottleneck.
+              </p>
+            </div>
+
+            {!analysisData?.rca ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-center space-y-2 min-h-[160px]">
+                <ShieldCheck className="w-8 h-8 text-emerald-600" />
+                <div className="text-xs font-bold text-emerald-800 font-mono">No Latency Bottlenecks</div>
+                <p className="text-[10px] text-emerald-700/80 font-mono max-w-[220px]">
+                  All components (DNS, TCP, TLS, TTFB) are operating within expected limits.
+                </p>
+              </div>
+            ) : (
+              <div
+                className={`flex-1 p-4 border rounded-xl space-y-3 min-h-[160px] flex flex-col justify-between ${
+                  analysisData.rca.severity === 'CRITICAL'
+                    ? 'border-destructive/30 bg-destructive/5 text-destructive'
+                    : 'border-amber-500/30 bg-amber-500/5 text-amber-800'
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-black/15 font-mono">
+                        {analysisData.rca.severity}
+                      </span>
+                      <h5 className="font-black text-sm font-mono mt-1.5 tracking-tight uppercase">
+                        {analysisData.rca.likely_cause}
+                      </h5>
+                    </div>
+                    <span className="text-[10px] font-black font-mono px-2 py-1 rounded-lg bg-black/10">
+                      Conf: {Math.round(analysisData.rca.confidence)}%
+                    </span>
+                  </div>
+
+                  <p className="text-[10px] font-mono leading-relaxed opacity-90">
+                    {analysisData.rca.evidence}
+                  </p>
+                </div>
+
+                <div className="pt-2.5 border-t border-current/10 flex items-center justify-between text-[10px] font-mono font-bold">
+                  <span>Affected Metric:</span>
+                  <span className="uppercase underline decoration-2">{analysisData.rca.affected_metric.replace('_', ' ')}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Performance Regression Table Card */}
+          <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm lg:col-span-2 space-y-4">
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-muted-foreground uppercase font-mono tracking-wider flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-chart-1" />
+                Performance Regression Scanning
+              </h4>
+              <p className="text-[10px] text-muted-foreground font-mono">
+                Statistical regression analysis comparing current metrics against baseline mean averages.
+              </p>
+            </div>
+
+            {!analysisData?.regressions || analysisData.regressions.length === 0 ? (
+              <div className="flex items-center justify-center p-8 border border-dashed border-black/10 rounded-xl text-muted-foreground font-mono text-xs">
+                Awaiting regression telemetry checks...
+              </div>
+            ) : (
+              <div className="border border-black/5 rounded-xl overflow-hidden font-mono text-xs">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-black/5 text-[10px] uppercase font-bold text-muted-foreground border-b border-black/5">
+                      <th className="p-3">Metric</th>
+                      <th className="p-3">Baseline Mean</th>
+                      <th className="p-3">Observed</th>
+                      <th className="p-3">Change</th>
+                      <th className="p-3 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analysisData.regressions.map((reg) => {
+                      const isReg = reg.status === 'Performance Regression';
+                      const isUp = reg.percentage_change > 0;
+                      const absPct = Math.round(Math.abs(reg.percentage_change));
+
+                      return (
+                        <tr key={reg.metric_type} className="border-b border-black/5 hover:bg-black/[0.01] transition-colors">
+                          <td className="p-3 font-bold uppercase">{reg.metric_type.replace('_', ' ')}</td>
+                          <td className="p-3 text-muted-foreground">{Math.round(reg.baseline_value)}ms</td>
+                          <td className="p-3 font-black text-foreground">{Math.round(reg.current_value)}ms</td>
+                          <td className="p-3">
+                            <span
+                              className={`font-black flex items-center gap-0.5 ${
+                                isUp
+                                  ? reg.percentage_change > 30
+                                    ? 'text-destructive'
+                                    : 'text-amber-500'
+                                  : 'text-emerald-600'
+                              }`}
+                            >
+                              {isUp ? '+' : '-'}
+                              {absPct}%
+                            </span>
+                          </td>
+                          <td className="p-3 text-right">
+                            <span
+                              className={`px-2 py-0.5 rounded-md font-bold text-[9px] uppercase ${
+                                isReg
+                                  ? 'bg-destructive/10 text-destructive border border-destructive/20'
+                                  : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
+                              }`}
+                            >
+                              {isReg ? 'Regression' : 'Healthy'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
       )}
     </div>
   );

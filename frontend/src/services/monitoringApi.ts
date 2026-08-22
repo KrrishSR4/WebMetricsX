@@ -13,6 +13,10 @@ export interface GoMonitoringResult {
   ssl_issuer?: string;
   error_message?: string;
   checked_at: string;
+  anomaly_state?: string;
+  anomaly_severity?: string;
+  rca?: RCAData | null;
+  regressions?: PerformanceRegression[] | null;
 }
 
 export interface LatencyBucket {
@@ -517,6 +521,47 @@ export const fetchAnomalyStats = async (
   try {
     const response = await fetch(endpoint);
     const data: GoApiResponse<AnomalyStats> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return null;
+    }
+
+    return data.data;
+  } catch {
+    return null;
+  }
+};
+
+export interface RCAData {
+  likely_cause: string;
+  affected_metric: string;
+  evidence: string;
+  confidence: number;
+  severity: string;
+}
+
+export interface PerformanceRegression {
+  metric_type: string;
+  baseline_value: number;
+  current_value: number;
+  percentage_change: number;
+  status: string;
+}
+
+export interface AnalysisResponse {
+  rca: RCAData | null;
+  regressions: PerformanceRegression[] | null;
+}
+
+export const fetchAnalysis = async (
+  targetUrl: string
+): Promise<AnalysisResponse | null> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/analysis?url=${encodeURIComponent(targetUrl)}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<AnalysisResponse> = await response.json();
 
     if (!response.ok || !data.success || !data.data) {
       return null;

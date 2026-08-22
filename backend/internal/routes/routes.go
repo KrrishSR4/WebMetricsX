@@ -53,5 +53,6 @@ func Setup(
 		v1.GET("/monitoring/anomalies/recent", anomalyHandler.GetRecentAnomalies)
 		v1.GET("/monitoring/anomalies/history", anomalyHandler.GetAnomalyHistory)
 		v1.GET("/monitoring/anomalies/stats", anomalyHandler.GetAnomalyStats)
+		v1.GET("/monitoring/analysis", anomalyHandler.GetAnalysis)
 	}
 }

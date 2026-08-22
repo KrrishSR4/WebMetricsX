@@ -268,3 +268,43 @@ func (h *AnomalyHandler) GetAnomalyStats(c *gin.Context) {
 		"data":    stats,
 	})
 }
+
+// GetAnalysis fetches the latest check result analysis (RCA and regressions) for a target
+func (h *AnomalyHandler) GetAnalysis(c *gin.Context) {
+	targetURL := c.Query("url")
+	if targetURL == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "MISSING_URL",
+				"message": "Query parameter 'url' is required",
+			},
+		})
+		return
+	}
+
+	if parsed, err := monitoring.ValidateAndSanitizeURL(targetURL); err == nil {
+		targetURL = parsed.String()
+	}
+	targetID := database.GenerateID(targetURL)
+
+	check, err := h.anomalyDetector.GetLatestCheck(c.Request.Context(), targetID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "NOT_FOUND",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"rca":         check.RCA,
+			"regressions": check.Regressions,
+		},
+	})
+}
