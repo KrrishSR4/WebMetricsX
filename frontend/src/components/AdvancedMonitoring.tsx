@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { UrlInput } from '@/components/UrlInput';
+import { useUrlHistory } from '@/hooks/useUrlHistory';
 import {
   Cpu,
   Globe,
@@ -13,7 +15,9 @@ import {
   Square,
   Pause,
   CheckCircle2,
+  History,
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   runGoMonitoringCheck,
   startContinuousMonitoring,
@@ -49,6 +53,8 @@ export const AdvancedMonitoring: React.FC = () => {
   const [lastCheckTime, setLastCheckTime] = useState<string | null>(null);
   const [nextCheckTime, setNextCheckTime] = useState<string | null>(null);
   const [targetsList, setTargetsList] = useState<string[]>([]);
+  const [historyOpen, setHistoryOpen] = useState<boolean>(false);
+  const { history, addToHistory, removeFromHistory, clearHistory } = useUrlHistory();
 
   const [loadingToggle, setLoadingToggle] = useState<boolean>(false);
   
@@ -78,7 +84,15 @@ export const AdvancedMonitoring: React.FC = () => {
       }
       return updated;
     });
-  }, []);
+
+    // Save/update target status in URL history
+    addToHistory({
+      url: check.url,
+      lastChecked: check.checked_at,
+      status: check.status === 'ACTIVE' || check.status === 'up' ? 'up' : (check.status === 'degraded' ? 'degraded' : 'down'),
+      responseTime: check.response_ms,
+    });
+  }, [addToHistory]);
 
   // Fetch current monitor status for the URL
   const loadMonitorStatus = useCallback(async () => {
@@ -161,27 +175,49 @@ export const AdvancedMonitoring: React.FC = () => {
     };
   }, [isMonitoringActive, url, timeRange, loadAnalytics, handleCheckReceived, loadMonitorStatus]);
 
-  // Start/Stop Continuous Backend Monitoring
-  const handleToggleMonitoring = async () => {
+  const handleStart = async (targetUrl: string) => {
+    if (!targetUrl || targetUrl.trim() === '') return;
+    setUrl(targetUrl);
+    setLoadingToggle(true);
+    setError(null);
+
+    try {
+      await startContinuousMonitoring(targetUrl, monitoringInterval);
+      setMonitoringStatus('ACTIVE');
+      addToHistory({
+        url: targetUrl,
+        lastChecked: new Date().toISOString(),
+        status: 'pending',
+        responseTime: null,
+      });
+      await loadAnalytics(targetUrl, timeRange);
+      await loadMonitorStatus();
+    } catch (err: any) {
+      setError(err.message || 'Failed to start continuous monitoring.');
+    } finally {
+      setLoadingToggle(false);
+    }
+  };
+
+  const handleStop = async () => {
     if (!url || url.trim() === '') return;
     setLoadingToggle(true);
     setError(null);
 
     try {
-      if (monitoringStatus === 'ACTIVE' || monitoringStatus === 'PAUSED') {
-        await stopContinuousMonitoring(url);
-        setMonitoringStatus('STOPPED');
-      } else {
-        await startContinuousMonitoring(url, monitoringInterval);
-        setMonitoringStatus('ACTIVE');
-        await loadAnalytics(url, timeRange);
-      }
+      await stopContinuousMonitoring(url);
+      setMonitoringStatus('STOPPED');
       await loadMonitorStatus();
     } catch (err: any) {
-      setError(err.message || 'Failed to update continuous monitoring state.');
+      setError(err.message || 'Failed to stop continuous monitoring.');
     } finally {
       setLoadingToggle(false);
     }
+  };
+
+  const handleSelectHistory = (selectedUrl: string) => {
+    setUrl(selectedUrl);
+    handleStart(selectedUrl);
   };
 
   // Pause continuous checks
@@ -437,37 +473,27 @@ export const AdvancedMonitoring: React.FC = () => {
         </div>
       </div>
 
-        {/* Input & Filter Controls Form */}
-        <form onSubmit={(e) => { e.preventDefault(); handleToggleMonitoring(); }} className="mt-6 flex flex-wrap items-stretch gap-3">
-          <div className="relative flex-1 min-w-[280px]">
-            <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Enter website URL (e.g. https://google.com)"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="pl-11 h-12 text-sm bg-background border-black/10 focus:border-chart-1 rounded-xl shadow-inner font-mono w-full"
-            />
-          </div>
+      {/* Input controls section */}
+      <div className="max-w-2xl mx-auto mb-6">
+        <UrlInput
+          onSubmit={handleStart}
+          onStop={handleStop}
+          isMonitoring={monitoringStatus !== 'STOPPED'}
+          isLoading={loadingToggle}
+          history={history}
+          onSelectHistory={handleSelectHistory}
+          onRemoveHistory={removeFromHistory}
+          onClearHistory={clearHistory}
+          currentUrl={url}
+        />
+      </div>
 
-          {/* Target Selector Dropdown */}
-          {targetsList.length > 0 && (
-            <select
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="h-12 px-3 text-xs bg-background border border-black/10 rounded-xl font-mono cursor-pointer min-w-[160px] shrink-0"
-            >
-              <option value={url}>Select Saved Target...</option>
-              {targetsList.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          )}
-
+      {/* Sleek Parameter & Filter Secondary Panel */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 mb-8 bg-card border border-black/10 rounded-2xl shadow-sm">
+        {/* Left Side: Parameters (Interval, API Host) */}
+        <div className="flex flex-wrap items-center gap-3">
           {/* Monitoring Interval Selector */}
-          <div className="flex items-center gap-1.5 bg-background border border-black/10 rounded-xl px-3 py-2 font-mono text-xs shrink-0">
+          <div className="flex items-center gap-1.5 bg-background border border-black/10 rounded-xl px-3 py-2 font-mono text-xs">
             <Clock className="w-4 h-4 text-muted-foreground" />
             <span className="text-[10px] font-bold text-muted-foreground uppercase">Interval:</span>
             <select
@@ -483,14 +509,23 @@ export const AdvancedMonitoring: React.FC = () => {
             </select>
           </div>
 
+          {/* API endpoint show */}
+          <div className="flex items-center gap-2 bg-background border border-black/10 rounded-xl px-3 py-2 text-xs font-mono text-muted-foreground">
+            <Server className="w-4 h-4 text-chart-2" />
+            <span>API: {import.meta.env.VITE_API_URL || 'http://localhost:8081'}</span>
+          </div>
+        </div>
+
+        {/* Right Side: Filters & Play/Pause (Time Range, Pause, Resume) */}
+        <div className="flex flex-wrap items-center gap-3">
           {/* Time Range Filter */}
-          <div className="flex items-center gap-1 bg-background border border-black/10 rounded-xl p-1 font-mono text-xs shrink-0">
+          <div className="flex items-center gap-1 bg-background border border-black/10 rounded-xl p-1 font-mono text-xs">
             {['1h', '6h', '24h', '7d', '30d'].map((range) => (
               <button
                 key={range}
                 type="button"
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-2 rounded-lg font-bold uppercase transition-all ${
+                className={`px-3 py-1.5 rounded-lg font-bold uppercase transition-all ${
                   timeRange === range
                     ? 'bg-chart-1 text-white shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -501,31 +536,15 @@ export const AdvancedMonitoring: React.FC = () => {
             ))}
           </div>
 
-          {/* Continuous Worker Controls: Start, Pause, Resume, Stop */}
-          {monitoringStatus === 'STOPPED' ? (
-            <Button
-              type="button"
-              onClick={handleToggleMonitoring}
-              disabled={loadingToggle}
-              className="h-12 px-5 font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              {loadingToggle ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <Play className="w-4 h-4 fill-current" />
-                  Start Continuous Monitoring
-                </>
-              )}
-            </Button>
-          ) : (
-            <div className="flex items-center gap-2 shrink-0">
+          {/* Pause / Resume controls */}
+          {monitoringStatus !== 'STOPPED' && (
+            <div className="flex items-center gap-2">
               {monitoringStatus === 'ACTIVE' ? (
                 <Button
                   type="button"
                   onClick={handlePauseMonitoring}
                   disabled={loadingToggle}
-                  className="h-12 px-4 font-bold rounded-xl shadow-md transition-all flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+                  className="h-10 px-4 font-bold rounded-xl border border-black/10 bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1.5 shadow-sm"
                 >
                   {loadingToggle ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -541,7 +560,7 @@ export const AdvancedMonitoring: React.FC = () => {
                   type="button"
                   onClick={handleResumeMonitoring}
                   disabled={loadingToggle}
-                  className="h-12 px-4 font-bold rounded-xl shadow-md transition-all flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="h-10 px-4 font-bold rounded-xl border border-black/10 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-sm"
                 >
                   {loadingToggle ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -553,25 +572,10 @@ export const AdvancedMonitoring: React.FC = () => {
                   )}
                 </Button>
               )}
-
-              <Button
-                type="button"
-                onClick={handleToggleMonitoring}
-                disabled={loadingToggle}
-                className="h-12 px-4 font-bold rounded-xl shadow-md transition-all flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white"
-              >
-                {loadingToggle ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Square className="w-4 h-4 fill-current" />
-                    Stop
-                  </>
-                )}
-              </Button>
             </div>
           )}
-        </form>
+        </div>
+      </div>
       </div>
 
       {/* Error Alert */}
