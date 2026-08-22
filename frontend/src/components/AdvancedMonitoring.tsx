@@ -486,7 +486,7 @@ export const AdvancedMonitoring: React.FC = () => {
       </div>
 
       {/* Sleek Parameter & Filter Secondary Panel */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 mb-8 bg-card border border-black/10 rounded-2xl shadow-sm">
+      <div className="flex flex-wrap items-center justify-center gap-6 p-4 mb-8 bg-card border border-black/10 rounded-2xl shadow-sm">
         {/* Left Side: Parameters (Interval, API Host) */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Monitoring Interval Selector */}
