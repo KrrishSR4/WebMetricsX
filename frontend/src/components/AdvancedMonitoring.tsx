@@ -465,10 +465,7 @@ export const AdvancedMonitoring: React.FC = () => {
               </div>
             )}
 
-            <div className="flex items-center gap-2 bg-muted/40 border border-black/5 rounded-xl px-4 py-1.5 text-xs font-mono text-muted-foreground">
-              <Server className="w-4 h-4 text-chart-2" />
-              <span>API: {import.meta.env.VITE_API_URL || 'http://localhost:8081'}</span>
-            </div>
+
           </div>
         </div>
       </div>
@@ -509,11 +506,7 @@ export const AdvancedMonitoring: React.FC = () => {
             </select>
           </div>
 
-          {/* API endpoint show */}
-          <div className="flex items-center gap-2 bg-background border border-black/10 rounded-xl px-3 py-2 text-xs font-mono text-muted-foreground">
-            <Server className="w-4 h-4 text-chart-2" />
-            <span>API: {import.meta.env.VITE_API_URL || 'http://localhost:8081'}</span>
-          </div>
+
         </div>
 
         {/* Right Side: Filters & Play/Pause (Time Range, Pause, Resume) */}
