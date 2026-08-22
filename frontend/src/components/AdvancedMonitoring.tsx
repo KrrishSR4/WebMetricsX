@@ -44,6 +44,7 @@ import { D3PerformanceRadar } from '@/components/analytics/D3PerformanceRadar';
 import { D3PerformanceHeatmap } from '@/components/analytics/D3PerformanceHeatmap';
 import { TTFBAnalysis } from '@/components/analytics/TTFBAnalysis';
 import { UptimeTimeline } from '@/components/analytics/UptimeTimeline';
+import { BaselineAnomalyPanel } from '@/components/analytics/BaselineAnomalyPanel';
 
 export const AdvancedMonitoring: React.FC = () => {
   const [url, setUrl] = useState<string>('https://google.com');
@@ -589,6 +590,9 @@ export const AdvancedMonitoring: React.FC = () => {
 
       {/* 1. KPI SUMMARY CARDS */}
       <KPISummaryCards summary={activeSummary} />
+
+      {/* Baseline & Anomaly Panel (Phase 2.6) */}
+      <BaselineAnomalyPanel url={url} latestCheck={latestCheck} />
 
       {/* 2. REAL-TIME RESPONSE TIME TIMELINE */}
       <ResponseTimeTimeline summary={activeSummary} />

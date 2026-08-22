@@ -393,3 +393,137 @@ export const listContinuousMonitors = async (): Promise<TargetDetails[]> => {
     return [];
   }
 };
+
+export interface MetricBaseline {
+  mean: number;
+  median: number;
+  p95: number;
+  p99: number;
+  min: number;
+  max: number;
+  stddev: number;
+  sample_count: number;
+}
+
+export interface TargetBaseline {
+  target_id: string;
+  time_window: string;
+  metrics: {
+    response_time: MetricBaseline;
+    ttfb: MetricBaseline;
+    dns_latency: MetricBaseline;
+    tcp_latency: MetricBaseline;
+    tls_latency: MetricBaseline;
+  };
+  insufficient_data: boolean;
+  calculated_at: string;
+}
+
+export interface AnomalyEvent {
+  id: string;
+  target_id: string;
+  metric_type: string;
+  lifecycle_state: string;
+  severity: string;
+  observed_value: number;
+  expected_value: number;
+  deviation_percentage: number;
+  consecutive_count: number;
+  detected_at: string;
+  resolved_at: string | null;
+  status: string;
+}
+
+export interface AnomalyStatus {
+  status: 'NORMAL' | 'DEGRADED' | 'ANOMALY';
+  active_anomalies: AnomalyEvent[];
+}
+
+export interface AnomalyStats {
+  total_detected: number;
+  total_resolved: number;
+  mean_resolution_sec: number;
+  severity_counts: Record<string, number>;
+  metric_counts: Record<string, number>;
+}
+
+export const fetchBaseline = async (
+  targetUrl: string,
+  timeRange: string = '24h'
+): Promise<TargetBaseline | null> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/baseline?url=${encodeURIComponent(targetUrl)}&range=${encodeURIComponent(timeRange)}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<TargetBaseline> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return null;
+    }
+
+    return data.data;
+  } catch {
+    return null;
+  }
+};
+
+export const fetchAnomalyStatus = async (
+  targetUrl: string
+): Promise<AnomalyStatus | null> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/anomalies/status?url=${encodeURIComponent(targetUrl)}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<AnomalyStatus> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return null;
+    }
+
+    return data.data;
+  } catch {
+    return null;
+  }
+};
+
+export const fetchRecentAnomalies = async (
+  targetUrl: string
+): Promise<AnomalyEvent[]> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/anomalies/recent?url=${encodeURIComponent(targetUrl)}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<AnomalyEvent[]> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return [];
+    }
+
+    return data.data;
+  } catch {
+    return [];
+  }
+};
+
+export const fetchAnomalyStats = async (
+  targetUrl: string
+): Promise<AnomalyStats | null> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/anomalies/stats?url=${encodeURIComponent(targetUrl)}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<AnomalyStats> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return null;
+    }
+
+    return data.data;
+  } catch {
+    return null;
+  }
+};

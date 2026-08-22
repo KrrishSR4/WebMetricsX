@@ -23,7 +23,7 @@ func TestScheduler_WorkerLifecycle(t *testing.T) {
 	engine := monitoring.NewEngine(logger, 2)
 	engine.SetAllowPrivateTargets(true)
 
-	sched := NewScheduler(engine, nil, nil, logger)
+	sched := NewScheduler(engine, nil, nil, nil, logger)
 	defer sched.Close()
 
 	ctx := context.Background()

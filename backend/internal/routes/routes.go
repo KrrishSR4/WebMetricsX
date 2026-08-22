@@ -8,6 +8,7 @@ import (
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/handlers"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/scheduler"
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,11 +19,13 @@ func Setup(
 	engine *monitoring.Engine,
 	repo *database.Repository,
 	sched *scheduler.Scheduler,
+	anomalyDet *services.AnomalyDetector,
 	logger *slog.Logger,
 ) {
 	healthHandler := handlers.NewHealthHandler(appVersion, cacheService)
 	monitoringHandler := handlers.NewMonitoringHandler(engine, repo, cacheService, sched, logger)
 	analyticsHandler := handlers.NewAnalyticsHandler(repo, logger)
+	anomalyHandler := handlers.NewAnomalyHandler(repo, anomalyDet, logger)
 
 	// Direct Health Endpoint
 	router.GET("/health", healthHandler.Check)
@@ -42,5 +45,13 @@ func Setup(
 
 		v1.GET("/monitoring/analytics", analyticsHandler.GetAnalytics)
 		v1.GET("/monitoring/targets", analyticsHandler.GetTargets)
+
+		// Baseline & Anomaly Endpoints (Phase 2.6)
+		v1.GET("/monitoring/baseline", anomalyHandler.GetBaseline)
+		v1.GET("/monitoring/baseline/history", anomalyHandler.GetBaselineHistory)
+		v1.GET("/monitoring/anomalies/status", anomalyHandler.GetAnomalyStatus)
+		v1.GET("/monitoring/anomalies/recent", anomalyHandler.GetRecentAnomalies)
+		v1.GET("/monitoring/anomalies/history", anomalyHandler.GetAnomalyHistory)
+		v1.GET("/monitoring/anomalies/stats", anomalyHandler.GetAnomalyStats)
 	}
 }

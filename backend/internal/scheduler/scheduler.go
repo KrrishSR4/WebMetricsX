@@ -10,6 +10,7 @@ import (
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/cache"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/database"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/services"
 )
 
 type Worker struct {
@@ -72,40 +73,42 @@ func (eb *EventBus) Publish(targetURL string, res *monitoring.CheckResult) {
 		}
 	}
 }
-
 type Scheduler struct {
-	engine       *monitoring.Engine
-	repo         *database.Repository
-	cacheService cache.CacheService
-	logger       *slog.Logger
-	workers      map[string]*Worker
-	eventBus     *EventBus
-	jobQueue     chan *Job
-	workerCount  int
-	ctx          context.Context
-	cancel       context.CancelFunc
-	wg           sync.WaitGroup
-	mu           sync.RWMutex
+	engine          *monitoring.Engine
+	repo            *database.Repository
+	cacheService    cache.CacheService
+	anomalyDetector *services.AnomalyDetector
+	logger          *slog.Logger
+	workers         map[string]*Worker
+	eventBus        *EventBus
+	jobQueue        chan *Job
+	workerCount     int
+	ctx             context.Context
+	cancel          context.CancelFunc
+	wg              sync.WaitGroup
+	mu              sync.RWMutex
 }
 
 func NewScheduler(
 	engine *monitoring.Engine,
 	repo *database.Repository,
 	cacheService cache.CacheService,
+	anomalyDetector *services.AnomalyDetector,
 	logger *slog.Logger,
 ) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &Scheduler{
-		engine:       engine,
-		repo:         repo,
-		cacheService: cacheService,
-		logger:       logger,
-		workers:      make(map[string]*Worker),
-		eventBus:     NewEventBus(),
-		jobQueue:     make(chan *Job, 1000),
-		workerCount:  10, // Default bounded pool count
-		ctx:          ctx,
-		cancel:       cancel,
+		engine:          engine,
+		repo:            repo,
+		cacheService:    cacheService,
+		anomalyDetector: anomalyDetector,
+		logger:          logger,
+		workers:         make(map[string]*Worker),
+		eventBus:        NewEventBus(),
+		jobQueue:        make(chan *Job, 1000),
+		workerCount:     10, // Default bounded pool count
+		ctx:             ctx,
+		cancel:          cancel,
 	}
 
 	// Start consumer worker pool
@@ -362,6 +365,19 @@ func (s *Scheduler) executeProbeTick(j *Job) {
 		}
 		_ = s.repo.UpdateCheckTimestamps(pCtx, j.TargetID, now, nextCheck)
 		cancel()
+	}
+
+	// Run Anomaly Detector (Phase 2.6)
+	if s.anomalyDetector != nil {
+		pCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		anomalyState, anomalySeverity, detErr := s.anomalyDetector.ProcessCheckResult(pCtx, res)
+		cancel()
+		if detErr != nil {
+			s.logger.Warn("[ANOMALY] Detection execution failed", slog.String("url", j.URL), slog.String("error", detErr.Error()))
+		} else {
+			res.AnomalyState = anomalyState
+			res.AnomalySeverity = anomalySeverity
+		}
 	}
 
 	// 2. Cache Latest State in Redis

@@ -42,10 +42,42 @@ func NewDB(dbURL string, logger *slog.Logger) (*DB, error) {
 
 	logger.Info("PostgreSQL database connected successfully")
 
-	// Ensure targets schema table has the correct column layout (Phase 2.5 Migration)
+	// Ensure database schema is migrated for baselines and anomalies (Phase 2.6 Migration)
 	migrationQueries := []string{
 		`ALTER TABLE targets ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE';`,
 		`ALTER TABLE targets ADD COLUMN IF NOT EXISTS next_checked_at TIMESTAMP WITH TIME ZONE;`,
+		`CREATE TABLE IF NOT EXISTS baselines (
+			id VARCHAR(64) PRIMARY KEY,
+			target_id VARCHAR(64) REFERENCES targets(id) ON DELETE CASCADE,
+			time_window VARCHAR(32) NOT NULL,
+			metric_type VARCHAR(64) NOT NULL,
+			mean_value DOUBLE PRECISION NOT NULL,
+			median_value DOUBLE PRECISION NOT NULL,
+			p95_value DOUBLE PRECISION NOT NULL,
+			p99_value DOUBLE PRECISION NOT NULL,
+			min_value DOUBLE PRECISION NOT NULL,
+			max_value DOUBLE PRECISION NOT NULL,
+			stddev_value DOUBLE PRECISION NOT NULL,
+			sample_count INT NOT NULL,
+			calculated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			CONSTRAINT unique_target_window_metric UNIQUE (target_id, time_window, metric_type)
+		);`,
+		`CREATE TABLE IF NOT EXISTS anomaly_events (
+			id VARCHAR(64) PRIMARY KEY,
+			target_id VARCHAR(64) REFERENCES targets(id) ON DELETE CASCADE,
+			metric_type VARCHAR(64) NOT NULL,
+			lifecycle_state VARCHAR(64) NOT NULL DEFAULT 'DEVIATION_DETECTED',
+			severity VARCHAR(32) NOT NULL DEFAULT 'LOW',
+			observed_value DOUBLE PRECISION NOT NULL,
+			expected_value DOUBLE PRECISION NOT NULL,
+			deviation_percentage DOUBLE PRECISION NOT NULL,
+			consecutive_count INT NOT NULL DEFAULT 1,
+			detected_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			resolved_at TIMESTAMP WITH TIME ZONE,
+			status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE'
+		);`,
+		`CREATE INDEX IF NOT EXISTS idx_anomaly_events_target_id ON anomaly_events(target_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_anomaly_events_detected_at ON anomaly_events(detected_at DESC);`,
 	}
 	for _, q := range migrationQueries {
 		if _, mErr := db.ExecContext(ctx, q); mErr != nil {

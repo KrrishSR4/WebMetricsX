@@ -18,6 +18,7 @@ import (
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/routes"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/scheduler"
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
 
@@ -57,9 +58,10 @@ func main() {
 	}
 	repo := database.NewRepository(db, logger)
 
-	// 5. Initialize Monitoring Engine & Scheduler
+	// 5. Initialize Monitoring Engine, Anomaly Detector & Scheduler
 	engine := monitoring.NewEngine(logger, 10)
-	sched := scheduler.NewScheduler(engine, repo, cacheService, logger)
+	anomalyDet := services.NewAnomalyDetector(repo, cacheService, logger)
+	sched := scheduler.NewScheduler(engine, repo, cacheService, anomalyDet, logger)
 	defer sched.Close()
 
 	// Load active monitoring targets from DB and restart background workers
@@ -80,7 +82,7 @@ func main() {
 	router.Use(middleware.ErrorHandler(logger))
 
 	// 8. Register Routes
-	routes.Setup(router, AppVersion, cacheService, engine, repo, sched, logger)
+	routes.Setup(router, AppVersion, cacheService, engine, repo, sched, anomalyDet, logger)
 
 	// 9. HTTP Server Setup
 	server := &http.Server{

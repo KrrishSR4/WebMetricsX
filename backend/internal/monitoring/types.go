@@ -55,18 +55,20 @@ type HTTPResult struct {
 
 // CheckResult represents the normalized, complete monitoring check result
 type CheckResult struct {
-	TargetID       string     `json:"target_id,omitempty"`
-	URL            string     `json:"url"`
-	Available      bool       `json:"available"`
-	StatusCode     int        `json:"status_code"`
-	DNSLatencyMs   int64      `json:"dns_latency_ms"`
-	TCPLatencyMs   int64      `json:"tcp_latency_ms"`
-	TLSLatencyMs   int64      `json:"tls_latency_ms"`
-	TTFBMs         int64      `json:"ttfb_ms"`
-	ResponseTimeMs int64      `json:"response_time_ms"`
-	SSLValid       bool       `json:"ssl_valid"`
-	SSLExpiryDate  *time.Time `json:"ssl_expiry_date,omitempty"`
-	SSLIssuer      string     `json:"ssl_issuer,omitempty"`
-	ErrorMessage   string     `json:"error_message,omitempty"`
-	CheckedAt      time.Time  `json:"checked_at"`
+	TargetID        string     `json:"target_id,omitempty"`
+	URL             string     `json:"url"`
+	Available       bool       `json:"available"`
+	StatusCode      int        `json:"status_code"`
+	DNSLatencyMs    int64      `json:"dns_latency_ms"`
+	TCPLatencyMs    int64      `json:"tcp_latency_ms"`
+	TLSLatencyMs    int64      `json:"tls_latency_ms"`
+	TTFBMs          int64      `json:"ttfb_ms"`
+	ResponseTimeMs  int64      `json:"response_time_ms"`
+	SSLValid        bool       `json:"ssl_valid"`
+	SSLExpiryDate   *time.Time `json:"ssl_expiry_date,omitempty"`
+	SSLIssuer       string     `json:"ssl_issuer,omitempty"`
+	ErrorMessage    string     `json:"error_message,omitempty"`
+	CheckedAt       time.Time  `json:"checked_at"`
+	AnomalyState    string     `json:"anomaly_state,omitempty"`
+	AnomalySeverity string     `json:"anomaly_severity,omitempty"`
 }
