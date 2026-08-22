@@ -78,6 +78,27 @@ func NewDB(dbURL string, logger *slog.Logger) (*DB, error) {
 		);`,
 		`CREATE INDEX IF NOT EXISTS idx_anomaly_events_target_id ON anomaly_events(target_id);`,
 		`CREATE INDEX IF NOT EXISTS idx_anomaly_events_detected_at ON anomaly_events(detected_at DESC);`,
+		`CREATE TABLE IF NOT EXISTS alert_events (
+			id VARCHAR(64) PRIMARY KEY,
+			target_id VARCHAR(64) REFERENCES targets(id) ON DELETE CASCADE,
+			alert_type VARCHAR(64) NOT NULL,
+			severity VARCHAR(32) NOT NULL DEFAULT 'LOW',
+			title VARCHAR(256) NOT NULL,
+			message TEXT NOT NULL,
+			affected_metric VARCHAR(64) NOT NULL,
+			current_value DOUBLE PRECISION NOT NULL,
+			threshold_value DOUBLE PRECISION NOT NULL,
+			rca_cause VARCHAR(256),
+			rca_evidence TEXT,
+			timestamp TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			status VARCHAR(32) NOT NULL DEFAULT 'TRIGGERED',
+			notification_status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+			consecutive_count INT NOT NULL DEFAULT 1,
+			resolved_at TIMESTAMP WITH TIME ZONE
+		);`,
+		`ALTER TABLE alert_events ADD COLUMN IF NOT EXISTS consecutive_count INT NOT NULL DEFAULT 1;`,
+		`CREATE INDEX IF NOT EXISTS idx_alerts_target_id ON alert_events(target_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_alerts_timestamp ON alert_events(timestamp DESC);`,
 	}
 	for _, q := range migrationQueries {
 		if _, mErr := db.ExecContext(ctx, q); mErr != nil {

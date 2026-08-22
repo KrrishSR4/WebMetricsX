@@ -20,12 +20,15 @@ func Setup(
 	repo *database.Repository,
 	sched *scheduler.Scheduler,
 	anomalyDet *services.AnomalyDetector,
+	alertEngine *services.AlertEngine,
+	pushProvider *services.PushNotificationProvider,
 	logger *slog.Logger,
 ) {
 	healthHandler := handlers.NewHealthHandler(appVersion, cacheService)
 	monitoringHandler := handlers.NewMonitoringHandler(engine, repo, cacheService, sched, logger)
 	analyticsHandler := handlers.NewAnalyticsHandler(repo, logger)
 	anomalyHandler := handlers.NewAnomalyHandler(repo, anomalyDet, logger)
+	alertHandler := handlers.NewAlertHandler(repo, alertEngine, pushProvider, logger)
 
 	// Direct Health Endpoint
 	router.GET("/health", healthHandler.Check)
@@ -54,5 +57,10 @@ func Setup(
 		v1.GET("/monitoring/anomalies/history", anomalyHandler.GetAnomalyHistory)
 		v1.GET("/monitoring/anomalies/stats", anomalyHandler.GetAnomalyStats)
 		v1.GET("/monitoring/analysis", anomalyHandler.GetAnalysis)
+
+		// Alerting Endpoints (Phase 2.7)
+		v1.GET("/monitoring/alerts/history", alertHandler.GetAlertHistory)
+		v1.GET("/monitoring/alerts/active", alertHandler.GetActiveIncidents)
+		v1.POST("/monitoring/alerts/subscribe", alertHandler.SubscribePush)
 	}
 }

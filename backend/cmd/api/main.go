@@ -58,10 +58,28 @@ func main() {
 	}
 	repo := database.NewRepository(db, logger)
 
-	// 5. Initialize Monitoring Engine, Anomaly Detector & Scheduler
+	// 5. Initialize Monitoring Engine, Providers, Alerting & Anomaly Detectors
+	emailProvider := services.NewSMTPEmailProvider(
+		os.Getenv("SMTP_HOST"),
+		os.Getenv("SMTP_PORT"),
+		os.Getenv("SMTP_USERNAME"),
+		os.Getenv("SMTP_PASSWORD"),
+		os.Getenv("SMTP_FROM"),
+		logger,
+	)
+	pushProvider := services.NewPushNotificationProvider(logger)
+	alertEng := services.NewAlertEngine(
+		repo,
+		cacheService,
+		emailProvider,
+		pushProvider,
+		os.Getenv("ALERT_RECIPIENT"),
+		logger,
+	)
+
 	engine := monitoring.NewEngine(logger, 10)
 	anomalyDet := services.NewAnomalyDetector(repo, cacheService, logger)
-	sched := scheduler.NewScheduler(engine, repo, cacheService, anomalyDet, logger)
+	sched := scheduler.NewScheduler(engine, repo, cacheService, anomalyDet, alertEng, logger)
 	defer sched.Close()
 
 	// Load active monitoring targets from DB and restart background workers
@@ -82,7 +100,7 @@ func main() {
 	router.Use(middleware.ErrorHandler(logger))
 
 	// 8. Register Routes
-	routes.Setup(router, AppVersion, cacheService, engine, repo, sched, anomalyDet, logger)
+	routes.Setup(router, AppVersion, cacheService, engine, repo, sched, anomalyDet, alertEng, pushProvider, logger)
 
 	// 9. HTTP Server Setup
 	server := &http.Server{

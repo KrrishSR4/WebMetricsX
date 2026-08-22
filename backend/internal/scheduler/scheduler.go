@@ -78,6 +78,7 @@ type Scheduler struct {
 	repo            *database.Repository
 	cacheService    cache.CacheService
 	anomalyDetector *services.AnomalyDetector
+	alertEngine     *services.AlertEngine
 	logger          *slog.Logger
 	workers         map[string]*Worker
 	eventBus        *EventBus
@@ -94,6 +95,7 @@ func NewScheduler(
 	repo *database.Repository,
 	cacheService cache.CacheService,
 	anomalyDetector *services.AnomalyDetector,
+	alertEngine *services.AlertEngine,
 	logger *slog.Logger,
 ) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -102,6 +104,7 @@ func NewScheduler(
 		repo:            repo,
 		cacheService:    cacheService,
 		anomalyDetector: anomalyDetector,
+		alertEngine:     alertEngine,
 		logger:          logger,
 		workers:         make(map[string]*Worker),
 		eventBus:        NewEventBus(),
@@ -378,6 +381,13 @@ func (s *Scheduler) executeProbeTick(j *Job) {
 			res.AnomalyState = anomalyState
 			res.AnomalySeverity = anomalySeverity
 		}
+	}
+
+	// Run Alerting Engine (Phase 2.7)
+	if s.alertEngine != nil {
+		pCtx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
+		_ = s.alertEngine.ProcessAlertsForCheck(pCtx, res)
+		cancel()
 	}
 
 	// 2. Cache Latest State in Redis

@@ -572,3 +572,88 @@ export const fetchAnalysis = async (
     return null;
   }
 };
+
+export interface AlertEvent {
+  id: string;
+  target_id: string;
+  alert_type: string; // DOWN, HIGH_TTFB, HIGH_LATENCY, ANOMALY, REGRESSION, SERVER_ERROR
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  title: string;
+  message: string;
+  affected_metric: string;
+  current_value: number;
+  threshold_value: number;
+  rca_cause?: string | null;
+  rca_evidence?: string | null;
+  timestamp: string;
+  status: 'TRIGGERED' | 'ACTIVE' | 'RESOLVED';
+  notification_status: 'SENT' | 'FAILED' | 'PENDING' | 'SKIPPED';
+  resolved_at?: string | null;
+}
+
+export const fetchAlertHistory = async (
+  targetUrl: string,
+  limit: number = 20
+): Promise<AlertEvent[]> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/alerts/history?url=${encodeURIComponent(targetUrl)}&limit=${limit}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<AlertEvent[]> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return [];
+    }
+
+    return data.data;
+  } catch {
+    return [];
+  }
+};
+
+export const fetchActiveIncidents = async (
+  targetUrl: string
+): Promise<AlertEvent[]> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/alerts/active?url=${encodeURIComponent(targetUrl)}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<AlertEvent[]> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return [];
+    }
+
+    return data.data;
+  } catch {
+    return [];
+  }
+};
+
+export const subscribeBrowserPush = async (
+  targetUrl: string,
+  subscription: unknown
+): Promise<boolean> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/alerts/subscribe`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        subscription,
+      }),
+    });
+
+    const data: GoApiResponse<{ status: string }> = await response.json();
+    return response.ok && data.success;
+  } catch {
+    return false;
+  }
+};
