@@ -34,10 +34,25 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
   const [pushEnabled, setPushEnabled] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Find the latest critical alert
-  const criticalAlert = [...activeIncidents, ...alertHistory]
-    .filter((log) => log.severity === 'CRITICAL')
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+  // Find all critical alerts
+  const criticalProbes = [...activeIncidents, ...alertHistory].filter(
+    (log) => log.severity === 'CRITICAL'
+  );
+
+  const sortedCriticals = [...criticalProbes].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
+  const earliestTime = sortedCriticals.length > 0
+    ? new Date(sortedCriticals[0].timestamp).toLocaleTimeString()
+    : '';
+
+  const latestTime = sortedCriticals.length > 0
+    ? new Date(sortedCriticals[sortedCriticals.length - 1].timestamp).toLocaleTimeString()
+    : '';
+
+  // Filter logs list to display only CRITICAL events
+  const criticalLogs = alertHistory.filter((log) => log.severity === 'CRITICAL');
 
   const loadAlertData = useCallback(async () => {
     try {
@@ -132,78 +147,8 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Column 1 & 2: Active Incidents & History */}
+      {/* Column 1 & 2: Alert History */}
       <div className="lg:col-span-2 space-y-6">
-        {/* Active Incidents */}
-        <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-bold text-muted-foreground uppercase font-mono tracking-wider flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-rose-500" />
-              Active Incidents
-            </h4>
-            <span className="text-[10px] md:text-xs font-mono bg-rose-500/10 text-rose-600 px-2 py-0.5 rounded-full font-bold">
-              {activeIncidents.length} Active
-            </span>
-          </div>
-
-          {activeIncidents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center bg-emerald-500/5 border border-emerald-500/10 rounded-xl space-y-2">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-              <h5 className="text-sm font-bold text-emerald-800 font-mono">All Systems Operational</h5>
-              <p className="text-xs text-emerald-700/80 font-mono">No active incidents detected on this target website.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {activeIncidents.map((incident) => (
-                <div 
-                  key={incident.id} 
-                  className="p-4 border border-rose-500/20 bg-rose-500/5 rounded-xl space-y-2 relative overflow-hidden"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h5 className="font-bold text-sm text-rose-950 font-mono flex items-center gap-1.5">
-                        <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                        {incident.title}
-                      </h5>
-                      <p className="text-xs text-rose-900/80 mt-1 font-mono leading-relaxed">{incident.message}</p>
-                    </div>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono uppercase ${getSeverityBadgeClass(incident.severity)}`}>
-                      {incident.severity}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-2 border-t border-rose-500/10 text-[10px] font-mono text-rose-800/80">
-                    <div>
-                      <span className="font-bold">Metric:</span> {incident.affected_metric}
-                    </div>
-                    <div>
-                      <span className="font-bold">Value:</span> {incident.current_value.toFixed(1)}
-                    </div>
-                    {incident.threshold_value > 0 && (
-                      <div>
-                        <span className="font-bold">Threshold:</span> {incident.threshold_value.toFixed(1)}
-                      </div>
-                    )}
-                    <div>
-                      <span className="font-bold">Triggered:</span> {new Date(incident.timestamp).toLocaleTimeString()}
-                    </div>
-                  </div>
-
-                  {incident.rca_cause && (
-                    <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-2.5 mt-2 text-[10px] font-mono text-amber-800">
-                      <div className="font-bold flex items-center gap-1">
-                        <Info className="w-3.5 h-3.5 shrink-0" />
-                        Likely Cause: {incident.rca_cause}
-                      </div>
-                      <div className="text-amber-700/80 mt-0.5 leading-relaxed">{incident.rca_evidence}</div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* History Log */}
         <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-black/5 pb-2.5">
@@ -213,9 +158,9 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
             </h4>
             
             <div className="text-[10px] md:text-xs font-mono font-bold">
-              {criticalAlert ? (
+              {criticalProbes.length > 0 ? (
                 <span className="text-rose-600 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full animate-pulse">
-                  ⚠️ Critical at {new Date(criticalAlert.timestamp).toLocaleTimeString()}
+                  ⚠️ {criticalProbes.length} critical probe{criticalProbes.length > 1 ? 's' : ''} {criticalProbes.length === 1 ? `(${earliestTime})` : `(${earliestTime} : ${latestTime})`}
                 </span>
               ) : (
                 <span className="text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
@@ -225,9 +170,9 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
             </div>
           </div>
 
-          {alertHistory.length === 0 ? (
+          {criticalLogs.length === 0 ? (
             <div className="text-center py-6 text-xs text-muted-foreground font-mono">
-              No historical alert logs recorded.
+              No critical alert logs recorded.
             </div>
           ) : (
             <div className="overflow-auto max-h-[300px] pr-1">
@@ -242,7 +187,7 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/5">
-                  {alertHistory.map((log) => (
+                  {criticalLogs.map((log) => (
                     <tr key={log.id} className="hover:bg-black/5 transition-colors">
                       <td className="py-3 pr-4">
                         <div>
