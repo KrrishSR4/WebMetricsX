@@ -34,8 +34,18 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
   const [pushEnabled, setPushEnabled] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Defensive check to avoid TypeError if states are not arrays
+  const activeList = Array.isArray(activeIncidents) ? activeIncidents : [];
+  const historyList = Array.isArray(alertHistory) ? alertHistory : [];
+
+  const formatTime = (timeStr: string | undefined | null) => {
+    if (!timeStr) return '';
+    const d = new Date(timeStr);
+    return isNaN(d.getTime()) ? '' : d.toLocaleTimeString();
+  };
+
   // Find all critical alerts
-  const criticalProbes = [...activeIncidents, ...alertHistory].filter(
+  const criticalProbes = [...activeList, ...historyList].filter(
     (log) => log.severity === 'CRITICAL'
   );
 
@@ -44,15 +54,15 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
   );
 
   const earliestTime = sortedCriticals.length > 0
-    ? new Date(sortedCriticals[0].timestamp).toLocaleTimeString()
+    ? formatTime(sortedCriticals[0].timestamp)
     : '';
 
   const latestTime = sortedCriticals.length > 0
-    ? new Date(sortedCriticals[sortedCriticals.length - 1].timestamp).toLocaleTimeString()
+    ? formatTime(sortedCriticals[sortedCriticals.length - 1].timestamp)
     : '';
 
   // Filter logs list to display only CRITICAL events
-  const criticalLogs = alertHistory.filter((log) => log.severity === 'CRITICAL');
+  const criticalLogs = historyList.filter((log) => log.severity === 'CRITICAL');
 
   const loadAlertData = useCallback(async () => {
     try {
@@ -211,7 +221,7 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
                         <span className="font-mono text-foreground font-bold">{log.current_value.toFixed(1)}</span>
                       </td>
                       <td className="py-3 text-muted-foreground text-[10px]">
-                        {new Date(log.timestamp).toLocaleTimeString()}
+                        {formatTime(log.timestamp)}
                       </td>
                     </tr>
                   ))}
