@@ -34,6 +34,11 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
   const [pushEnabled, setPushEnabled] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Find the latest critical alert
+  const criticalAlert = [...activeIncidents, ...alertHistory]
+    .filter((log) => log.severity === 'CRITICAL')
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+
   const loadAlertData = useCallback(async () => {
     try {
       const [incidents, history] = await Promise.all([
@@ -201,19 +206,33 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
 
         {/* History Log */}
         <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm space-y-4">
-          <h4 className="text-sm font-bold text-muted-foreground uppercase font-mono tracking-wider flex items-center gap-2">
-            <History className="w-4 h-4 text-chart-1" />
-            Alert Logs & Incidents History
-          </h4>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-black/5 pb-2.5">
+            <h4 className="text-sm font-bold text-muted-foreground uppercase font-mono tracking-wider flex items-center gap-2">
+              <History className="w-4 h-4 text-chart-1" />
+              Alert Logs & Incidents History
+            </h4>
+            
+            <div className="text-[10px] md:text-xs font-mono font-bold">
+              {criticalAlert ? (
+                <span className="text-rose-600 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full animate-pulse">
+                  ⚠️ Critical at {new Date(criticalAlert.timestamp).toLocaleTimeString()}
+                </span>
+              ) : (
+                <span className="text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                  ✓ no critical probes
+                </span>
+              )}
+            </div>
+          </div>
 
           {alertHistory.length === 0 ? (
             <div className="text-center py-6 text-xs text-muted-foreground font-mono">
               No historical alert logs recorded.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left font-mono text-xs">
-                <thead>
+            <div className="overflow-auto max-h-[300px] pr-1">
+              <table className="w-full border-collapse text-left font-mono text-xs relative">
+                <thead className="sticky top-0 bg-card z-10">
                   <tr className="border-b border-black/5 text-muted-foreground font-bold">
                     <th className="py-2.5">Alert Event</th>
                     <th className="py-2.5">Severity</th>
