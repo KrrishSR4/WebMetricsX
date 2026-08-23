@@ -180,9 +180,9 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
             </div>
           </div>
 
-          {criticalLogs.length === 0 ? (
+          {historyList.length === 0 ? (
             <div className="text-center py-6 text-xs text-muted-foreground font-mono">
-              No critical alert logs recorded.
+              No historical alert logs recorded.
             </div>
           ) : (
             <div className="overflow-auto max-h-[300px] pr-1">
@@ -197,7 +197,7 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/5">
-                  {criticalLogs.map((log) => (
+                  {historyList.map((log) => (
                     <tr key={log.id} className="hover:bg-black/5 transition-colors">
                       <td className="py-3 pr-4">
                         <div>
