@@ -12,18 +12,24 @@ import (
 )
 
 type AlertEmailData struct {
-	Website      string
-	Status       string // NORMAL, DEGRADED, DOWN
-	TTFB         float64
-	Threshold    float64
-	ResponseTime float64
-	DNS          float64
-	TCP          float64
-	TLS          float64
-	Availability float64
-	DetectedAt   time.Time
-	LikelyCause  string
-	RCAEvidence  string
+	Website               string
+	Status                string // HIGH_LATENCY, WEBSITE_DOWN, RECOVERY
+	TTFB                  float64
+	Threshold             float64
+	ResponseTime          float64
+	DNS                   float64
+	TCP                   float64
+	TLS                   float64
+	Availability          float64
+	DetectedAt            time.Time
+	LikelyCause           string
+	RCAEvidence           string
+	AvgResponseTime       float64
+	P95ResponseTime       float64
+	P99ResponseTime       float64
+	ConsecutiveViolations int
+	LastAlertTime         time.Time
+	NextAlertTime         time.Time
 }
 
 func SendAlertEmail(ctx context.Context, recipient string, alert AlertEmailData) error {
@@ -48,21 +54,36 @@ func SendAlertEmail(ctx context.Context, recipient string, alert AlertEmailData)
 	var statusText string
 	var statusBorder string
 	switch alert.Status {
-	case "DOWN":
-		subject = fmt.Sprintf("WebMetricsX Alert — Connection DOWN for %s", alert.Website)
+	case "WEBSITE_DOWN":
+		subject = fmt.Sprintf("WebMetricsX Alert — Website Down: %s", alert.Website)
 		statusBg = "#fef2f2"
 		statusText = "#dc2626"
 		statusBorder = "#fecaca"
-	case "DEGRADED":
-		subject = fmt.Sprintf("WebMetricsX Alert — High TTFB / Slow Performance for %s", alert.Website)
+	case "HIGH_LATENCY":
+		subject = fmt.Sprintf("WebMetricsX Alert — High TTFB Detected for %s", alert.Website)
 		statusBg = "#fffbeb"
 		statusText = "#d97706"
 		statusBorder = "#fef3c7"
-	default:
-		subject = fmt.Sprintf("WebMetricsX Status — System Operational for %s", alert.Website)
+	default: // RECOVERY
+		subject = fmt.Sprintf("WebMetricsX Recovery — Website Recovered: %s", alert.Website)
 		statusBg = "#f0fdf4"
 		statusText = "#16a34a"
 		statusBorder = "#dcfce7"
+	}
+
+	lastAlertStr := "N/A"
+	if !alert.LastAlertTime.IsZero() {
+		lastAlertStr = alert.LastAlertTime.Format("2006-01-02 15:04:05 MST")
+	}
+	nextAlertStr := "N/A"
+	if !alert.NextAlertTime.IsZero() {
+		nextAlertStr = alert.NextAlertTime.Format("2006-01-02 15:04:05 MST")
+	}
+
+	// Header title string based on status
+	headerTitle := "Incident Alert"
+	if alert.Status == "RECOVERY" {
+		headerTitle = "Incident Resolved"
 	}
 
 	// Build a professional HTML email body with Light Mode theme matching the WebMetricsX design
@@ -78,7 +99,7 @@ func SendAlertEmail(ctx context.Context, recipient string, alert AlertEmailData)
 								WebMetricsX
 							</span>
 							<div style="font-size: 9px; color: #64748b; font-family: monospace; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 3px;">
-								Continuous Engine Active
+								%s
 							</div>
 						</td>
 						<td style="text-align: right; vertical-align: middle; padding-bottom: 16px;">
@@ -136,6 +157,33 @@ func SendAlertEmail(ctx context.Context, recipient string, alert AlertEmailData)
 					</tr>
 				</table>
 
+				<!-- Stats & Cooldown Details -->
+				<div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 12px; color: #334155; font-family: monospace;">
+					<div style="font-weight: 800; color: #0f172a; text-transform: uppercase; font-size: 10px; margin-bottom: 8px; letter-spacing: 0.5px;">Incident Details</div>
+					<table style="width: 100%%; border-collapse: collapse;">
+						<tr style="border-bottom: 1px solid #f1f5f9; height: 28px;">
+							<td style="color: #64748b;">Average Latency (24h):</td>
+							<td style="text-align: right; font-weight: bold; color: #0f172a;">%.1f ms</td>
+						</tr>
+						<tr style="border-bottom: 1px solid #f1f5f9; height: 28px;">
+							<td style="color: #64748b;">P95 / P99 Latency:</td>
+							<td style="text-align: right; font-weight: bold; color: #0f172a;">%.1f ms / %.1f ms</td>
+						</tr>
+						<tr style="border-bottom: 1px solid #f1f5f9; height: 28px;">
+							<td style="color: #64748b;">Consecutive Bad Probes:</td>
+							<td style="text-align: right; font-weight: bold; color: #0f172a;">%d</td>
+						</tr>
+						<tr style="border-bottom: 1px solid #f1f5f9; height: 28px;">
+							<td style="color: #64748b;">Last Alert Sent:</td>
+							<td style="text-align: right; color: #334155;">%s</td>
+						</tr>
+						<tr style="height: 28px;">
+							<td style="color: #64748b;">Next Eligible Alert:</td>
+							<td style="text-align: right; color: #334155;">%s</td>
+						</tr>
+					</table>
+				</div>
+
 				%s
 
 				<div style="font-size: 10px; color: #64748b; font-family: monospace; border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 24px; line-height: 1.5;">
@@ -145,7 +193,7 @@ func SendAlertEmail(ctx context.Context, recipient string, alert AlertEmailData)
 
 			</div>
 		</div>
-	`, statusBg, statusText, statusBorder, alert.Status, alert.Website, alert.TTFB, alert.Threshold, alert.ResponseTime, alert.Status, alert.DNS, alert.TCP, alert.TLS, alert.Availability, formatRCAHTML(alert.LikelyCause, alert.RCAEvidence), alert.DetectedAt.Format("2006-01-02 15:04:05 MST"))
+	`, headerTitle, statusBg, statusText, statusBorder, alert.Status, alert.Website, alert.TTFB, alert.Threshold, alert.ResponseTime, alert.Status, alert.DNS, alert.TCP, alert.TLS, alert.Availability, alert.AvgResponseTime, alert.P95ResponseTime, alert.P99ResponseTime, alert.ConsecutiveViolations, lastAlertStr, nextAlertStr, formatRCAHTML(alert.LikelyCause, alert.RCAEvidence), alert.DetectedAt.Format("2006-01-02 15:04:05 MST"))
 
 	url := "https://api.brevo.com/v3/smtp/email"
 

@@ -18,7 +18,12 @@ import {
   fetchActiveIncidents, 
   fetchAlertHistory, 
   subscribeBrowserPush,
-  getApiBaseUrl
+  getApiBaseUrl,
+  fetchAlertStatus,
+  AlertStatusSummary,
+  subscribeEmailAlerts,
+  unsubscribeEmailAlerts,
+  fetchEmailSubscriptions
 } from '@/services/monitoringApi';
 import { toast } from 'sonner';
 
@@ -44,6 +49,8 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
   const [alertErrorMessage, setAlertErrorMessage] = useState<string>('');
+  const [alertStatusSummary, setAlertStatusSummary] = useState<AlertStatusSummary | null>(null);
+  const [subscribedEmails, setSubscribedEmails] = useState<string[]>([]);
 
   // Browser Permission State
   const [permission, setPermission] = useState<NotificationPermission>(
@@ -82,12 +89,16 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
 
   const loadAlertData = useCallback(async () => {
     try {
-      const [incidents, history] = await Promise.all([
+      const [incidents, history, summary, subs] = await Promise.all([
         fetchActiveIncidents(targetUrl),
         fetchAlertHistory(targetUrl, 10),
+        fetchAlertStatus(targetUrl),
+        fetchEmailSubscriptions(targetUrl),
       ]);
       setActiveIncidents(incidents);
       setAlertHistory(history);
+      setAlertStatusSummary(summary);
+      setSubscribedEmails(subs);
     } catch (err) {
       console.error('Error fetching alerts data:', err);
     } finally {
@@ -222,6 +233,45 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
     }
   };
 
+  const handleSubscribeEmail = async () => {
+    const trimmed = testEmail.trim();
+    if (!trimmed || !trimmed.includes('@') || !trimmed.includes('.')) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      const success = await subscribeEmailAlerts(targetUrl, trimmed);
+      if (success) {
+        toast.success(`Subscribed ${trimmed} to email alerts successfully!`);
+        setTestEmail('');
+        // Reload list
+        const subs = await fetchEmailSubscriptions(targetUrl);
+        setSubscribedEmails(subs);
+      } else {
+        toast.error('Failed to subscribe email to alerts.');
+      }
+    } catch {
+      toast.error('Error subscribing email.');
+    }
+  };
+
+  const handleUnsubscribeEmail = async (emailToUnsub: string) => {
+    try {
+      const success = await unsubscribeEmailAlerts(targetUrl, emailToUnsub);
+      if (success) {
+        toast.success(`Unsubscribed ${emailToUnsub} successfully.`);
+        // Reload list
+        const subs = await fetchEmailSubscriptions(targetUrl);
+        setSubscribedEmails(subs);
+      } else {
+        toast.error('Failed to unsubscribe.');
+      }
+    } catch {
+      toast.error('Error unsubscribing.');
+    }
+  };
+
   const getSeverityBadgeClass = (severity: AlertEvent['severity']) => {
     switch (severity) {
       case 'CRITICAL':
@@ -243,10 +293,99 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
     return 'bg-rose-500/10 text-rose-600 border border-rose-500/20 animate-pulse';
   };
 
+  const getCooldownCountdown = (alertType: 'HIGH_LATENCY' | 'WEBSITE_DOWN') => {
+    if (!alertStatusSummary || !alertStatusSummary.cooldowns) return null;
+    const cd = alertStatusSummary.cooldowns[alertType];
+    if (!cd || !cd.in_cooldown || !cd.remaining_sec) return null;
+    
+    const minutes = Math.floor(cd.remaining_sec / 60);
+    const seconds = cd.remaining_sec % 60;
+    return `${minutes}m ${seconds}s`;
+  };
+
+  const getAlertStatusState = () => {
+    if (!alertStatusSummary) return { status: 'healthy', label: 'Monitoring Healthy', color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20' };
+
+    const activeInc = alertStatusSummary.active_incidents || [];
+    const isDownActive = activeInc.some(i => i.alert_type === 'WEBSITE_DOWN' && i.status !== 'RESOLVED');
+    const isLatencyActive = activeInc.some(i => i.alert_type === 'HIGH_LATENCY' && i.status !== 'RESOLVED');
+
+    if (isDownActive) {
+      const countdown = getCooldownCountdown('WEBSITE_DOWN');
+      const nextEligibleStr = countdown ? ` (Next email eligible in ${countdown})` : '';
+      return {
+        status: 'down',
+        label: `Website Down${nextEligibleStr}`,
+        color: 'text-rose-600 bg-rose-500/10 border-rose-500/20 animate-pulse',
+      };
+    }
+
+    if (isLatencyActive) {
+      const countdown = getCooldownCountdown('HIGH_LATENCY');
+      const nextEligibleStr = countdown ? ` (Next email eligible in ${countdown})` : '';
+      return {
+        status: 'degraded',
+        label: `High Latency Detected${nextEligibleStr}`,
+        color: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+      };
+    }
+
+    const hasRecentRecovery = historyList.length > 0 && historyList[0].status === 'RESOLVED';
+    if (hasRecentRecovery) {
+      return {
+        status: 'recovered',
+        label: 'Recovered',
+        color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+      };
+    }
+
+    return {
+      status: 'healthy',
+      label: 'Monitoring Healthy',
+      color: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    };
+  };
+
+  const statusState = getAlertStatusState();
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Column 1 & 2: Alert History */}
       <div className="lg:col-span-2 space-y-6">
+        {/* Active Alerting Policy Status */}
+        <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm space-y-4 font-mono">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <ShieldAlert className="w-4.5 h-4.5 text-chart-1 animate-pulse" />
+              Active Alerting Policy Status
+            </h4>
+            <div className={`text-[10px] font-bold px-3 py-1 rounded-full border ${statusState.color}`}>
+              {statusState.status === 'healthy' || statusState.status === 'recovered' ? '🟢' : statusState.status === 'degraded' ? '🟠' : '🔴'} {statusState.label}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4 pt-2 text-center text-xs">
+            <div className="bg-black/5 rounded-xl py-3 space-y-1">
+              <div className="text-muted-foreground text-[10px] uppercase font-bold">Last Alert Sent</div>
+              <div className="font-bold text-foreground text-xs">
+                {alertStatusSummary?.last_alert_sent_at ? formatTime(alertStatusSummary.last_alert_sent_at) : 'N/A'}
+              </div>
+            </div>
+            <div className="bg-black/5 rounded-xl py-3 space-y-1">
+              <div className="text-muted-foreground text-[10px] uppercase font-bold">Alert Count</div>
+              <div className="font-bold text-foreground text-xs">
+                {alertStatusSummary?.sent_count ?? 0}
+              </div>
+            </div>
+            <div className="bg-black/5 rounded-xl py-3 space-y-1">
+              <div className="text-muted-foreground text-[10px] uppercase font-bold">Suppressed Alerts</div>
+              <div className="font-bold text-foreground text-xs">
+                {alertStatusSummary?.suppressed_count ?? 0}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* History Log */}
         <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-black/5 pb-2.5">
@@ -400,12 +539,35 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
             )}
           </div>
 
-          {/* Test notifications form */}
+          {/* Email alert subscriptions */}
           <div className="space-y-3 pt-3 border-t border-black/5 font-mono">
-            <h5 className="font-bold uppercase text-[10px] text-muted-foreground tracking-wider">Test Notifications</h5>
+            <h5 className="font-bold uppercase text-[10px] text-muted-foreground tracking-wider">Email Alert Recipients</h5>
+            
+            {/* List of current subscribers */}
+            {subscribedEmails.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pb-1">
+                {subscribedEmails.map((emailVal) => (
+                  <div key={emailVal} className="flex items-center gap-1.5 bg-black/5 border border-black/5 px-2 py-1 rounded-xl text-[9px] font-bold text-foreground">
+                    <span className="truncate max-w-[130px]">{emailVal}</span>
+                    <button 
+                      onClick={() => handleUnsubscribeEmail(emailVal)}
+                      className="text-muted-foreground hover:text-rose-600 font-bold focus:outline-none"
+                      title="Unsubscribe"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-[9px] text-muted-foreground italic">
+                No custom email recipients registered. Alerts will fall back to default admin email.
+              </div>
+            )}
+
             <div className="space-y-2">
               <label htmlFor="test-email-input" className="block text-[10px] text-muted-foreground font-bold uppercase">
-                Add Your Email
+                Email Address
               </label>
               <input
                 id="test-email-input"
@@ -422,24 +584,25 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
                 <p className="text-[10px] text-rose-600 font-bold">{emailError}</p>
               )}
               
-              <button
-                onClick={handleSendTestAlert}
-                disabled={sendingTest}
-                className="w-full h-9 text-xs font-bold rounded-xl bg-chart-1 text-white hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-all shadow-sm"
-              >
-                {sendingTest ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    Sending...
-                  </>
-                ) : testStatus === 'success' ? (
-                  '✓ Alert Sent'
-                ) : testStatus === 'error' ? (
-                  '✕ Failed to Send Alert'
-                ) : (
-                  'Send Test Alert'
-                )}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSubscribeEmail}
+                  className="flex-1 h-9 text-[10px] font-bold rounded-xl bg-chart-1 text-white hover:opacity-90 transition-all shadow-sm"
+                >
+                  Subscribe
+                </button>
+                <button
+                  onClick={handleSendTestAlert}
+                  disabled={sendingTest}
+                  className="flex-1 h-9 text-[10px] font-bold rounded-xl border border-black/10 hover:bg-black/5 disabled:opacity-50 flex items-center justify-center gap-1 transition-all"
+                >
+                  {sendingTest ? (
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                  ) : (
+                    'Test Alert'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 

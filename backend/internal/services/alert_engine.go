@@ -14,6 +14,7 @@ import (
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
 )
 
+
 type AlertEngine struct {
 	repo          *database.Repository
 	cacheService  cache.CacheService
@@ -26,6 +27,10 @@ type AlertEngine struct {
 	memAlerts          []*database.AlertEventRecord
 	memActiveIncidents map[string]*database.AlertEventRecord
 	memCooldowns       map[string]time.Time
+	memViolations      map[string]int
+	memFailures        map[string]int
+	memGlobalLimits    map[string]int
+	memMetrics         map[string]int64
 
 	recipientEmail string
 	cooldownDur    time.Duration
@@ -51,6 +56,10 @@ func NewAlertEngine(
 		memAlerts:          make([]*database.AlertEventRecord, 0),
 		memActiveIncidents: make(map[string]*database.AlertEventRecord),
 		memCooldowns:       make(map[string]time.Time),
+		memViolations:      make(map[string]int),
+		memFailures:        make(map[string]int),
+		memGlobalLimits:    make(map[string]int),
+		memMetrics:         make(map[string]int64),
 		recipientEmail:     recipientEmail,
 		cooldownDur:        15 * time.Minute,
 	}
@@ -67,117 +76,69 @@ type alertDetails struct {
 
 // ProcessAlertsForCheck runs rules checks and resolves or triggers alarms
 func (ae *AlertEngine) ProcessAlertsForCheck(ctx context.Context, check *monitoring.CheckResult) error {
-	conditions := ae.evaluateConditions(check)
+	// 1. Check WEBSITE_DOWN state (3 consecutive failed probes required)
+	isFailed := !check.Available || check.StatusCode == 0 || check.StatusCode >= 500
+	if isFailed {
+		// Reset latency consecutive count
+		ae.setConsecutiveViolations(ctx, check.TargetID, "HIGH_LATENCY", 0)
 
-	alertTypes := []string{"DOWN", "HIGH_TTFB", "HIGH_LATENCY", "ANOMALY", "REGRESSION", "SERVER_ERROR"}
+		// Increment consecutive failures count
+		fails := ae.getConsecutiveFailures(ctx, check.TargetID) + 1
+		ae.setConsecutiveFailures(ctx, check.TargetID, fails)
+		ae.logger.Debug("Consecutive failures tracker", slog.String("target", check.TargetID), slog.Int("count", fails))
 
-	for _, alertType := range alertTypes {
-		details, triggered := conditions[alertType]
+		if fails >= 3 {
+			details := alertDetails{
+				severity:       "CRITICAL",
+				title:          "Website Down",
+				message:        fmt.Sprintf("Target website %s failed network probes. Error: %s", check.URL, check.ErrorMessage),
+				affectedMetric: "availability",
+				currentVal:     0.0,
+				thresholdVal:   1.0,
+			}
+			_ = ae.triggerAlert(ctx, check, "WEBSITE_DOWN", details)
+		}
 
-		if triggered {
-			err := ae.triggerAlert(ctx, check, alertType, details)
-			if err != nil {
-				ae.logger.Error("Failed to trigger alert", slog.String("type", alertType), slog.String("error", err.Error()))
+		// Resolve HIGH_LATENCY alert if active
+		_ = ae.resolveAlert(ctx, check, "HIGH_LATENCY")
+	} else {
+		// Reset failures count
+		ae.setConsecutiveFailures(ctx, check.TargetID, 0)
+		_ = ae.resolveAlert(ctx, check, "WEBSITE_DOWN")
+
+		// Load custom threshold from DB (fallback to 400ms)
+		thresholdMs := int64(400)
+		if ae.repo != nil && ae.repo.IsAvailable() {
+			if target, err := ae.repo.GetTargetByID(ctx, check.TargetID); err == nil && target != nil && target.LatencyThresholdMs > 0 {
+				thresholdMs = int64(target.LatencyThresholdMs)
+			}
+		}
+
+		// 2. Check HIGH_LATENCY state (TTFB > thresholdMs or ResponseTime > thresholdMs, 3 consecutive violations required)
+		isLatencyViolated := check.TTFBMs > thresholdMs || check.ResponseTimeMs > thresholdMs
+		if isLatencyViolated {
+			viols := ae.getConsecutiveViolations(ctx, check.TargetID, "HIGH_LATENCY") + 1
+			ae.setConsecutiveViolations(ctx, check.TargetID, "HIGH_LATENCY", viols)
+			ae.logger.Debug("Consecutive latency violations tracker", slog.String("target", check.TargetID), slog.Int("count", viols))
+
+			if viols >= 3 {
+				details := alertDetails{
+					severity:       "WARNING",
+					title:          "High TTFB Detected",
+					message:        fmt.Sprintf("Time To First Byte or response latency for %s is elevated: %dms (threshold %dms)", check.URL, check.TTFBMs, thresholdMs),
+					affectedMetric: "ttfb",
+					currentVal:     float64(check.TTFBMs),
+					thresholdVal:   float64(thresholdMs),
+				}
+				_ = ae.triggerAlert(ctx, check, "HIGH_LATENCY", details)
 			}
 		} else {
-			err := ae.resolveAlert(ctx, check, alertType)
-			if err != nil {
-				ae.logger.Error("Failed to resolve alert", slog.String("type", alertType), slog.String("error", err.Error()))
-			}
+			ae.setConsecutiveViolations(ctx, check.TargetID, "HIGH_LATENCY", 0)
+			_ = ae.resolveAlert(ctx, check, "HIGH_LATENCY")
 		}
 	}
 
 	return nil
-}
-
-func (ae *AlertEngine) evaluateConditions(check *monitoring.CheckResult) map[string]alertDetails {
-	res := make(map[string]alertDetails)
-
-	// DOWN check
-	if !check.Available || check.StatusCode == 0 {
-		res["DOWN"] = alertDetails{
-			severity:       "CRITICAL",
-			title:          "Website Connection DOWN",
-			message:        fmt.Sprintf("Target website %s failed network probes. Error: %s", check.URL, check.ErrorMessage),
-			affectedMetric: "availability",
-			currentVal:     0.0,
-			thresholdVal:   1.0,
-		}
-	}
-
-	// SERVER ERROR check
-	if check.StatusCode >= 500 {
-		res["SERVER_ERROR"] = alertDetails{
-			severity:       "CRITICAL",
-			title:          "Origin Server Failure (HTTP 5xx)",
-			message:        fmt.Sprintf("Target website %s returned severe HTTP server error code %d", check.URL, check.StatusCode),
-			affectedMetric: "status_code",
-			currentVal:     float64(check.StatusCode),
-			thresholdVal:   500.0,
-		}
-	}
-
-	// HIGH TTFB check (TTFB > 400ms)
-	if check.Available && check.TTFBMs > 400 {
-		res["HIGH_TTFB"] = alertDetails{
-			severity:       "MEDIUM",
-			title:          "High Time To First Byte (TTFB)",
-			message:        fmt.Sprintf("Time To First Byte for %s is elevated: %dms (threshold limit 400ms)", check.URL, check.TTFBMs),
-			affectedMetric: "ttfb",
-			currentVal:     float64(check.TTFBMs),
-			thresholdVal:   400.0,
-		}
-	}
-
-	// HIGH LATENCY check (ResponseTime > 400ms)
-	if check.Available && check.ResponseTimeMs > 400 {
-		res["HIGH_LATENCY"] = alertDetails{
-			severity:       "LOW",
-			title:          "Response Latency Degraded",
-			message:        fmt.Sprintf("Total network response latency for %s is degraded: %dms (threshold limit 400ms)", check.URL, check.ResponseTimeMs),
-			affectedMetric: "response_time",
-			currentVal:     float64(check.ResponseTimeMs),
-			thresholdVal:   400.0,
-		}
-	}
-
-	// ANOMALY check
-	if check.Available && check.AnomalyState == "ANOMALY" {
-		severity := "HIGH"
-		if check.AnomalySeverity != "" {
-			severity = check.AnomalySeverity
-		}
-		res["ANOMALY"] = alertDetails{
-			severity:       severity,
-			title:          "Statistical Anomaly Detected",
-			message:        fmt.Sprintf("Latency values for %s significantly deviated from historical baseline averages.", check.URL),
-			affectedMetric: "response_time",
-			currentVal:     float64(check.ResponseTimeMs),
-			thresholdVal:   0.0,
-		}
-	}
-
-	// REGRESSION check
-	hasRegression := false
-	var regressionDetails string
-	for _, reg := range check.Regressions {
-		if reg.Status == "Performance Regression" {
-			hasRegression = true
-			regressionDetails += fmt.Sprintf(" %s: %dms (baseline %dms).", reg.MetricType, int(reg.CurrentValue), int(reg.BaselineValue))
-		}
-	}
-	if check.Available && hasRegression {
-		res["REGRESSION"] = alertDetails{
-			severity:       "MEDIUM",
-			title:          "Performance Regression Identified",
-			message:        fmt.Sprintf("Sustained performance regression detected on %s:%s", check.URL, regressionDetails),
-			affectedMetric: "response_time",
-			currentVal:     float64(check.ResponseTimeMs),
-			thresholdVal:   0.0,
-		}
-	}
-
-	return res
 }
 
 func (ae *AlertEngine) triggerAlert(ctx context.Context, check *monitoring.CheckResult, alertType string, details alertDetails) error {
@@ -185,18 +146,21 @@ func (ae *AlertEngine) triggerAlert(ctx context.Context, check *monitoring.Check
 	var alertID string
 	var consecutiveCount int = 1
 	var detectedAt time.Time = time.Now().UTC()
+	var lastSentAt time.Time
 
 	if err == nil && activeAlert != nil {
 		alertID = activeAlert.ID
 		consecutiveCount = activeAlert.ConsecutiveCount + 1
 		detectedAt = activeAlert.Timestamp
+		// Extract last sent time if recorded in activeAlert.ResolvedAt (reused field)
+		if activeAlert.ResolvedAt != nil {
+			lastSentAt = *activeAlert.ResolvedAt
+		}
 	} else {
 		alertID = database.GenerateID(fmt.Sprintf("%s:%s:%d", check.TargetID, alertType, time.Now().UnixNano()))
+		ae.incrementMetric(ctx, "alerts_triggered_total")
 	}
 
-	cooldownActive := ae.checkAndSetCooldown(ctx, check.TargetID, alertType)
-
-	notificationStatus := "SKIPPED"
 	status := "ACTIVE"
 	if consecutiveCount == 1 {
 		status = "TRIGGERED"
@@ -222,20 +186,32 @@ func (ae *AlertEngine) triggerAlert(ctx context.Context, check *monitoring.Check
 		RCAEvidence:        rcaEvidence,
 		Timestamp:          detectedAt,
 		Status:             status,
-		NotificationStatus: notificationStatus,
+		NotificationStatus: "SKIPPED",
 		ConsecutiveCount:   consecutiveCount,
 	}
 
-	if !cooldownActive {
+	// Cooldown and safety checks
+	cooldownActive := ae.checkAndSetCooldown(ctx, check.TargetID, alertType)
+	canSendGlobal, _ := ae.checkAndIncrementGlobalRateLimit(ctx)
+
+	if !cooldownActive && canSendGlobal {
 		record.NotificationStatus = "SENT"
-		go func(rec *database.AlertEventRecord, chk *monitoring.CheckResult) {
+		nowSent := time.Now().UTC()
+		record.ResolvedAt = &nowSent // Track LastAlertSentAt
+		ae.incrementMetric(ctx, "alerts_sent_total")
+
+		go func(rec *database.AlertEventRecord, chk *monitoring.CheckResult, prevSent time.Time) {
 			nCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 
 			availability := 100.0
+			var avgVal, p95Val, p99Val float64
 			if ae.repo != nil && ae.repo.IsAvailable() {
 				if summary, err := ae.repo.GetAnalyticsSummary(nCtx, chk.TargetID, "24h"); err == nil && summary != nil {
 					availability = summary.UptimePercentage
+					avgVal = float64(summary.AvgResponseTimeMs)
+					p95Val = float64(summary.P95ResponseTimeMs)
+					p99Val = float64(summary.P99ResponseTimeMs)
 				}
 			}
 
@@ -245,39 +221,58 @@ func (ae *AlertEngine) triggerAlert(ctx context.Context, check *monitoring.Check
 				evidence = chk.RCA.Evidence
 			}
 
-			status := "DEGRADED"
-			if rec.AlertType == "DOWN" || rec.AlertType == "SERVER_ERROR" {
-				status = "DOWN"
-			}
-
 			alertData := email.AlertEmailData{
-				Website:      chk.URL,
-				Status:       status,
-				TTFB:         float64(chk.TTFBMs),
-				Threshold:    rec.ThresholdValue,
-				ResponseTime: float64(chk.ResponseTimeMs),
-				DNS:          float64(chk.DNSLatencyMs),
-				TCP:          float64(chk.TCPLatencyMs),
-				TLS:          float64(chk.TLSLatencyMs),
-				Availability: availability,
-				DetectedAt:   rec.Timestamp,
-				LikelyCause:  cause,
-				RCAEvidence:  evidence,
+				Website:               chk.URL,
+				Status:                alertType,
+				TTFB:                  float64(chk.TTFBMs),
+				Threshold:             rec.ThresholdValue,
+				ResponseTime:          float64(chk.ResponseTimeMs),
+				DNS:                   float64(chk.DNSLatencyMs),
+				TCP:                   float64(chk.TCPLatencyMs),
+				TLS:                   float64(chk.TLSLatencyMs),
+				Availability:          availability,
+				DetectedAt:            rec.Timestamp,
+				LikelyCause:           cause,
+				RCAEvidence:           evidence,
+				AvgResponseTime:       avgVal,
+				P95ResponseTime:       p95Val,
+				P99ResponseTime:       p99Val,
+				ConsecutiveViolations: rec.ConsecutiveCount,
+				LastAlertTime:         prevSent,
+				NextAlertTime:         time.Now().UTC().Add(15 * time.Minute),
 			}
 
-			if emailErr := email.SendAlertEmail(nCtx, ae.recipientEmail, alertData); emailErr != nil {
-				ae.logger.Error("Failed to send Brevo alert email", slog.String("error", emailErr.Error()))
+			// Fetch subscribed emails
+			recipients := []string{ae.recipientEmail} // Always fall back to default ALERT_RECIPIENT
+			if ae.repo != nil && ae.repo.IsAvailable() {
+				if subs, err := ae.repo.GetEmailSubscriptions(nCtx, chk.TargetID); err == nil && len(subs) > 0 {
+					recipients = subs
+				}
+			}
+
+			// Send to all recipients
+			var finalErr error
+			for _, recipient := range recipients {
+				if emailErr := email.SendAlertEmail(nCtx, recipient, alertData); emailErr != nil {
+					finalErr = emailErr
+					ae.logger.Error("Failed to send Brevo alert email", slog.String("recipient", recipient), slog.String("error", emailErr.Error()))
+					ae.incrementMetric(context.Background(), "brevo_send_failures_total")
+				}
+			}
+
+			if finalErr != nil {
 				rec.NotificationStatus = "FAILED"
 				_ = ae.saveAlertRecord(context.Background(), rec)
 			}
-
-			if ae.pushProvider != nil {
-				pushMsg := fmt.Sprintf("[%s] %s: %s", rec.Severity, rec.Title, rec.Message)
-				if pushErr := ae.pushProvider.SendPushNotification(nCtx, rec.TargetID, rec.Title, pushMsg); pushErr != nil {
-					ae.logger.Error("Failed to send browser push notification", slog.String("error", pushErr.Error()))
-				}
-			}
-		}(record, check)
+		}(record, check, lastSentAt)
+	} else {
+		if cooldownActive {
+			ae.logger.Info("Alert suppressed due to cooldown", slog.String("target", check.TargetID), slog.String("type", alertType))
+			ae.incrementMetric(ctx, "alerts_suppressed_total")
+		} else if !canSendGlobal {
+			ae.logger.Warn("Alert suppressed due to global safety rate limit", slog.String("target", check.TargetID), slog.String("type", alertType))
+			ae.incrementMetric(ctx, "alerts_rate_limited_total")
+		}
 	}
 
 	return ae.saveAlertRecord(ctx, record)
@@ -294,38 +289,54 @@ func (ae *AlertEngine) resolveAlert(ctx context.Context, check *monitoring.Check
 	activeAlert.ResolvedAt = &now
 
 	ae.clearCooldown(ctx, check.TargetID, alertType)
+	ae.incrementMetric(ctx, "alerts_recovered_total")
 
 	go func(rec *database.AlertEventRecord, chk *monitoring.CheckResult) {
 		nCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		availability := 100.0
+		var avgVal, p95Val, p99Val float64
 		if ae.repo != nil && ae.repo.IsAvailable() {
 			if summary, err := ae.repo.GetAnalyticsSummary(nCtx, chk.TargetID, "24h"); err == nil && summary != nil {
 				availability = summary.UptimePercentage
+				avgVal = float64(summary.AvgResponseTimeMs)
+				p95Val = float64(summary.P95ResponseTimeMs)
+				p99Val = float64(summary.P99ResponseTimeMs)
 			}
 		}
 
 		alertData := email.AlertEmailData{
-			Website:      chk.URL,
-			Status:       "NORMAL",
-			TTFB:         float64(chk.TTFBMs),
-			Threshold:    rec.ThresholdValue,
-			ResponseTime: float64(chk.ResponseTimeMs),
-			DNS:          float64(chk.DNSLatencyMs),
-			TCP:          float64(chk.TCPLatencyMs),
-			TLS:          float64(chk.TLSLatencyMs),
-			Availability: availability,
-			DetectedAt:   time.Now().UTC(),
+			Website:         chk.URL,
+			Status:          "RECOVERY",
+			TTFB:            float64(chk.TTFBMs),
+			Threshold:       rec.ThresholdValue,
+			ResponseTime:    float64(chk.ResponseTimeMs),
+			DNS:             float64(chk.DNSLatencyMs),
+			TCP:             float64(chk.TCPLatencyMs),
+			TLS:             float64(chk.TLSLatencyMs),
+			Availability:    availability,
+			DetectedAt:      now,
+			AvgResponseTime: avgVal,
+			P95ResponseTime: p95Val,
+			P99ResponseTime: p99Val,
+			LastAlertTime:   rec.Timestamp,
 		}
 
-		if emailErr := email.SendAlertEmail(nCtx, ae.recipientEmail, alertData); emailErr != nil {
-			ae.logger.Error("Failed to send Brevo resolution email", slog.String("error", emailErr.Error()))
+		// Fetch subscribed emails
+		recipients := []string{ae.recipientEmail} // Always fall back to default ALERT_RECIPIENT
+		if ae.repo != nil && ae.repo.IsAvailable() {
+			if subs, err := ae.repo.GetEmailSubscriptions(nCtx, chk.TargetID); err == nil && len(subs) > 0 {
+				recipients = subs
+			}
 		}
 
-		if ae.pushProvider != nil {
-			pushMsg := fmt.Sprintf("[RESOLVED] Alert Cleared for %s", chk.URL)
-			_ = ae.pushProvider.SendPushNotification(nCtx, rec.TargetID, "Alert Resolved", pushMsg)
+		// Send to all recipients
+		for _, recipient := range recipients {
+			if emailErr := email.SendAlertEmail(nCtx, recipient, alertData); emailErr != nil {
+				ae.logger.Error("Failed to send Brevo recovery email", slog.String("recipient", recipient), slog.String("error", emailErr.Error()))
+				ae.incrementMetric(context.Background(), "brevo_send_failures_total")
+			}
 		}
 	}(activeAlert, check)
 
@@ -423,6 +434,8 @@ func (ae *AlertEngine) checkAndSetCooldown(ctx context.Context, targetID, alertT
 			return true
 		}
 		_ = ae.cacheService.Set(ctx, redisKey, 1, ae.cooldownDur)
+		cutoffStr := time.Now().UTC().Add(ae.cooldownDur).Format(time.RFC3339)
+		_ = ae.cacheService.Set(ctx, redisKey+":expiry", cutoffStr, ae.cooldownDur)
 		return false
 	}
 
@@ -443,6 +456,7 @@ func (ae *AlertEngine) clearCooldown(ctx context.Context, targetID, alertType st
 
 	if ae.cacheService != nil && ae.cacheService.IsAvailable() {
 		_ = ae.cacheService.Delete(ctx, redisKey)
+		_ = ae.cacheService.Delete(ctx, redisKey+":expiry")
 		return
 	}
 
@@ -451,105 +465,183 @@ func (ae *AlertEngine) clearCooldown(ctx context.Context, targetID, alertType st
 	delete(ae.memCooldowns, redisKey)
 }
 
-func (ae *AlertEngine) buildAlertEmailBody(rec *database.AlertEventRecord, checkURL string) string {
-	rcaBlock := ""
-	if rec.RCACause != nil {
-		rcaBlock = fmt.Sprintf(`
-			<div style="background-color: #fcf8e3; border: 1px solid #faebcc; border-radius: 8px; padding: 15px; margin-top: 20px;">
-				<h3 style="color: #8a6d3b; margin-top: 0; font-size: 14px;">🔍 Root Cause Analysis (RCA)</h3>
-				<p style="margin: 0; font-family: monospace; font-size: 13px;"><strong>Likely Cause:</strong> %s</p>
-				<p style="margin: 5px 0 0 0; font-family: monospace; font-size: 12px; color: #666;">%s</p>
-			</div>
-		`, *rec.RCACause, *rec.RCAEvidence)
+func (ae *AlertEngine) getConsecutiveViolations(ctx context.Context, targetID, alertType string) int {
+	redisKey := fmt.Sprintf("webmetricsx:alert:violations:%s:%s", targetID, alertType)
+	if ae.cacheService != nil && ae.cacheService.IsAvailable() {
+		var val int
+		if err := ae.cacheService.Get(ctx, redisKey, &val); err == nil {
+			return val
+		}
+		return 0
 	}
-
-	return fmt.Sprintf(`
-		<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-			<div style="background-color: #d9534f; color: white; padding: 15px; border-radius: 8px; text-align: center;">
-				<h2 style="margin: 0; font-size: 20px;">⚠️ WebMetricsX Alert Triggered</h2>
-			</div>
-			<div style="padding: 20px 0;">
-				<p style="font-size: 16px; color: #333;">An issue has been identified on your monitored target website.</p>
-				<table style="width: 100%%; border-collapse: collapse; margin-top: 15px; font-size: 14px;">
-					<tr style="border-bottom: 1px solid #eee; height: 35px;">
-						<td style="color: #666; font-weight: bold;">Website:</td>
-						<td><a href="%s" style="color: #337ab7; text-decoration: none;">%s</a></td>
-					</tr>
-					<tr style="border-bottom: 1px solid #eee; height: 35px;">
-						<td style="color: #666; font-weight: bold;">Alert Type:</td>
-						<td style="font-family: monospace; font-weight: bold; color: #d9534f;">%s</td>
-					</tr>
-					<tr style="border-bottom: 1px solid #eee; height: 35px;">
-						<td style="color: #666; font-weight: bold;">Severity:</td>
-						<td><span style="background-color: #f2dede; color: #a94442; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">%s</span></td>
-					</tr>
-					<tr style="border-bottom: 1px solid #eee; height: 35px;">
-						<td style="color: #666; font-weight: bold;">Current Value:</td>
-						<td style="font-family: monospace;">%.1f</td>
-					</tr>
-					<tr style="border-bottom: 1px solid #eee; height: 35px;">
-						<td style="color: #666; font-weight: bold;">Threshold/Baseline:</td>
-						<td style="font-family: monospace; color: #999;">%.1f</td>
-					</tr>
-					<tr style="border-bottom: 1px solid #eee; height: 35px;">
-						<td style="color: #666; font-weight: bold;">Time Detected:</td>
-						<td>%s</td>
-					</tr>
-				</table>
-				<p style="margin-top: 20px; font-size: 14px; color: #444; line-height: 1.5;">
-					<strong>Message:</strong> %s
-				</p>
-				%s
-			</div>
-			<div style="border-top: 1px solid #eee; padding-top: 15px; text-align: center; color: #999; font-size: 11px;">
-				Sent automatically by WebMetricsX Continuous Monitoring Service.
-			</div>
-		</div>
-	`, checkURL, checkURL, rec.AlertType, rec.Severity, rec.CurrentValue, rec.ThresholdValue, rec.Timestamp.Format(time.RFC1123), rec.Message, rcaBlock)
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+	return ae.memViolations[redisKey]
 }
 
-func (ae *AlertEngine) buildResolutionEmailBody(rec *database.AlertEventRecord, checkURL string) string {
-	duration := ""
-	if rec.ResolvedAt != nil {
-		dur := rec.ResolvedAt.Sub(rec.Timestamp).Round(time.Second)
-		duration = fmt.Sprintf(`
-			<tr style="border-bottom: 1px solid #eee; height: 35px;">
-				<td style="color: #666; font-weight: bold;">Incident Duration:</td>
-				<td>%s</td>
-			</tr>
-		`, dur.String())
+func (ae *AlertEngine) setConsecutiveViolations(ctx context.Context, targetID, alertType string, val int) {
+	redisKey := fmt.Sprintf("webmetricsx:alert:violations:%s:%s", targetID, alertType)
+	if ae.cacheService != nil && ae.cacheService.IsAvailable() {
+		_ = ae.cacheService.Set(ctx, redisKey, val, 24*time.Hour)
+		return
+	}
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+	ae.memViolations[redisKey] = val
+}
+
+func (ae *AlertEngine) getConsecutiveFailures(ctx context.Context, targetID string) int {
+	redisKey := fmt.Sprintf("webmetricsx:alert:failures:%s", targetID)
+	if ae.cacheService != nil && ae.cacheService.IsAvailable() {
+		var val int
+		if err := ae.cacheService.Get(ctx, redisKey, &val); err == nil {
+			return val
+		}
+		return 0
+	}
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+	return ae.memFailures[redisKey]
+}
+
+func (ae *AlertEngine) setConsecutiveFailures(ctx context.Context, targetID string, val int) {
+	redisKey := fmt.Sprintf("webmetricsx:alert:failures:%s", targetID)
+	if ae.cacheService != nil && ae.cacheService.IsAvailable() {
+		_ = ae.cacheService.Set(ctx, redisKey, val, 24*time.Hour)
+		return
+	}
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+	ae.memFailures[redisKey] = val
+}
+
+func (ae *AlertEngine) checkAndIncrementGlobalRateLimit(ctx context.Context) (bool, error) {
+	currentHour := time.Now().UTC().Format("2006010215")
+	redisKey := fmt.Sprintf("webmetricsx:alert:global_limit:%s", currentHour)
+
+	if ae.cacheService != nil && ae.cacheService.IsAvailable() {
+		var count int
+		_ = ae.cacheService.Get(ctx, redisKey, &count)
+		if count >= 20 {
+			return false, nil
+		}
+		_ = ae.cacheService.Set(ctx, redisKey, count+1, 2*time.Hour)
+		return true, nil
 	}
 
-	return fmt.Sprintf(`
-		<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-			<div style="background-color: #5cb85c; color: white; padding: 15px; border-radius: 8px; text-align: center;">
-				<h2 style="margin: 0; font-size: 20px;">✅ WebMetricsX Alert Resolved</h2>
-			</div>
-			<div style="padding: 20px 0;">
-				<p style="font-size: 16px; color: #333;">The performance issue on your website has been resolved. Operation returned to normal.</p>
-				<table style="width: 100%%; border-collapse: collapse; margin-top: 15px; font-size: 14px;">
-					<tr style="border-bottom: 1px solid #eee; height: 35px;">
-						<td style="color: #666; font-weight: bold;">Website:</td>
-						<td><a href="%s" style="color: #337ab7; text-decoration: none;">%s</a></td>
-					</tr>
-					<tr style="border-bottom: 1px solid #eee; height: 35px;">
-						<td style="color: #666; font-weight: bold;">Alert Type:</td>
-						<td style="font-family: monospace; font-weight: bold; color: #5cb85c;">%s</td>
-					</tr>
-					<tr style="border-bottom: 1px solid #eee; height: 35px;">
-						<td style="color: #666; font-weight: bold;">Recovery Value:</td>
-						<td style="font-family: monospace;">%.1f</td>
-					</tr>
-					<tr style="border-bottom: 1px solid #eee; height: 35px;">
-						<td style="color: #666; font-weight: bold;">Time Resolved:</td>
-						<td>%s</td>
-					</tr>
-					%s
-				</table>
-			</div>
-			<div style="border-top: 1px solid #eee; padding-top: 15px; text-align: center; color: #999; font-size: 11px;">
-				Sent automatically by WebMetricsX Continuous Monitoring Service.
-			</div>
-		</div>
-	`, checkURL, checkURL, rec.AlertType, rec.CurrentValue, rec.ResolvedAt.Format(time.RFC1123), duration)
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+	
+	// Clean up old memory keys to prevent leak
+	for k := range ae.memGlobalLimits {
+		if k != redisKey {
+			delete(ae.memGlobalLimits, k)
+		}
+	}
+	
+	count := ae.memGlobalLimits[redisKey]
+	if count >= 20 {
+		return false, nil
+	}
+	ae.memGlobalLimits[redisKey] = count + 1
+	return true, nil
+}
+
+func (ae *AlertEngine) incrementMetric(ctx context.Context, metricName string) {
+	redisKey := fmt.Sprintf("webmetricsx:metrics:%s", metricName)
+	if ae.cacheService != nil && ae.cacheService.IsAvailable() {
+		var val int64
+		_ = ae.cacheService.Get(ctx, redisKey, &val)
+		_ = ae.cacheService.Set(ctx, redisKey, val+1, 0)
+		return
+	}
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+	ae.memMetrics[metricName] = ae.memMetrics[metricName] + 1
+}
+
+func (ae *AlertEngine) getMetricVal(ctx context.Context, metricName string) int64 {
+	redisKey := fmt.Sprintf("webmetricsx:metrics:%s", metricName)
+	if ae.cacheService != nil && ae.cacheService.IsAvailable() {
+		var val int64
+		if err := ae.cacheService.Get(ctx, redisKey, &val); err == nil {
+			return val
+		}
+		return 0
+	}
+	ae.mu.RLock()
+	defer ae.mu.RUnlock()
+	return ae.memMetrics[metricName]
+}
+
+func (ae *AlertEngine) GetAlertStatusSummary(ctx context.Context, targetID string) (map[string]interface{}, error) {
+	active, _ := ae.GetActiveIncidents(ctx, targetID)
+
+	triggered := ae.getMetricVal(ctx, "alerts_triggered_total")
+	sent := ae.getMetricVal(ctx, "alerts_sent_total")
+	suppressed := ae.getMetricVal(ctx, "alerts_suppressed_total") + ae.getMetricVal(ctx, "alerts_rate_limited_total")
+
+	var lastSent time.Time
+	recent, _ := ae.GetRecentAlerts(ctx, targetID, 1)
+	if len(recent) > 0 {
+		lastSent = recent[0].Timestamp
+	}
+
+	statusMap := make(map[string]interface{})
+	statusMap["active_incidents"] = active
+	statusMap["triggered_count"] = triggered
+	statusMap["sent_count"] = sent
+	statusMap["suppressed_count"] = suppressed
+
+	if !lastSent.IsZero() {
+		statusMap["last_alert_sent_at"] = lastSent.Format(time.RFC3339)
+	}
+
+	now := time.Now().UTC()
+	cooldowns := make(map[string]interface{})
+	for _, alertType := range []string{"HIGH_LATENCY", "WEBSITE_DOWN"} {
+		redisKey := fmt.Sprintf("webmetricsx:alert:cooldown:%s:%s", targetID, alertType)
+		var exists int
+		var cutoff time.Time
+		var inCooldown bool
+
+		if ae.cacheService != nil && ae.cacheService.IsAvailable() {
+			if err := ae.cacheService.Get(ctx, redisKey, &exists); err == nil {
+				inCooldown = true
+				var cutoffStr string
+				if errExp := ae.cacheService.Get(ctx, redisKey+":expiry", &cutoffStr); errExp == nil {
+					if parsedExp, errP := time.Parse(time.RFC3339, cutoffStr); errP == nil {
+						cutoff = parsedExp
+					}
+				}
+			}
+		} else {
+			ae.mu.RLock()
+			exp, ok := ae.memCooldowns[redisKey]
+			ae.mu.RUnlock()
+			if ok && now.Before(exp) {
+				inCooldown = true
+				cutoff = exp
+			}
+		}
+
+		if inCooldown {
+			remaining := cutoff.Sub(now).Round(time.Second)
+			if remaining < 0 {
+				remaining = 0
+			}
+			cooldowns[alertType] = map[string]interface{}{
+				"in_cooldown":   true,
+				"remaining_sec": int(remaining.Seconds()),
+				"next_eligible": cutoff.Format(time.RFC3339),
+			}
+		} else {
+			cooldowns[alertType] = map[string]interface{}{
+				"in_cooldown": false,
+			}
+		}
+	}
+	statusMap["cooldowns"] = cooldowns
+
+	return statusMap, nil
 }

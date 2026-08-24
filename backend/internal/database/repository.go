@@ -107,16 +107,17 @@ func GenerateID(input string) string {
 }
 
 type TargetRecord struct {
-	ID            string     `json:"id"`
-	URL           string     `json:"url"`
-	Name          string     `json:"name"`
-	IsActive      bool       `json:"is_active"`
-	Status        string     `json:"status"`
-	IntervalSec   int        `json:"interval_sec"`
-	LastCheckedAt *time.Time `json:"last_checked_at"`
-	NextCheckedAt *time.Time `json:"next_checked_at"`
-	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
+	ID                 string     `json:"id"`
+	URL                string     `json:"url"`
+	Name               string     `json:"name"`
+	IsActive           bool       `json:"is_active"`
+	Status             string     `json:"status"`
+	IntervalSec        int        `json:"interval_sec"`
+	LatencyThresholdMs int        `json:"latency_threshold_ms"`
+	LastCheckedAt      *time.Time `json:"last_checked_at"`
+	NextCheckedAt      *time.Time `json:"next_checked_at"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 // UpsertTarget creates or updates a target in PostgreSQL with active status and interval
@@ -197,7 +198,7 @@ func (r *Repository) GetActiveTargets(ctx context.Context) ([]*TargetRecord, err
 		return []*TargetRecord{}, nil
 	}
 
-	query := `SELECT id, url, name, is_active, status, interval_sec, last_checked_at, next_checked_at, created_at, updated_at FROM targets WHERE is_active = TRUE;`
+	query := `SELECT id, url, name, is_active, status, interval_sec, latency_threshold_ms, last_checked_at, next_checked_at, created_at, updated_at FROM targets WHERE is_active = TRUE;`
 	rows, err := r.db.Pool().QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -207,7 +208,7 @@ func (r *Repository) GetActiveTargets(ctx context.Context) ([]*TargetRecord, err
 	var targets []*TargetRecord
 	for rows.Next() {
 		var t TargetRecord
-		if err := rows.Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.Status, &t.IntervalSec, &t.LastCheckedAt, &t.NextCheckedAt, &t.CreatedAt, &t.UpdatedAt); err == nil {
+		if err := rows.Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.Status, &t.IntervalSec, &t.LatencyThresholdMs, &t.LastCheckedAt, &t.NextCheckedAt, &t.CreatedAt, &t.UpdatedAt); err == nil {
 			targets = append(targets, &t)
 		}
 	}
@@ -220,9 +221,9 @@ func (r *Repository) GetTargetByID(ctx context.Context, id string) (*TargetRecor
 		return nil, fmt.Errorf("database unavailable")
 	}
 
-	query := `SELECT id, url, name, is_active, status, interval_sec, last_checked_at, next_checked_at, created_at, updated_at FROM targets WHERE id = $1;`
+	query := `SELECT id, url, name, is_active, status, interval_sec, latency_threshold_ms, last_checked_at, next_checked_at, created_at, updated_at FROM targets WHERE id = $1;`
 	var t TargetRecord
-	err := r.db.Pool().QueryRowContext(ctx, query, id).Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.Status, &t.IntervalSec, &t.LastCheckedAt, &t.NextCheckedAt, &t.CreatedAt, &t.UpdatedAt)
+	err := r.db.Pool().QueryRowContext(ctx, query, id).Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.Status, &t.IntervalSec, &t.LatencyThresholdMs, &t.LastCheckedAt, &t.NextCheckedAt, &t.CreatedAt, &t.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +236,7 @@ func (r *Repository) GetAllMonitoredTargets(ctx context.Context) ([]*TargetRecor
 		return []*TargetRecord{}, nil
 	}
 
-	query := `SELECT id, url, name, is_active, status, interval_sec, last_checked_at, next_checked_at, created_at, updated_at FROM targets ORDER BY created_at DESC;`
+	query := `SELECT id, url, name, is_active, status, interval_sec, latency_threshold_ms, last_checked_at, next_checked_at, created_at, updated_at FROM targets ORDER BY created_at DESC;`
 	rows, err := r.db.Pool().QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -245,11 +246,22 @@ func (r *Repository) GetAllMonitoredTargets(ctx context.Context) ([]*TargetRecor
 	var targets []*TargetRecord
 	for rows.Next() {
 		var t TargetRecord
-		if err := rows.Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.Status, &t.IntervalSec, &t.LastCheckedAt, &t.NextCheckedAt, &t.CreatedAt, &t.UpdatedAt); err == nil {
+		if err := rows.Scan(&t.ID, &t.URL, &t.Name, &t.IsActive, &t.Status, &t.IntervalSec, &t.LatencyThresholdMs, &t.LastCheckedAt, &t.NextCheckedAt, &t.CreatedAt, &t.UpdatedAt); err == nil {
 			targets = append(targets, &t)
 		}
 	}
 	return targets, nil
+}
+
+// UpdateTargetThreshold saves the custom latency threshold for a monitored URL
+func (r *Repository) UpdateTargetThreshold(ctx context.Context, targetURL string, thresholdMs int) error {
+	if r.db == nil || !r.db.IsAvailable() {
+		return nil
+	}
+
+	query := `UPDATE targets SET latency_threshold_ms = $1, updated_at = $2 WHERE url = $3;`
+	_, err := r.db.Pool().ExecContext(ctx, query, thresholdMs, time.Now().UTC(), targetURL)
+	return err
 }
 
 // SaveCheckResult persists check telemetry into Neon PostgreSQL

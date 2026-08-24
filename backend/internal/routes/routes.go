@@ -43,6 +43,7 @@ func Setup(
 		v1.POST("/monitoring/stop", monitoringHandler.StopMonitoring)
 		v1.POST("/monitoring/pause", monitoringHandler.PauseMonitoring)
 		v1.POST("/monitoring/resume", monitoringHandler.ResumeMonitoring)
+		v1.POST("/monitoring/threshold", monitoringHandler.UpdateTargetThreshold)
 		v1.GET("/monitoring/status/:id", monitoringHandler.GetMonitoringStatus)
 		v1.GET("/monitoring/list", monitoringHandler.ListActiveMonitors)
 		v1.GET("/monitoring/stream", monitoringHandler.StreamMonitoring)
@@ -62,7 +63,11 @@ func Setup(
 		// Alerting Endpoints (Phase 2.7)
 		v1.GET("/monitoring/alerts/history", alertHandler.GetAlertHistory)
 		v1.GET("/monitoring/alerts/active", alertHandler.GetActiveIncidents)
+		v1.GET("/monitoring/alerts/status", alertHandler.GetAlertStatus)
 		v1.POST("/monitoring/alerts/subscribe", alertHandler.SubscribePush)
+		v1.POST("/monitoring/alerts/subscribe/email", alertHandler.SubscribeEmail)
+		v1.POST("/monitoring/alerts/unsubscribe/email", alertHandler.UnsubscribeEmail)
+		v1.GET("/monitoring/alerts/subscribe/email/list", alertHandler.GetEmailSubscriptions)
 		v1.POST("/alerts/test", alertHandler.TestBrevoAlert)
 	}
 }

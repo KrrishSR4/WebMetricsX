@@ -354,6 +354,7 @@ export interface TargetDetails {
 	is_active: boolean;
 	status: string;
 	interval_sec: number;
+	latency_threshold_ms?: number;
 	last_checked_at?: string;
 	next_checked_at?: string;
 	created_at: string;
@@ -652,6 +653,142 @@ export const subscribeBrowserPush = async (
     });
 
     const data: GoApiResponse<{ status: string }> = await response.json();
+    return response.ok && data.success;
+  } catch {
+    return false;
+  }
+};
+
+export interface AlertCooldownDetails {
+  in_cooldown: boolean;
+  remaining_sec?: number;
+  next_eligible?: string;
+}
+
+export interface AlertStatusSummary {
+  active_incidents: AlertEvent[];
+  triggered_count: number;
+  sent_count: number;
+  suppressed_count: number;
+  last_alert_sent_at?: string;
+  cooldowns: {
+    HIGH_LATENCY: AlertCooldownDetails;
+    WEBSITE_DOWN: AlertCooldownDetails;
+  };
+}
+
+export const fetchAlertStatus = async (
+  targetUrl: string
+): Promise<AlertStatusSummary | null> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/alerts/status?url=${encodeURIComponent(targetUrl)}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<AlertStatusSummary> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return null;
+    }
+
+    return data.data;
+  } catch {
+    return null;
+  }
+};
+
+export const subscribeEmailAlerts = async (
+  targetUrl: string,
+  email: string
+): Promise<boolean> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/alerts/subscribe/email`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        email,
+      }),
+    });
+
+    const data: GoApiResponse<unknown> = await response.json();
+    return response.ok && data.success;
+  } catch {
+    return false;
+  }
+};
+
+export const unsubscribeEmailAlerts = async (
+  targetUrl: string,
+  email: string
+): Promise<boolean> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/alerts/unsubscribe/email`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        email,
+      }),
+    });
+
+    const data: GoApiResponse<unknown> = await response.json();
+    return response.ok && data.success;
+  } catch {
+    return false;
+  }
+};
+
+export const fetchEmailSubscriptions = async (
+  targetUrl: string
+): Promise<string[]> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/alerts/subscribe/email/list?url=${encodeURIComponent(targetUrl)}`;
+
+  try {
+    const response = await fetch(endpoint);
+    const data: GoApiResponse<string[]> = await response.json();
+
+    if (!response.ok || !data.success || !data.data) {
+      return [];
+    }
+
+    return data.data;
+  } catch {
+    return [];
+  }
+};
+
+export const updateLatencyThreshold = async (
+  targetUrl: string,
+  thresholdMs: number
+): Promise<boolean> => {
+  const baseUrl = getApiBaseUrl();
+  const endpoint = `${baseUrl}/api/v1/monitoring/threshold`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        threshold_ms: thresholdMs,
+      }),
+    });
+
+    const data: GoApiResponse<unknown> = await response.json();
     return response.ok && data.success;
   } catch {
     return false;

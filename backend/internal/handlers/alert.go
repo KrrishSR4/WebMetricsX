@@ -230,3 +230,197 @@ func isValidEmail(email string) bool {
 	return strings.Contains(email, "@") && strings.Contains(email, ".") && len(email) > 5
 }
 
+// GetAlertStatus fetches dynamic state, metrics, and cooldown countdowns for a target
+func (h *AlertHandler) GetAlertStatus(c *gin.Context) {
+	targetURL := c.Query("url")
+	if targetURL == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "MISSING_URL",
+				"message": "Query parameter 'url' is required",
+			},
+		})
+		return
+	}
+
+	if parsed, err := monitoring.ValidateAndSanitizeURL(targetURL); err == nil {
+		targetURL = parsed.String()
+	}
+	targetID := database.GenerateID(targetURL)
+
+	status, getErr := h.alertEngine.GetAlertStatusSummary(c.Request.Context(), targetID)
+	if getErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INTERNAL_ERROR",
+				"message": getErr.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    status,
+	})
+}
+
+// SubscribeEmail registers an email for target alerts
+func (h *AlertHandler) SubscribeEmail(c *gin.Context) {
+	var req struct {
+		URL   string `json:"url"`
+		Email string `json:"email"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_INPUT",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	req.Email = strings.TrimSpace(req.Email)
+	if req.URL == "" || !isValidEmail(req.Email) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_INPUT",
+				"message": "Valid URL and email address are required",
+			},
+		})
+		return
+	}
+
+	if parsed, err := monitoring.ValidateAndSanitizeURL(req.URL); err == nil {
+		req.URL = parsed.String()
+	}
+	targetID := database.GenerateID(req.URL)
+
+	if h.repo != nil && h.repo.IsAvailable() {
+		// Auto-upsert target first to prevent foreign key violation
+		_, err := h.repo.UpsertTarget(c.Request.Context(), req.URL, 30, false)
+		if err != nil {
+			h.logger.Warn("Failed to auto-upsert target on email subscription", slog.String("url", req.URL), slog.String("error", err.Error()))
+		}
+
+		err = h.repo.AddEmailSubscription(c.Request.Context(), targetID, req.Email)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error": gin.H{
+					"code":    "DATABASE_ERROR",
+					"message": err.Error(),
+				},
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Email alert subscription saved successfully",
+	})
+}
+
+// UnsubscribeEmail removes registered email for target alerts
+func (h *AlertHandler) UnsubscribeEmail(c *gin.Context) {
+	var req struct {
+		URL   string `json:"url"`
+		Email string `json:"email"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_INPUT",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	req.Email = strings.TrimSpace(req.Email)
+	if req.URL == "" || req.Email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_INPUT",
+				"message": "URL and email address are required",
+			},
+		})
+		return
+	}
+
+	if parsed, err := monitoring.ValidateAndSanitizeURL(req.URL); err == nil {
+		req.URL = parsed.String()
+	}
+	targetID := database.GenerateID(req.URL)
+
+	if h.repo != nil && h.repo.IsAvailable() {
+		err := h.repo.RemoveEmailSubscription(c.Request.Context(), targetID, req.Email)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error": gin.H{
+					"code":    "DATABASE_ERROR",
+					"message": err.Error(),
+				},
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Email alert subscription removed successfully",
+	})
+}
+
+// GetEmailSubscriptions lists all registered emails for target alerts
+func (h *AlertHandler) GetEmailSubscriptions(c *gin.Context) {
+	targetURL := c.Query("url")
+	if targetURL == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "MISSING_URL",
+				"message": "Query parameter 'url' is required",
+			},
+		})
+		return
+	}
+
+	if parsed, err := monitoring.ValidateAndSanitizeURL(targetURL); err == nil {
+		targetURL = parsed.String()
+	}
+	targetID := database.GenerateID(targetURL)
+
+	var list []string
+	var getErr error
+	if h.repo != nil && h.repo.IsAvailable() {
+		list, getErr = h.repo.GetEmailSubscriptions(c.Request.Context(), targetID)
+		if getErr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error": gin.H{
+					"code":    "DATABASE_ERROR",
+					"message": getErr.Error(),
+				},
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    list,
+	})
+}
+

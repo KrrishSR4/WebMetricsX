@@ -99,6 +99,14 @@ func NewDB(dbURL string, logger *slog.Logger) (*DB, error) {
 		`ALTER TABLE alert_events ADD COLUMN IF NOT EXISTS consecutive_count INT NOT NULL DEFAULT 1;`,
 		`CREATE INDEX IF NOT EXISTS idx_alerts_target_id ON alert_events(target_id);`,
 		`CREATE INDEX IF NOT EXISTS idx_alerts_timestamp ON alert_events(timestamp DESC);`,
+		`CREATE TABLE IF NOT EXISTS alert_subscriptions (
+			id VARCHAR(64) PRIMARY KEY,
+			target_id VARCHAR(64) REFERENCES targets(id) ON DELETE CASCADE,
+			email VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			CONSTRAINT unique_target_email UNIQUE (target_id, email)
+		);`,
+		`ALTER TABLE targets ADD COLUMN IF NOT EXISTS latency_threshold_ms INT NOT NULL DEFAULT 400;`,
 	}
 	for _, q := range migrationQueries {
 		if _, mErr := db.ExecContext(ctx, q); mErr != nil {

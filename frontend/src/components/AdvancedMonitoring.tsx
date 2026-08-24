@@ -29,6 +29,7 @@ import {
   connectMonitoringSSE,
   fetchAnalyticsSummary,
   fetchMonitoredTargets,
+  updateLatencyThreshold,
   GoMonitoringResult,
   AnalyticsSummary,
   HeatmapCell,
@@ -51,6 +52,7 @@ export const AdvancedMonitoring: React.FC = () => {
   const [url, setUrl] = useState<string>('https://google.com');
   const [timeRange, setTimeRange] = useState<string>('24h');
   const [monitoringInterval, setMonitoringInterval] = useState<number>(3); // 3s default
+  const [latencyThreshold, setLatencyThreshold] = useState<number>(400); // 400ms default
   const [monitoringStatus, setMonitoringStatus] = useState<'ACTIVE' | 'PAUSED' | 'STOPPED'>('STOPPED');
   const [lastCheckTime, setLastCheckTime] = useState<string | null>(null);
   const [nextCheckTime, setNextCheckTime] = useState<string | null>(null);
@@ -118,6 +120,9 @@ export const AdvancedMonitoring: React.FC = () => {
         setMonitoringStatus(matched.status as 'ACTIVE' | 'PAUSED' | 'STOPPED');
         setLastCheckTime(matched.last_checked_at || null);
         setNextCheckTime(matched.next_checked_at || null);
+        if (matched.latency_threshold_ms) {
+          setLatencyThreshold(matched.latency_threshold_ms);
+        }
       } else {
         setMonitoringStatus('STOPPED');
         setLastCheckTime(null);
@@ -127,6 +132,15 @@ export const AdvancedMonitoring: React.FC = () => {
       // Fallback
     }
   }, [url]);
+
+  const handleThresholdChange = async (val: number) => {
+    setLatencyThreshold(val);
+    try {
+      await updateLatencyThreshold(url, val);
+    } catch (err) {
+      console.error('Failed to update latency threshold:', err);
+    }
+  };
 
   // Load target list on mount
   useEffect(() => {
@@ -510,6 +524,25 @@ export const AdvancedMonitoring: React.FC = () => {
               <option value={30}>30 sec</option>
               <option value={60}>1 min</option>
               <option value={300}>5 min</option>
+            </select>
+          </div>
+
+          {/* Latency Threshold Selector */}
+          <div className="flex items-center gap-1.5 bg-background border border-black/10 rounded-xl px-3 py-2 font-mono text-xs">
+            <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase">Limit:</span>
+            <select
+              value={latencyThreshold}
+              onChange={(e) => handleThresholdChange(Number(e.target.value))}
+              className="bg-transparent font-bold focus:outline-none cursor-pointer"
+            >
+              <option value={100}>100 ms</option>
+              <option value={200}>200 ms</option>
+              <option value={300}>300 ms</option>
+              <option value={400}>400 ms</option>
+              <option value={600}>600 ms</option>
+              <option value={800}>800 ms</option>
+              <option value={1000}>1s</option>
             </select>
           </div>
 

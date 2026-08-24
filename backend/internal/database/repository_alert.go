@@ -162,3 +162,53 @@ func (r *Repository) UpdateAlertStatus(ctx context.Context, alertID string, stat
 	_, err := r.db.Pool().ExecContext(ctx, query, status, resolvedAt, alertID)
 	return err
 }
+
+// AddEmailSubscription subscribes an email address to a target's alerts
+func (r *Repository) AddEmailSubscription(ctx context.Context, targetID, email string) error {
+	if r.db == nil || !r.db.IsAvailable() {
+		return nil
+	}
+
+	id := GenerateID(targetID + ":" + email)
+	query := `
+		INSERT INTO alert_subscriptions (id, target_id, email)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (target_id, email) DO NOTHING
+	`
+	_, err := r.db.Pool().ExecContext(ctx, query, id, targetID, email)
+	return err
+}
+
+// RemoveEmailSubscription unsubscribes an email address from a target's alerts
+func (r *Repository) RemoveEmailSubscription(ctx context.Context, targetID, email string) error {
+	if r.db == nil || !r.db.IsAvailable() {
+		return nil
+	}
+
+	query := `DELETE FROM alert_subscriptions WHERE target_id = $1 AND email = $2`
+	_, err := r.db.Pool().ExecContext(ctx, query, targetID, email)
+	return err
+}
+
+// GetEmailSubscriptions fetches all alert email recipients for a target
+func (r *Repository) GetEmailSubscriptions(ctx context.Context, targetID string) ([]string, error) {
+	if r.db == nil || !r.db.IsAvailable() {
+		return []string{}, nil
+	}
+
+	query := `SELECT email FROM alert_subscriptions WHERE target_id = $1 ORDER BY created_at ASC`
+	rows, err := r.db.Pool().QueryContext(ctx, query, targetID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []string
+	for rows.Next() {
+		var emailVal string
+		if err := rows.Scan(&emailVal); err == nil {
+			list = append(list, emailVal)
+		}
+	}
+	return list, nil
+}

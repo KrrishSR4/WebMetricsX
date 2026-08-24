@@ -417,3 +417,62 @@ func (h *MonitoringHandler) ListActiveMonitors(c *gin.Context) {
 		"data":    list,
 	})
 }
+
+// UpdateTargetThreshold saves the custom latency threshold for a monitored URL
+func (h *MonitoringHandler) UpdateTargetThreshold(c *gin.Context) {
+	var req struct {
+		URL         string `json:"url"`
+		ThresholdMs int    `json:"threshold_ms"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_INPUT",
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	if req.URL == "" || req.ThresholdMs <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":    "INVALID_INPUT",
+				"message": "Valid URL and threshold in milliseconds are required",
+			},
+		})
+		return
+	}
+
+	if parsed, err := monitoring.ValidateAndSanitizeURL(req.URL); err == nil {
+		req.URL = parsed.String()
+	}
+
+	if h.repo != nil && h.repo.IsAvailable() {
+		// First upsert the target if it doesn't exist
+		_, err := h.repo.UpsertTarget(c.Request.Context(), req.URL, 30, false)
+		if err != nil {
+			h.logger.Warn("Failed to auto-upsert target on threshold update", slog.String("url", req.URL), slog.String("error", err.Error()))
+		}
+
+		err = h.repo.UpdateTargetThreshold(c.Request.Context(), req.URL, req.ThresholdMs)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error": gin.H{
+					"code":    "DATABASE_ERROR",
+					"message": err.Error(),
+				},
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Latency threshold updated successfully",
+	})
+}
