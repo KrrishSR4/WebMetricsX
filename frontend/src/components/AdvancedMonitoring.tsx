@@ -30,10 +30,15 @@ import {
   fetchAnalyticsSummary,
   fetchMonitoredTargets,
   updateLatencyThreshold,
+  subscribeEmailAlerts,
+  unsubscribeEmailAlerts,
+  fetchEmailSubscriptions,
+  getApiBaseUrl,
   GoMonitoringResult,
   AnalyticsSummary,
   HeatmapCell,
 } from '@/services/monitoringApi';
+import { toast } from 'sonner';
 
 import { KPISummaryCards } from '@/components/analytics/KPISummaryCards';
 import { ResponseTimeTimeline } from '@/components/analytics/ResponseTimeTimeline';
@@ -57,6 +62,11 @@ export const AdvancedMonitoring: React.FC = () => {
   const [lastCheckTime, setLastCheckTime] = useState<string | null>(null);
   const [nextCheckTime, setNextCheckTime] = useState<string | null>(null);
   const [targetsList, setTargetsList] = useState<string[]>([]);
+  const [subscribedEmails, setSubscribedEmails] = useState<string[]>([]);
+  const [alertEmail, setAlertEmail] = useState<string>('');
+  const [emailError, setEmailError] = useState<string>('');
+  const [sendingTest, setSendingTest] = useState<boolean>(false);
+  const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [historyOpen, setHistoryOpen] = useState<boolean>(false);
   const { history, addToHistory, removeFromHistory, clearHistory } = useUrlHistory();
 
@@ -103,6 +113,10 @@ export const AdvancedMonitoring: React.FC = () => {
     if (!url) return;
     try {
       const list = await listContinuousMonitors();
+      // Load email subscriptions for target
+      const subs = await fetchEmailSubscriptions(url);
+      setSubscribedEmails(subs);
+
       const normalizeUrl = (u: string) => {
         try {
           let cleaned = u.trim();
@@ -139,6 +153,84 @@ export const AdvancedMonitoring: React.FC = () => {
       await updateLatencyThreshold(url, val);
     } catch (err) {
       console.error('Failed to update latency threshold:', err);
+    }
+  };
+
+  const handleSubscribeEmail = async () => {
+    const trimmed = alertEmail.trim();
+    if (!trimmed || !trimmed.includes('@') || !trimmed.includes('.')) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    setEmailError('');
+
+    try {
+      const success = await subscribeEmailAlerts(url, trimmed);
+      if (success) {
+        toast.success(`Subscribed ${trimmed} successfully!`);
+        setAlertEmail('');
+        const subs = await fetchEmailSubscriptions(url);
+        setSubscribedEmails(subs);
+      } else {
+        toast.error('Failed to subscribe email.');
+      }
+    } catch {
+      toast.error('Error subscribing email.');
+    }
+  };
+
+  const handleUnsubscribeEmail = async (emailToUnsub: string) => {
+    try {
+      const success = await unsubscribeEmailAlerts(url, emailToUnsub);
+      if (success) {
+        toast.success(`Unsubscribed ${emailToUnsub} successfully.`);
+        const subs = await fetchEmailSubscriptions(url);
+        setSubscribedEmails(subs);
+      } else {
+        toast.error('Failed to unsubscribe.');
+      }
+    } catch {
+      toast.error('Error unsubscribing.');
+    }
+  };
+
+  const handleSendTestAlert = async () => {
+    const trimmed = alertEmail.trim();
+    if (!trimmed || !trimmed.includes('@') || !trimmed.includes('.')) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    setEmailError('');
+    setSendingTest(true);
+    setTestStatus('idle');
+
+    const baseUrl = getApiBaseUrl();
+    try {
+      const response = await fetch(`${baseUrl}/api/v1/alerts/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: trimmed }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setTestStatus('success');
+        toast.success(`Test alert successfully sent to ${trimmed}`);
+        setTimeout(() => setTestStatus('idle'), 3000);
+      } else {
+        setTestStatus('error');
+        toast.error(data.message || 'Please check email config and try again.');
+        setTimeout(() => setTestStatus('idle'), 3000);
+      }
+    } catch (err) {
+      console.error('Error sending test alert:', err);
+      setTestStatus('error');
+      toast.error(err instanceof Error ? err.message : 'An unexpected network error occurred.');
+      setTimeout(() => setTestStatus('idle'), 3000);
+    } finally {
+      setSendingTest(false);
     }
   };
 
@@ -546,6 +638,36 @@ export const AdvancedMonitoring: React.FC = () => {
             </select>
           </div>
 
+          {/* Email Subscription & Test Alert controls */}
+          <div className="flex items-center gap-2 border-l border-black/10 pl-3 flex-wrap">
+            <input
+              type="email"
+              placeholder="alert-email@example.com"
+              value={alertEmail}
+              onChange={(e) => {
+                setAlertEmail(e.target.value);
+                setEmailError('');
+              }}
+              className="h-9 px-3 text-xs rounded-xl border border-black/10 bg-background text-foreground focus:outline-none w-48 font-mono"
+            />
+            <Button
+              onClick={handleSubscribeEmail}
+              className="h-9 px-3 text-xs font-bold rounded-xl bg-chart-1 text-white hover:opacity-90 transition-all shadow-sm"
+            >
+              Subscribe
+            </Button>
+            <Button
+              onClick={handleSendTestAlert}
+              disabled={sendingTest}
+              className="h-9 px-3 text-xs font-bold rounded-xl border border-black/10 hover:bg-black/5 disabled:opacity-50 flex items-center justify-center gap-1 transition-all"
+            >
+              {sendingTest ? (
+                <RefreshCw className="w-3 h-3 animate-spin" />
+              ) : (
+                'Test Alert'
+              )}
+            </Button>
+          </div>
 
         </div>
 
@@ -609,6 +731,32 @@ export const AdvancedMonitoring: React.FC = () => {
           )}
         </div>
       </div>
+      
+      {/* Email Validation Error message */}
+      {emailError && (
+        <div className="text-[10px] text-rose-500 font-bold text-center -mt-6 mb-4 font-mono">
+          {emailError}
+        </div>
+      )}
+
+      {/* Subscribed Email Chips List */}
+      {subscribedEmails.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-2 -mt-5 mb-6 font-mono text-[10px]">
+          <span className="text-muted-foreground uppercase font-bold text-[9px] tracking-wider mr-1">Alert Recipients:</span>
+          {subscribedEmails.map((emailVal) => (
+            <div key={emailVal} className="flex items-center gap-1.5 bg-card border border-black/10 px-2.5 py-1 rounded-xl font-bold text-foreground shadow-sm animate-fade-in">
+              <span>{emailVal}</span>
+              <button
+                onClick={() => handleUnsubscribeEmail(emailVal)}
+                className="text-muted-foreground hover:text-rose-600 font-bold ml-1 text-xs focus:outline-none"
+                title="Unsubscribe"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       </div>
 
       {/* Error Alert */}

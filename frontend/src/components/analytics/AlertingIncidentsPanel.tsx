@@ -41,16 +41,7 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
   const [pushEnabled, setPushEnabled] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Email Notification Test States
-  const [testEmail, setTestEmail] = useState<string>('');
-  const [emailError, setEmailError] = useState<string>('');
-  const [sendingTest, setSendingTest] = useState<boolean>(false);
-  const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
-  const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
-  const [alertErrorMessage, setAlertErrorMessage] = useState<string>('');
   const [alertStatusSummary, setAlertStatusSummary] = useState<AlertStatusSummary | null>(null);
-  const [subscribedEmails, setSubscribedEmails] = useState<string[]>([]);
 
   // Browser Permission State
   const [permission, setPermission] = useState<NotificationPermission>(
@@ -89,16 +80,14 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
 
   const loadAlertData = useCallback(async () => {
     try {
-      const [incidents, history, summary, subs] = await Promise.all([
+      const [incidents, history, summary] = await Promise.all([
         fetchActiveIncidents(targetUrl),
         fetchAlertHistory(targetUrl, 10),
         fetchAlertStatus(targetUrl),
-        fetchEmailSubscriptions(targetUrl),
       ]);
       setActiveIncidents(incidents);
       setAlertHistory(history);
       setAlertStatusSummary(summary);
-      setSubscribedEmails(subs);
     } catch (err) {
       console.error('Error fetching alerts data:', err);
     } finally {
@@ -351,7 +340,7 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Column 1 & 2: Alert History */}
-      <div className="lg:col-span-2 space-y-6">
+      <div className="lg:col-span-3 space-y-6">
         {/* Active Alerting Policy Status */}
         <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm space-y-4 font-mono">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -459,239 +448,6 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
         </div>
       </div>
 
-      {/* Column 3: Alert Settings & Push Subscriptions */}
-      <div className="space-y-6">
-        <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm space-y-5">
-          <div className="space-y-2">
-            <h4 className="text-sm font-bold text-muted-foreground uppercase font-mono tracking-wider flex items-center gap-2">
-              <Bell className="w-4 h-4 text-chart-1 animate-bounce" />
-              Real-time Notifications
-            </h4>
-            <p className="text-xs text-muted-foreground font-mono leading-relaxed">
-              Enable background push notifications to stay updated on website outages, TTFB spikes, and regression anomalies.
-            </p>
-          </div>
-
-          <div className="bg-background border border-black/5 rounded-xl p-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1">
-                <h5 className="font-bold text-xs font-mono">Browser Notifications</h5>
-                <div className="text-[10px] font-mono font-bold">
-                  {permission === 'granted' ? (
-                    <span className="text-emerald-600 flex items-center gap-1">
-                      ✓ Browser Notifications Enabled
-                    </span>
-                  ) : permission === 'denied' ? (
-                    <span className="text-rose-600 flex items-center gap-1">
-                      ✕ Browser Notifications Blocked
-                    </span>
-                  ) : (
-                    <span className="text-amber-600 flex items-center gap-1">
-                      ⚠ Browser Notification Permission Required
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {permission === 'default' && (
-                <button
-                  onClick={async () => {
-                    const res = await Notification.requestPermission();
-                    setPermission(res);
-                    if (res === 'granted') {
-                      setPushEnabled(true);
-                      toast.success('Browser notifications successfully enabled!');
-                      new Notification('WebMetricsX Alert', {
-                        body: 'Test notification received successfully.',
-                        icon: '/favicon.ico',
-                      });
-                    }
-                  }}
-                  type="button"
-                  className="text-[10px] font-mono font-bold px-2.5 py-1.5 rounded-lg bg-chart-1 text-white hover:opacity-90 transition-all shadow-sm"
-                >
-                  Enable
-                </button>
-              )}
-              
-              {permission === 'granted' && (
-                <div className="text-emerald-500 bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20">
-                  <Bell className="w-4 h-4" />
-                </div>
-              )}
-
-              {permission === 'denied' && (
-                <div className="text-rose-500 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20">
-                  <BellOff className="w-4 h-4" />
-                </div>
-              )}
-            </div>
-
-            {permission === 'denied' && (
-              <p className="text-[10px] text-rose-600/90 font-mono leading-relaxed pt-1.5 border-t border-black/5">
-                Browser notifications are blocked for WebMetricsX. Please enable notification permission from your browser or site settings.
-              </p>
-            )}
-            {permission === 'default' && (
-              <p className="text-[10px] text-amber-600/90 font-mono leading-relaxed pt-1.5 border-t border-black/5">
-                Browser notification permission is required to enable push notifications. Click "Enable" to request permission.
-              </p>
-            )}
-          </div>
-
-          {/* Email alert subscriptions */}
-          <div className="space-y-3 pt-3 border-t border-black/5 font-mono">
-            <h5 className="font-bold uppercase text-[10px] text-muted-foreground tracking-wider">Email Alert Recipients</h5>
-            
-            {/* List of current subscribers */}
-            {subscribedEmails.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pb-1">
-                {subscribedEmails.map((emailVal) => (
-                  <div key={emailVal} className="flex items-center gap-1.5 bg-black/5 border border-black/5 px-2 py-1 rounded-xl text-[9px] font-bold text-foreground">
-                    <span className="truncate max-w-[130px]">{emailVal}</span>
-                    <button 
-                      onClick={() => handleUnsubscribeEmail(emailVal)}
-                      className="text-muted-foreground hover:text-rose-600 font-bold focus:outline-none"
-                      title="Unsubscribe"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-[9px] text-muted-foreground italic">
-                No custom email recipients registered. Alerts will fall back to default admin email.
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label htmlFor="test-email-input" className="block text-[10px] text-muted-foreground font-bold uppercase">
-                Email Address
-              </label>
-              <input
-                id="test-email-input"
-                type="email"
-                placeholder="user@example.com"
-                value={testEmail}
-                onChange={(e) => {
-                  setTestEmail(e.target.value);
-                  setEmailError('');
-                }}
-                className="w-full h-9 px-3 text-xs rounded-xl border border-black/10 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-chart-1"
-              />
-              {emailError && (
-                <p className="text-[10px] text-rose-600 font-bold">{emailError}</p>
-              )}
-              
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSubscribeEmail}
-                  className="flex-1 h-9 text-[10px] font-bold rounded-xl bg-chart-1 text-white hover:opacity-90 transition-all shadow-sm"
-                >
-                  Subscribe
-                </button>
-                <button
-                  onClick={handleSendTestAlert}
-                  disabled={sendingTest}
-                  className="flex-1 h-9 text-[10px] font-bold rounded-xl border border-black/10 hover:bg-black/5 disabled:opacity-50 flex items-center justify-center gap-1 transition-all"
-                >
-                  {sendingTest ? (
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                  ) : (
-                    'Test Alert'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-3 border-t border-black/5 font-mono text-[10px] text-muted-foreground">
-            <h5 className="font-bold uppercase text-foreground">Alert Notification Rules</h5>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                <span>Uptime: Alert on DNS/TCP down immediately</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                <span>Performance: TTFB or Latency &gt; 400ms</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                <span>Anomaly: Stat deviation exceeding threshold</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                <span>Regression: Performance regression &gt; 50%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Live Channel Status */}
-        <div className="bg-card border border-black/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between min-h-[160px]">
-          <div className="space-y-2">
-            <h4 className="text-sm font-bold text-muted-foreground uppercase font-mono tracking-wider flex items-center gap-2">
-              <Activity className="w-4 h-4 text-emerald-500" />
-              Live alert bus channel
-            </h4>
-            <p className="text-[10px] text-muted-foreground font-mono leading-relaxed">
-              Standard SSE client connection active. System auto-correlates alerts continuously on every probe.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-3 py-1.5 rounded-xl font-mono text-[10px] font-bold w-fit">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            SSE EVENT TUNNEL LISTENING
-          </div>
-        </div>
-      </div>
-
-      {/* Test Success Dialog */}
-      {showSuccessDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-card border border-black/10 rounded-2xl p-6 max-w-sm w-full shadow-lg space-y-4 font-mono">
-            <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
-              <CheckCircle2 className="w-5 h-5" />
-              Test alert sent
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              A test notification has been sent to:<br />
-              <span className="text-foreground font-bold">{testEmail}</span>
-            </p>
-            <button
-              onClick={() => setShowSuccessDialog(false)}
-              className="w-full h-9 text-xs font-bold rounded-xl border border-black/10 hover:bg-black/5 transition-all text-foreground"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Test Error Dialog */}
-      {showErrorDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-card border border-black/10 rounded-2xl p-6 max-w-sm w-full shadow-lg space-y-4 font-mono">
-            <div className="flex items-center gap-2 text-rose-600 font-bold text-sm">
-              <AlertTriangle className="w-5 h-5" />
-              Failed to Send Alert
-            </div>
-            <p className="text-xs text-rose-700 leading-relaxed break-words">
-              {alertErrorMessage || "Please check your email configuration and try again."}
-            </p>
-            <button
-              onClick={() => setShowErrorDialog(false)}
-              className="w-full h-9 text-xs font-bold rounded-xl border border-black/10 hover:bg-black/5 transition-all text-foreground"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
