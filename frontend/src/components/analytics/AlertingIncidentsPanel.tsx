@@ -155,7 +155,7 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
           toast.error('Failed to register subscription with server.');
         }
       } else {
-        toast.warn('Notification permission was not granted.');
+        toast.warning('Notification permission was not granted.');
       }
     } catch (err) {
       console.error(err);

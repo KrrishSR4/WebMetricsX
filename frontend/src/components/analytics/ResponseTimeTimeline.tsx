@@ -15,10 +15,26 @@ import { Badge } from '@/components/ui/badge';
 
 interface Props {
   summary: AnalyticsSummary;
+  threshold?: number;
+  onThresholdChange?: (val: number) => void;
 }
 
-export const ResponseTimeTimeline: React.FC<Props> = ({ summary }) => {
-  const [threshold, setThreshold] = useState<number>(400);
+export const ResponseTimeTimeline: React.FC<Props> = ({ 
+  summary, 
+  threshold: propThreshold, 
+  onThresholdChange 
+}) => {
+  const [localThreshold, setLocalThreshold] = useState<number>(400);
+
+  const threshold = propThreshold !== undefined ? propThreshold : localThreshold;
+
+  const handleThresholdSelect = (val: number) => {
+    if (onThresholdChange) {
+      onThresholdChange(val);
+    } else {
+      setLocalThreshold(val);
+    }
+  };
 
   const data = summary.history.map((pt) => ({
     timestamp: new Date(pt.checked_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
@@ -70,12 +86,15 @@ export const ResponseTimeTimeline: React.FC<Props> = ({ summary }) => {
             <span className="text-[10px] font-bold text-muted-foreground uppercase">Threshold:</span>
             <select
               value={threshold}
-              onChange={(e) => setThreshold(Number(e.target.value))}
+              onChange={(e) => handleThresholdSelect(Number(e.target.value))}
               className="bg-transparent text-xs font-mono font-bold focus:outline-none cursor-pointer"
             >
+              <option value={100}>100 ms</option>
               <option value={200}>200 ms</option>
+              <option value={300}>300 ms</option>
               <option value={400}>400 ms</option>
               <option value={600}>600 ms</option>
+              <option value={800}>800 ms</option>
               <option value={1000}>1000 ms</option>
             </select>
           </div>

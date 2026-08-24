@@ -632,7 +632,11 @@ export const AdvancedMonitoring: React.FC = () => {
       <AlertingIncidentsPanel targetUrl={url} latestCheck={latestCheck} />
 
       {/* 2. REAL-TIME RESPONSE TIME TIMELINE */}
-      <ResponseTimeTimeline summary={activeSummary} />
+      <ResponseTimeTimeline 
+        summary={activeSummary} 
+        threshold={latencyThreshold} 
+        onThresholdChange={handleThresholdChange} 
+      />
 
       {/* 3. TWO-COLUMN: LATENCY DISTRIBUTION + TTFB ANALYSIS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
