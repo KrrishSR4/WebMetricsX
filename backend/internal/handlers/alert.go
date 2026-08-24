@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/database"
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/email"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/services"
 	"github.com/gin-gonic/gin"
@@ -162,8 +162,8 @@ func (h *AlertHandler) SubscribePush(c *gin.Context) {
 	})
 }
 
-// TestNotification handles testing email alerts and browser notifications via Resend API
-func (h *AlertHandler) TestNotification(c *gin.Context) {
+// TestBrevoAlert handles testing email alerts via Brevo REST API
+func (h *AlertHandler) TestBrevoAlert(c *gin.Context) {
 	var req struct {
 		Email string `json:"email"`
 	}
@@ -175,8 +175,8 @@ func (h *AlertHandler) TestNotification(c *gin.Context) {
 		return
 	}
 
-	email := strings.TrimSpace(req.Email)
-	if email == "" || !isValidEmail(email) {
+	emailStr := strings.TrimSpace(req.Email)
+	if emailStr == "" || !isValidEmail(emailStr) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "Please enter a valid email address",
@@ -184,44 +184,35 @@ func (h *AlertHandler) TestNotification(c *gin.Context) {
 		return
 	}
 
-	apiKey := os.Getenv("RESEND_API_KEY")
+	apiKey := os.Getenv("BREVO_API_KEY")
 	if apiKey == "" {
-		h.logger.Warn("RESEND_API_KEY environment variable is not configured")
+		h.logger.Warn("BREVO_API_KEY environment variable is not configured")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"message": "RESEND_API_KEY is not configured in backend environment",
+			"message": "BREVO_API_KEY is not configured in backend environment",
 		})
 		return
 	}
 
-	subject := "[WebMetricsX] Test Alert"
-	timestamp := time.Now().Format("2006-01-02 15:04:05 MST")
-
-	htmlBody := fmt.Sprintf(`
-		<div style="font-family: monospace; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-			<h2 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">WebMetricsX Test Alert</h2>
-			<p style="color: #334155; font-size: 14px; line-height: 1.6;">This is a test notification from WebMetricsX.</p>
-			<p style="color: #334155; font-size: 14px; line-height: 1.6;">Your email alerting system is working correctly.</p>
-			<div style="background-color: #f8fafc; padding: 12px; border-radius: 8px; margin: 20px 0;">
-				<span style="font-weight: bold; color: #64748b;">Timestamp:</span> 
-				<span style="color: #0f172a;">%s</span>
-			</div>
-			<p style="color: #64748b; font-size: 11px; margin-bottom: 0;">This is a test notification and not a real monitoring incident.</p>
-		</div>
-	`, timestamp)
-
-	fromEmail := os.Getenv("RESEND_FROM")
-	if fromEmail == "" {
-		fromEmail = "onboarding@resend.dev"
-	}
-	if !strings.Contains(fromEmail, "<") {
-		fromEmail = fmt.Sprintf("WebMetricsX <%s>", fromEmail)
+	// Prepare data containing real-like values for verification
+	alertData := email.AlertEmailData{
+		Website:      "https://example.com (WebMetricsX Testing)",
+		Status:       "DEGRADED",
+		TTFB:         420.0,
+		Threshold:    400.0,
+		ResponseTime: 480.0,
+		DNS:          15.0,
+		TCP:          25.0,
+		TLS:          40.0,
+		Availability: 99.9,
+		DetectedAt:   time.Now(),
+		LikelyCause:  "Origin Latency",
+		RCAEvidence:  "TTFB was high while DNS and TLS handshakes were fast, pointing to backend processing slowdown.",
 	}
 
-	provider := services.NewResendEmailProvider(apiKey, fromEmail, h.logger)
-	err := provider.SendEmail(c.Request.Context(), email, subject, htmlBody)
+	err := email.SendAlertEmail(c.Request.Context(), emailStr, alertData)
 	if err != nil {
-		h.logger.Error("Failed to send test email through Resend", slog.String("error", err.Error()))
+		h.logger.Error("Failed to send test email through Brevo", slog.String("error", err.Error()))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Unable to send test alert: " + err.Error(),

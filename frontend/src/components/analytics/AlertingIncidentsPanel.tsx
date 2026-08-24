@@ -17,7 +17,8 @@ import {
   AlertEvent, 
   fetchActiveIncidents, 
   fetchAlertHistory, 
-  subscribeBrowserPush 
+  subscribeBrowserPush,
+  getApiBaseUrl
 } from '@/services/monitoringApi';
 import { toast } from 'sonner';
 
@@ -42,6 +43,7 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
   const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [showSuccessDialog, setShowSuccessDialog] = useState<boolean>(false);
   const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
+  const [alertErrorMessage, setAlertErrorMessage] = useState<string>('');
 
   // Browser Permission State
   const [permission, setPermission] = useState<NotificationPermission>(
@@ -166,8 +168,9 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
     setSendingTest(true);
     setTestStatus('idle');
 
+    const baseUrl = getApiBaseUrl();
     try {
-      const response = await fetch('/api/notifications/test', {
+      const response = await fetch(`${baseUrl}/api/alerts/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +180,7 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
 
       let data = { success: false, message: '' };
       if (response.status === 404) {
-        const fallbackResponse = await fetch('/api/v1/notifications/test', {
+        const fallbackResponse = await fetch(`${baseUrl}/api/v1/alerts/test`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -204,12 +207,14 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
         }
       } else {
         setTestStatus('error');
+        setAlertErrorMessage(data.message || 'Please check your email configuration and try again.');
         setShowErrorDialog(true);
         setTimeout(() => setTestStatus('idle'), 3000);
       }
     } catch (err) {
       console.error('Error sending test alert:', err);
       setTestStatus('error');
+      setAlertErrorMessage(err instanceof Error ? err.message : 'An unexpected network error occurred.');
       setShowErrorDialog(true);
       setTimeout(() => setTestStatus('idle'), 3000);
     } finally {
@@ -488,7 +493,7 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
           <div className="bg-card border border-black/10 rounded-2xl p-6 max-w-sm w-full shadow-lg space-y-4 font-mono">
             <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
               <CheckCircle2 className="w-5 h-5" />
-              Alert Sent
+              Test alert sent
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               A test notification has been sent to:<br />
@@ -512,8 +517,8 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
               <AlertTriangle className="w-5 h-5" />
               Failed to Send Alert
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Please check your email configuration and try again.
+            <p className="text-xs text-rose-700 leading-relaxed break-words">
+              {alertErrorMessage || "Please check your email configuration and try again."}
             </p>
             <button
               onClick={() => setShowErrorDialog(false)}

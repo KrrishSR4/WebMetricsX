@@ -10,6 +10,7 @@ import (
 
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/cache"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/database"
+	"github.com/KrrishSR4/WebMetricsX/backend/internal/email"
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
 )
 
@@ -227,14 +228,45 @@ func (ae *AlertEngine) triggerAlert(ctx context.Context, check *monitoring.Check
 
 	if !cooldownActive {
 		record.NotificationStatus = "SENT"
-		go func(rec *database.AlertEventRecord, checkURL string) {
+		go func(rec *database.AlertEventRecord, chk *monitoring.CheckResult) {
 			nCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 
-			subject := fmt.Sprintf("[%s] Alert Triggered: %s", rec.Severity, rec.Title)
-			body := ae.buildAlertEmailBody(rec, checkURL)
-			if emailErr := ae.emailProvider.SendEmail(nCtx, ae.recipientEmail, subject, body); emailErr != nil {
-				ae.logger.Error("Failed to send alert email", slog.String("error", emailErr.Error()))
+			availability := 100.0
+			if ae.repo != nil && ae.repo.IsAvailable() {
+				if summary, err := ae.repo.GetAnalyticsSummary(nCtx, chk.TargetID, "24h"); err == nil && summary != nil {
+					availability = summary.UptimePercentage
+				}
+			}
+
+			var cause, evidence string
+			if chk.RCA != nil {
+				cause = chk.RCA.LikelyCause
+				evidence = chk.RCA.Evidence
+			}
+
+			status := "DEGRADED"
+			if rec.AlertType == "DOWN" || rec.AlertType == "SERVER_ERROR" {
+				status = "DOWN"
+			}
+
+			alertData := email.AlertEmailData{
+				Website:      chk.URL,
+				Status:       status,
+				TTFB:         float64(chk.TTFBMs),
+				Threshold:    rec.ThresholdValue,
+				ResponseTime: float64(chk.ResponseTimeMs),
+				DNS:          float64(chk.DNSLatencyMs),
+				TCP:          float64(chk.TCPLatencyMs),
+				TLS:          float64(chk.TLSLatencyMs),
+				Availability: availability,
+				DetectedAt:   rec.Timestamp,
+				LikelyCause:  cause,
+				RCAEvidence:  evidence,
+			}
+
+			if emailErr := email.SendAlertEmail(nCtx, ae.recipientEmail, alertData); emailErr != nil {
+				ae.logger.Error("Failed to send Brevo alert email", slog.String("error", emailErr.Error()))
 				rec.NotificationStatus = "FAILED"
 				_ = ae.saveAlertRecord(context.Background(), rec)
 			}
@@ -245,7 +277,7 @@ func (ae *AlertEngine) triggerAlert(ctx context.Context, check *monitoring.Check
 					ae.logger.Error("Failed to send browser push notification", slog.String("error", pushErr.Error()))
 				}
 			}
-		}(record, check.URL)
+		}(record, check)
 	}
 
 	return ae.saveAlertRecord(ctx, record)
@@ -263,19 +295,39 @@ func (ae *AlertEngine) resolveAlert(ctx context.Context, check *monitoring.Check
 
 	ae.clearCooldown(ctx, check.TargetID, alertType)
 
-	go func(rec *database.AlertEventRecord, checkURL string) {
+	go func(rec *database.AlertEventRecord, chk *monitoring.CheckResult) {
 		nCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		subject := fmt.Sprintf("[RESOLVED] Alert Cleared: %s", rec.Title)
-		body := ae.buildResolutionEmailBody(rec, checkURL)
-		_ = ae.emailProvider.SendEmail(nCtx, ae.recipientEmail, subject, body)
+		availability := 100.0
+		if ae.repo != nil && ae.repo.IsAvailable() {
+			if summary, err := ae.repo.GetAnalyticsSummary(nCtx, chk.TargetID, "24h"); err == nil && summary != nil {
+				availability = summary.UptimePercentage
+			}
+		}
+
+		alertData := email.AlertEmailData{
+			Website:      chk.URL,
+			Status:       "NORMAL",
+			TTFB:         float64(chk.TTFBMs),
+			Threshold:    rec.ThresholdValue,
+			ResponseTime: float64(chk.ResponseTimeMs),
+			DNS:          float64(chk.DNSLatencyMs),
+			TCP:          float64(chk.TCPLatencyMs),
+			TLS:          float64(chk.TLSLatencyMs),
+			Availability: availability,
+			DetectedAt:   time.Now().UTC(),
+		}
+
+		if emailErr := email.SendAlertEmail(nCtx, ae.recipientEmail, alertData); emailErr != nil {
+			ae.logger.Error("Failed to send Brevo resolution email", slog.String("error", emailErr.Error()))
+		}
 
 		if ae.pushProvider != nil {
-			pushMsg := fmt.Sprintf("[RESOLVED] Alert Cleared for %s", checkURL)
+			pushMsg := fmt.Sprintf("[RESOLVED] Alert Cleared for %s", chk.URL)
 			_ = ae.pushProvider.SendPushNotification(nCtx, rec.TargetID, "Alert Resolved", pushMsg)
 		}
-	}(activeAlert, check.URL)
+	}(activeAlert, check)
 
 	return ae.saveAlertRecord(ctx, activeAlert)
 }

@@ -90,7 +90,7 @@ export interface GoApiResponse<T = any> {
   };
 }
 
-const getApiBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl && envUrl.trim() !== '') {
     return envUrl.replace(/\/+$/, '');
