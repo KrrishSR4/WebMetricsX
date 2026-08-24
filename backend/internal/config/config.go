@@ -13,6 +13,7 @@ type Config struct {
 	CORSAllowedOrigins []string
 	DatabaseURL        string
 	RedisURL           string
+	ResendAPIKey       string
 }
 
 func LoadConfig() (*Config, error) {
@@ -31,6 +32,7 @@ func LoadConfig() (*Config, error) {
 		CORSAllowedOrigins: origins,
 		DatabaseURL:        getEnv("DATABASE_URL", ""),
 		RedisURL:           getEnv("REDIS_URL", "redis://localhost:6379/0"),
+		ResendAPIKey:       getEnv("RESEND_API_KEY", ""),
 	}, nil
 
 }

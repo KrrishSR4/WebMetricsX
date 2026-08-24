@@ -32,6 +32,7 @@ func Setup(
 
 	// Direct Health Endpoint
 	router.GET("/health", healthHandler.Check)
+	router.POST("/api/notifications/test", alertHandler.TestNotification)
 
 	// API Version 1 Router Group
 	v1 := router.Group("/api/v1")
@@ -62,5 +63,6 @@ func Setup(
 		v1.GET("/monitoring/alerts/history", alertHandler.GetAlertHistory)
 		v1.GET("/monitoring/alerts/active", alertHandler.GetActiveIncidents)
 		v1.POST("/monitoring/alerts/subscribe", alertHandler.SubscribePush)
+		v1.POST("/notifications/test", alertHandler.TestNotification)
 	}
 }
