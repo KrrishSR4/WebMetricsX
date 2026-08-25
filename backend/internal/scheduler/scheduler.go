@@ -211,6 +211,11 @@ func (s *Scheduler) StartWorker(ctx context.Context, rawURL string, intervalSec 
 
 	s.logger.Info("[MONITOR] target started continuous monitoring worker", slog.String("target_id", targetID), slog.String("url", targetURL), slog.Int("interval_sec", intervalSec))
 
+	// Reset alert state for clean continuous monitoring start
+	if s.alertEngine != nil {
+		s.alertEngine.ResetTargetState(s.ctx, targetID)
+	}
+
 	// Launch background goroutine ticker loop
 	s.wg.Add(1)
 	go func() {
@@ -228,6 +233,7 @@ func (s *Scheduler) StopWorker(ctx context.Context, rawURL string) error {
 		return err
 	}
 	targetURL := parsedURL.String()
+	targetID := database.GenerateID(targetURL)
 
 	s.mu.Lock()
 	worker, exists := s.workers[targetURL]
@@ -235,6 +241,9 @@ func (s *Scheduler) StopWorker(ctx context.Context, rawURL string) error {
 		s.mu.Unlock()
 		if s.repo != nil {
 			_ = s.repo.UpdateTargetStatus(ctx, targetURL, "STOPPED", false)
+		}
+		if s.alertEngine != nil {
+			s.alertEngine.ResetTargetState(ctx, targetID)
 		}
 		return nil
 	}
@@ -253,6 +262,11 @@ func (s *Scheduler) StopWorker(ctx context.Context, rawURL string) error {
 		_ = s.cacheService.Delete(ctx, cache.WorkerStateKey(worker.TargetID))
 	}
 
+	// Reset alert engine active incidents & cooldowns
+	if s.alertEngine != nil {
+		s.alertEngine.ResetTargetState(ctx, targetID)
+	}
+
 	s.logger.Info("[MONITOR] target stopped continuous worker", slog.String("url", targetURL))
 	return nil
 }
@@ -264,6 +278,7 @@ func (s *Scheduler) PauseWorker(ctx context.Context, rawURL string) error {
 		return err
 	}
 	targetURL := parsedURL.String()
+	targetID := database.GenerateID(targetURL)
 
 	s.mu.Lock()
 	worker, exists := s.workers[targetURL]
@@ -271,6 +286,9 @@ func (s *Scheduler) PauseWorker(ctx context.Context, rawURL string) error {
 		s.mu.Unlock()
 		if s.repo != nil {
 			_ = s.repo.UpdateTargetStatus(ctx, targetURL, "PAUSED", false)
+		}
+		if s.alertEngine != nil {
+			s.alertEngine.ResetTargetState(ctx, targetID)
 		}
 		return nil
 	}
@@ -285,6 +303,10 @@ func (s *Scheduler) PauseWorker(ctx context.Context, rawURL string) error {
 
 	if s.cacheService != nil && s.cacheService.IsAvailable() {
 		_ = s.cacheService.Delete(ctx, cache.WorkerStateKey(worker.TargetID))
+	}
+
+	if s.alertEngine != nil {
+		s.alertEngine.ResetTargetState(ctx, targetID)
 	}
 
 	s.logger.Info("[MONITOR] target paused worker", slog.String("url", targetURL))

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -460,6 +461,45 @@ func (ae *AlertEngine) clearCooldown(ctx context.Context, targetID, alertType st
 	ae.mu.Lock()
 	defer ae.mu.Unlock()
 	delete(ae.memCooldowns, redisKey)
+}
+
+// ResetTargetState clears all active incidents, consecutive counters, and cooldowns for a target
+func (ae *AlertEngine) ResetTargetState(ctx context.Context, targetID string) {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+
+	prefixIncident := fmt.Sprintf("%s:", targetID)
+	for k := range ae.memActiveIncidents {
+		if strings.HasPrefix(k, prefixIncident) || k == targetID {
+			delete(ae.memActiveIncidents, k)
+		}
+	}
+
+	prefixCooldown := fmt.Sprintf("webmetricsx:alert:cooldown:%s:", targetID)
+	prefixViol := fmt.Sprintf("webmetricsx:alert:violations:%s:", targetID)
+	prefixFail := fmt.Sprintf("webmetricsx:alert:failures:%s", targetID)
+
+	for k := range ae.memCooldowns {
+		if strings.HasPrefix(k, prefixCooldown) {
+			delete(ae.memCooldowns, k)
+		}
+	}
+	for k := range ae.memViolations {
+		if strings.HasPrefix(k, prefixViol) {
+			delete(ae.memViolations, k)
+		}
+	}
+	delete(ae.memFailures, targetID)
+
+	if ae.cacheService != nil && ae.cacheService.IsAvailable() {
+		_ = ae.cacheService.Delete(ctx, fmt.Sprintf("webmetricsx:alert:cooldown:%s:HIGH_LATENCY", targetID))
+		_ = ae.cacheService.Delete(ctx, fmt.Sprintf("webmetricsx:alert:cooldown:%s:WEBSITE_DOWN", targetID))
+		_ = ae.cacheService.Delete(ctx, fmt.Sprintf("webmetricsx:alert:violations:%s:HIGH_LATENCY", targetID))
+		_ = ae.cacheService.Delete(ctx, fmt.Sprintf("webmetricsx:alert:violations:%s:WEBSITE_DOWN", targetID))
+		_ = ae.cacheService.Delete(ctx, prefixFail)
+	}
+
+	ae.logger.Info("[ALERT ENGINE] Reset target alert state and cooldowns", slog.String("target_id", targetID))
 }
 
 func (ae *AlertEngine) getConsecutiveViolations(ctx context.Context, targetID, alertType string) int {
