@@ -33,6 +33,14 @@ type AlertEmailData struct {
 }
 
 func SendAlertEmail(ctx context.Context, recipient string, alert AlertEmailData) error {
+	return SendAlertEmails(ctx, []string{recipient}, alert)
+}
+
+func SendAlertEmails(ctx context.Context, recipients []string, alert AlertEmailData) error {
+	if len(recipients) == 0 {
+		return nil
+	}
+
 	apiKey := os.Getenv("BREVO_API_KEY")
 	if apiKey == "" {
 		return fmt.Errorf("BREVO_API_KEY environment variable is not configured")
@@ -197,16 +205,22 @@ func SendAlertEmail(ctx context.Context, recipient string, alert AlertEmailData)
 
 	url := "https://api.brevo.com/v3/smtp/email"
 
+	toSlice := make([]map[string]string, 0, len(recipients))
+	for _, r := range recipients {
+		if r != "" {
+			toSlice = append(toSlice, map[string]string{"email": r})
+		}
+	}
+	if len(toSlice) == 0 {
+		return nil
+	}
+
 	reqBody := map[string]interface{}{
 		"sender": map[string]string{
 			"name":  senderName,
 			"email": senderEmail,
 		},
-		"to": []map[string]string{
-			{
-				"email": recipient,
-			},
-		},
+		"to":          toSlice,
 		"subject":     subject,
 		"htmlContent": htmlContent,
 	}

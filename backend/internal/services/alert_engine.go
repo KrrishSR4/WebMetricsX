@@ -249,17 +249,10 @@ func (ae *AlertEngine) triggerAlert(ctx context.Context, check *monitoring.Check
 				return
 			}
 
-			// Send to all recipients
-			var finalErr error
-			for _, recipient := range recipients {
-				if emailErr := email.SendAlertEmail(nCtx, recipient, alertData); emailErr != nil {
-					finalErr = emailErr
-					ae.logger.Error("Failed to send Brevo alert email", slog.String("recipient", recipient), slog.String("error", emailErr.Error()))
-					ae.incrementMetric(context.Background(), "brevo_send_failures_total")
-				}
-			}
-
-			if finalErr != nil {
+			// Send to all recipients in batch
+			if emailErr := email.SendAlertEmails(nCtx, recipients, alertData); emailErr != nil {
+				ae.logger.Error("Failed to send Brevo alert email batch", slog.String("recipients", fmt.Sprintf("%v", recipients)), slog.String("error", emailErr.Error()))
+				ae.incrementMetric(context.Background(), "brevo_send_failures_total")
 				rec.NotificationStatus = "FAILED"
 				_ = ae.saveAlertRecord(context.Background(), rec)
 			}
@@ -329,12 +322,10 @@ func (ae *AlertEngine) resolveAlert(ctx context.Context, check *monitoring.Check
 			return
 		}
 
-		// Send to all recipients
-		for _, recipient := range recipients {
-			if emailErr := email.SendAlertEmail(nCtx, recipient, alertData); emailErr != nil {
-				ae.logger.Error("Failed to send Brevo recovery email", slog.String("recipient", recipient), slog.String("error", emailErr.Error()))
-				ae.incrementMetric(context.Background(), "brevo_send_failures_total")
-			}
+		// Send to all recipients in batch
+		if emailErr := email.SendAlertEmails(nCtx, recipients, alertData); emailErr != nil {
+			ae.logger.Error("Failed to send Brevo recovery email batch", slog.String("recipients", fmt.Sprintf("%v", recipients)), slog.String("error", emailErr.Error()))
+			ae.incrementMetric(context.Background(), "brevo_send_failures_total")
 		}
 	}(activeAlert, check)
 
