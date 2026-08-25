@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UrlInput } from '@/components/UrlInput';
 import { useUrlHistory } from '@/hooks/useUrlHistory';
+import { useNotifications } from '@/hooks/useNotifications';
 import {
   Cpu,
   Globe,
@@ -16,6 +17,8 @@ import {
   Pause,
   CheckCircle2,
   History,
+  Bell,
+  BellOff,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -69,6 +72,7 @@ export const AdvancedMonitoring: React.FC = () => {
   const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [historyOpen, setHistoryOpen] = useState<boolean>(false);
   const { history, addToHistory, removeFromHistory, clearHistory } = useUrlHistory();
+  const { toggleNotificationForUrl, isNotificationEnabledForUrl } = useNotifications();
 
   const [loadingToggle, setLoadingToggle] = useState<boolean>(false);
   
@@ -674,6 +678,29 @@ export const AdvancedMonitoring: React.FC = () => {
                 'Test Alert'
               )}
             </Button>
+            {/* Web Push Notifications Toggle Button */}
+            <Button
+              type="button"
+              onClick={() => toggleNotificationForUrl(url)}
+              className={`h-9 px-3 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 shadow-sm ${
+                isNotificationEnabledForUrl(url)
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+                  : 'bg-background border-black/10 text-muted-foreground hover:text-foreground'
+              }`}
+              title="Toggle Web Push / Chrome Notifications for this URL"
+            >
+              {isNotificationEnabledForUrl(url) ? (
+                <>
+                  <Bell className="w-3.5 h-3.5 text-emerald-500 fill-current" />
+                  Web Push: ON
+                </>
+              ) : (
+                <>
+                  <BellOff className="w-3.5 h-3.5" />
+                  Web Push: OFF
+                </>
+              )}
+            </Button>
           </div>
 
         </div>
@@ -777,21 +804,21 @@ export const AdvancedMonitoring: React.FC = () => {
         </div>
       )}
 
-      {/* 1. KPI SUMMARY CARDS */}
-      <KPISummaryCards summary={activeSummary} />
-
-      {/* Baseline & Anomaly Panel (Phase 2.6) */}
-      <BaselineAnomalyPanel url={url} latestCheck={latestCheck} />
-
-      {/* Alerting & Incidents Panel (Phase 2.7) */}
-      <AlertingIncidentsPanel targetUrl={url} latestCheck={latestCheck} />
-
-      {/* 2. REAL-TIME RESPONSE TIME TIMELINE */}
+      {/* 1. REAL-TIME RESPONSE TIME TIMELINE (TOPMOST SECTION) */}
       <ResponseTimeTimeline 
         summary={activeSummary} 
         threshold={latencyThreshold} 
         onThresholdChange={handleThresholdChange} 
       />
+
+      {/* 2. KPI SUMMARY CARDS */}
+      <KPISummaryCards summary={activeSummary} />
+
+      {/* Alerting & Incidents Panel (Phase 2.7) */}
+      <AlertingIncidentsPanel targetUrl={url} latestCheck={latestCheck} />
+
+      {/* Baseline & Anomaly Panel (Phase 2.6) */}
+      <BaselineAnomalyPanel url={url} latestCheck={latestCheck} />
 
       {/* 3. TWO-COLUMN: LATENCY DISTRIBUTION + TTFB ANALYSIS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
