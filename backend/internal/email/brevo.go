@@ -246,11 +246,21 @@ func SendAlertEmails(ctx context.Context, recipients []string, alert AlertEmailD
 	}
 	defer resp.Body.Close()
 
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read Brevo API response: %w", err)
+	}
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		respBytes, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("Brevo API returned error status %d: %s", resp.StatusCode, string(respBytes))
 	}
 
+	var brevoResp struct {
+		MessageID string `json:"messageId"`
+	}
+	_ = json.Unmarshal(respBytes, &brevoResp)
+
+	fmt.Printf(" [BREVO SUCCESS] Email dispatched to %v | MessageID: %s\n", recipients, brevoResp.MessageID)
 	return nil
 }
 
