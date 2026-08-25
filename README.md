@@ -1,330 +1,149 @@
-#  WebMetricsX
-### Real-Time Website Monitoring & SEO Analytics Platform
+# WebMetricsX 2.0
+### Real-Time Website Monitoring, Reliability & SEO Performance Analytics Platform
 
-WebMetricsX is a **production-ready, enterprise-grade web application** that provides **REAL-TIME website monitoring and SEO analytics** using **live APIs, real network requests, and continuous polling**.
+WebMetricsX 2.0 is a **production-ready, enterprise-grade website reliability platform** powered by a high-concurrency **Go 2.0 backend core**, **3-second high-frequency worker probing**, **Server-Sent Events (SSE) live chart telemetry**, and **instant Brevo transactional email & Web Push downtime alerting**.
 
-The platform delivers **accurate, continuously updating insights every 5 seconds** without requiring any authentication.
-
----
-
-##  Key Highlights
-
--  Real-time monitoring (updates every 5 seconds)
--  Live uptime & website health tracking
--  Advanced performance analytics
--  Professional SEO audits with actionable suggestions
--  Colorful charts, graphs & histograms
--  Export full dashboard as professional PDF
--  Fully Android & mobile friendly UI
--  No login / signup / OAuth
--  No mock data, fake data, or placeholders
+The platform delivers real-time website status tracking, deep HTTP timing metrics (DNS, TCP, TLS, TTFB), SSL certificate verification, and Core Web Vitals analytics without requiring login or third-party tracking.
 
 ---
 
-##  How WebMetricsX Works (High-Level Flow)
+## ⚡ Key Highlights (V2.0 Core Features)
+
+- 🚀 **Go 2.0 High-Concurrency Probing Engine**: Multithreaded Go worker pool executing background network probes.
+- ⚡ **3-Second High-Frequency Tickers**: Real-time HTTP, DNS, TCP, and TLS phase measurement every 3 seconds.
+- ✉️ **Brevo Transactional Email Alerts**: Instant HTML email notifications delivered to all subscribed recipients via Brevo API batching.
+- 🔔 **Chrome & Browser Web Push Alerts**: Firebase Cloud Messaging (FCM) background desktop notifications for instant downtime visibility.
+- 📡 **Server-Sent Events (SSE) Telemetry Stream**: Live event bus (`/api/v1/monitoring/stream`) broadcasting real-time metrics for dynamic D3.js & Recharts visualizations.
+- 💾 **Neon PostgreSQL & Redis Infrastructure**: Persistent target state, worker job synchronization, and anomaly cooldown management.
+- 📊 **Core Web Vitals & SEO Audits**: Real-time LCP, FID, CLS, and full HTML markup validation via Google PageSpeed Insights API.
+- 📄 **Client-Ready PDF Reports**: One-click professional dashboard export for client reporting.
+- 🐳 **Docker & Docker Compose Ready**: Multi-stage containerized deployment for local development and cloud production.
+
+---
+
+## 🏗️ System Architecture Flow
 
 ```mermaid
 graph TD
+    USER([Browser Client / Dashboard])
 
-    USER[Browser Client]
+    subgraph FRONTEND ["React 18 Frontend Service (Port 8080)"]
+        UI[React + Tailwind UI]
+        CHARTS[D3.js & Recharts Live Timeline]
+        PUSH[Firebase Web Push Notifications]
+    end
 
-    USER --> FRONTEND[React + Tailwind Dashboard]
+    subgraph BACKEND ["Go 2.0 Backend Core (Port 8081)"]
+        API[Gin HTTP REST API]
+        SCHEDULER[Continuous Monitoring Scheduler]
+        WORKERS[Bounded Worker Pool - 10 Threads]
+        ENGINE[Probing Engine: DNS / TCP / TLS / TTFB]
+        ALERT_ENGINE[Alert Engine & Cooldown Manager]
+        SSE_BUS[SSE Real-Time Event Bus]
+    end
 
-    FRONTEND --> API[FastAPI Backend]
+    subgraph INFRA ["Data & Messaging Layer"]
+        POSTGRES[(Neon PostgreSQL Database)]
+        REDIS[(Redis 7 Cache)]
+        BREVO[Brevo Transactional Email API]
+    end
 
-    API --> MONITOR[Real-Time Monitoring Engine]
-
-    MONITOR --> HTTPCHECK[HTTP Monitor]
-    MONITOR --> DNSCHECK[DNS Analysis]
-    MONITOR --> TLSCHECK[SSL Certificate Monitor]
-    MONITOR --> SEOCHECK[SEO Analyzer]
-    MONITOR --> CWVCHECK[Core Web Vitals Monitor]
-    MONITOR --> PERFCHECK[Performance Analyzer]
-
-    HTTPCHECK --> ENGINE[Metrics Engine]
-    DNSCHECK --> ENGINE
-    TLSCHECK --> ENGINE
-    SEOCHECK --> ENGINE
-    CWVCHECK --> ENGINE
-    PERFCHECK --> ENGINE
-
-    ENGINE --> DATABASE[(SQLite Database)]
-
-    DATABASE --> ANALYTICS[Analytics Processor]
-
-    ANALYTICS --> DASHBOARD[Live Dashboard]
-
-    DASHBOARD --> SCORE[Website Health Score]
-    DASHBOARD --> CHARTS[Performance Charts]
-    DASHBOARD --> HISTORY[Historical Trends]
-    DASHBOARD --> UPTIME[Uptime Statistics]
-
-    DASHBOARD --> REPORTS[PDF Report Generator]
-
-    REPORTS --> DOWNLOAD[Export Analytics Report]
-
-    DASHBOARD --> ALERTS[Alert Engine]
-
-    ALERTS --> RULE{Response Time > 400ms}
-
-    RULE -->|Yes| NOTIFY[Web Notification]
-
-    RULE -->|No| CONTINUE[Continue Monitoring]
-
-    NOTIFY --> TOAST[Toast Alert]
-
-    TOAST --> BANNER[Dashboard Alert Banner]
+    USER <--> UI
+    UI <-->|HTTP REST / SSE Stream| API
+    API <--> SCHEDULER
+    SCHEDULER <--> WORKERS
+    WORKERS <--> ENGINE
+    WORKERS -->|Persist Metrics| POSTGRES
+    WORKERS -->|Cache Telemetry| REDIS
+    ENGINE --> ALERT_ENGINE
+    ALERT_ENGINE -->|Batch Email Payload| BREVO
+    ALERT_ENGINE -->|Push Notification| PUSH
+    WORKERS -->|Stream Live Metric Ticks| SSE_BUS
+    SSE_BUS -->|Live Event Stream| CHARTS
 ```
-
 
 ---
 
-##  System Architecture (ASCII Diagram)
-
-
+## 🔁 Real-Time Probing & Alerting Lifecycle
 
 ```mermaid
 graph TD
+    START([Go Ticker Triggered - Every 3 Seconds])
 
-    USER([Browser Client])
+    START --> PROBE[Execute Network Probe: DNS + TCP + TLS + TTFB]
 
-    USER --> FRONTEND[Frontend Layer]
+    PROBE --> PERSIST[Save Metric Record to Neon PostgreSQL & Redis]
 
-    FRONTEND --> BACKEND[Backend API]
+    PROBE --> STREAM[Broadcast Metric Tick to SSE Stream]
 
-    BACKEND --> MONITORING[Monitoring Services]
+    STREAM --> UI_UPDATE[Live Recharts Chart & KPI Cards Update]
 
-    MONITORING --> STORAGE[(Metrics Database)]
+    PROBE --> EVALUATE{Evaluate Status & Thresholds}
 
-    STORAGE --> ANALYTICS[Analytics Engine]
+    EVALUATE -->|Status == UP| RESOLVE_CHECK{Was Previous Status DOWN/DEGRADED?}
 
-    ANALYTICS --> DASHBOARD[Live Dashboard]
+    RESOLVE_CHECK -->|Yes| RECOVERY[Trigger RECOVERY Incident]
+    RECOVERY --> DISPATCH_RECOVERY[Dispatch Brevo Recovery Email + Reset Cooldown]
 
-    DASHBOARD --> ALERTS[Notifications]
+    RESOLVE_CHECK -->|No| CONTINUE[Continue Monitoring Ticker]
 
-    DASHBOARD --> REPORTS[Report Export]
-```
+    EVALUATE -->|Status == DOWN or TTFB > 400ms| ALERT_CHECK{Cooldown Active?}
 
+    ALERT_CHECK -->|No| TRIGGER[Trigger WEBSITE_DOWN / HIGH_LATENCY Alert]
 
+    TRIGGER --> EMAIL_BATCH[Send Batch Email to All Subscribed Recipients via Brevo]
+    TRIGGER --> PUSH_ALERT[Trigger Browser Chrome Web Push & Toast Banner]
+    TRIGGER --> SET_COOLDOWN[Set 15-Minute Alert Cooldown]
 
----
-
-##  Real-Time Monitoring Features (20+)
-
-1. Website status (Up / Down / Degraded)
-2. HTTP response status codes
-3. Current response time (ms)
-4. Average response time
-5. Time To First Byte (TTFB)
-6. DNS lookup time
-7. TCP connect time
-8. TLS handshake time
-9. SSL certificate validity & expiry
-10. Page load performance score
-11. 24-hour uptime percentage
-12. Response time history timeline
-13. Error rate detection
-14. Latency spike detection
-15. Performance breakdown (DNS / Connect / TTFB / Download)
-16. Core Web Vitals (LCP, FID, CLS)
-17. Mobile performance score
-18. Desktop performance score
-19. Accessibility score
-20. Best Practices score
-21. Last checked timestamp
-
----
-
-##  Data Visualization
-
-WebMetrics uses **REAL collected data only** to render:
-
-- Line charts (response time over time)
-- Bar charts (performance metrics)
-- Area charts (uptime trends)
-- Histograms (latency distribution)
-- Status badges & indicators
-
-**Chart Rules:**
-- Flat colors only
-- No gradients
-- Professional, subtle animations
-- Tooltips & legends enabled
-
----
-
-##  SEO Analytics Module
-
-WebMetrics performs **real SEO analysis** using live APIs and crawls:
-
-- SEO score (0–100 via Lighthouse)
-- Title tag presence & length
-- Meta description validation
-- H1 / H2 structure checks
-- Image ALT tag detection
-- Canonical tag availability
-- Robots.txt & sitemap.xml checks
-- Mobile friendliness
-- Indexing readiness
-
-### Output:
-- SEO score
-- Missing elements
-- Clear improvement suggestions
-- Actionable recommendations
-
----
-
-##  PDF Export
-
-- Export the **entire dashboard** as a professional PDF
-- Same layout, same charts, same colors
-- Real collected data only
-- Includes:
-  - Website URL
-  - Timestamp
-  - All analytics sections
-
----
-
-##  UI / Design Philosophy
-
-- Enterprise-grade UI (GitHub / Vercel / Grafana inspired)
-- Flat, minimal design
-- Neutral base colors (white, black, gray)
-- Subtle accent colors for charts
-- Card-based layout
-- Clean typography & spacing
-
----
-
-##  Android & Mobile Support
-
-- Fully responsive design
-- Touch-friendly charts
-- Optimized for Android browsers
-- Smooth performance on low-end devices
-- No horizontal scrolling
-
----
-
-##  SEO-Friendly Application Structure
-
-- Semantic HTML
-- Proper meta tags
-- Clean DOM structure
-- Optimized rendering
-- Target Lighthouse score: **100**
-
----
-### Dashboard
-![Dashboard Preview](public/dashboard.png)
-
-
-### Performance:
-![Example Image](public/performance.png)
-### SEO:
-![Example Image](public/seo.png)
-### Exported_PDF:
-![Example Image](public/exportedpdf1.png)
-### Exported_PDF
-![Example Image](public/exportedpdf2.png)
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-- React.js (component-based UI)
-- Tailwind CSS / CSS Modules (flat, enterprise UI)
-- Chart.js / Recharts (charts & graphs)
-- Axios / Fetch API
-- Responsive layout (mobile-first)
-
-### Backend
-- Node.js
-- Express.js
-- Lovable Cloud backend execution
-- Real HTTP probing engine
-- Polling / background jobs (5s interval)
-
-### APIs & Monitoring
-- Lighthouse API
-- Google PageSpeed Insights API
-- Real HTTP & DNS probing
-- SSL certificate inspection
-- Core Web Vitals collection
-
-### Utilities
-- PDF generation (dashboard export)
-- WebSockets / polling
-- Error handling & retries
-
----
-
-##  Setup Instructions
-
-### Prerequisites
-- Node.js (v18+ recommended)
-- npm or yarn
-- Internet access (for real APIs)
-- Lovable Cloud enabled
-
----
-
-### Local Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/webmetrics.git
-
-# Start development server
-npm run dev
+    ALERT_CHECK -->|Yes| SKIP[Skip Email to Prevent Spam Notification]
 ```
 
 ---
 
-## 🐳 Docker & Docker Compose Setup (WebMetricsX 2.0)
+## 🛠️ Technology Stack
 
-WebMetricsX 2.0 provides multi-stage Docker containerization for both the **Go Backend Monitoring Engine** and **React Vite Frontend**, orchestrated with **Docker Compose** and **Redis**.
+### Frontend Service
+- **Core**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, Shadcn UI, Framer Motion
+- **Data Visualization**: Recharts, D3.js, Lucide Icons
+- **Real-Time Data**: Server-Sent Events (`EventSource`), TanStack Query
+- **Notifications**: Firebase Cloud Messaging (FCM), Sonner Toasts
+
+### Go Backend Core
+- **Language**: Go 1.24 (High-concurrency goroutines & channels)
+- **Web Framework**: Gin Gonic (`gin-contrib/cors`, structured logging)
+- **Database & Cache**: Neon PostgreSQL (`lib/pq`, `pgx`), Redis 7 (`go-redis/v9`)
+- **Probing Engine**: SSRF-protected HTTP, net.Resolver DNS, net.Dialer TCP, crypto/tls Handshake
+
+### Email & Alerting Engine
+- **Transactional Email**: Brevo REST API v3 (Multi-recipient JSON batching)
+- **Push Notifications**: Firebase FCM Web Push (`firebase-messaging-sw.js`)
+
+---
+
+## 🐳 Docker & Docker Compose Setup
 
 ### Prerequisites
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (v24+ with Docker Compose v2.20+)
 - Environment file setup (`.env`)
 
-### Environment Setup
-Create a `.env` file in the project root (or copy `.env.example`):
+### Local Docker Commands
+
 ```bash
+# 1. Clone the repository
+git clone https://github.com/KrrishSR4/WebMetricsX.git
+cd WebMetricsX
+
+# 2. Configure Environment Variables
 cp .env.example .env
-```
-Ensure `DATABASE_URL` (Neon PostgreSQL) and `BREVO_API_KEY` are configured properly.
 
-### Docker Compose Commands
-
-#### 1. Build and Start All Containers
-```bash
+# 3. Build & Launch Containers
 docker compose up --build -d
-```
 
-#### 2. View Service Logs
-```bash
-# All services
-docker compose logs -f
-
-# Backend logs only
-docker compose logs -f backend
-
-# Frontend logs only
-docker compose logs -f frontend
-```
-
-#### 3. Service Status & Health
-```bash
+# 4. Inspect Service Status
 docker compose ps
-```
 
-#### 4. Stop & Remove Containers
-```bash
+# 5. Stop Containers
 docker compose down
 ```
 
@@ -332,89 +151,34 @@ docker compose down
 - **Frontend Dashboard**: `http://localhost:8080`
 - **Go Backend API**: `http://localhost:8081`
 - **Backend Health Check**: `http://localhost:8081/health`
-- **SSE Monitoring Stream**: `http://localhost:8081/api/v1/monitoring/stream`
+- **SSE Telemetry Stream**: `http://localhost:8081/api/v1/monitoring/stream`
 - **Redis Cache**: `localhost:6379`
 
 ---
 
-## 🛡️ CI/CD Pipeline & Security Hardening (WebMetricsX 2.0)
+## 🛡️ CI/CD Pipeline & Security Hardening
 
-WebMetricsX 2.0 incorporates a hardened, production-grade GitHub Actions CI/CD and dependency-security pipeline with automated review & safe auto-merging:
+WebMetricsX incorporates a production-grade GitHub Actions CI/CD and security pipeline:
 
-### 1. Workflows Overview
 - **Core CI (`.github/workflows/ci.yml`)**:
   - **Frontend Job**: Node.js 20, `npm ci`, ESLint, production build validation.
   - **Backend Job**: Go 1.24, `gofmt` style validation, `go vet`, race-enabled unit tests (`go test -race`), binary compilation (`go build`).
-  - **Docker Job**: Docker Compose configuration validation and Buildx image compilation for both Frontend and Backend.
+  - **Docker Job**: Docker Compose configuration validation and Buildx image compilation.
 - **CodeQL Security Scanning (`.github/workflows/codeql.yml`)**:
   - Multi-language security matrix analyzing both **Go** and **JavaScript/TypeScript**.
-  - Treated as required security signals on `push`, `pull_request`, and weekly cron schedule (`0 3 * * 1`).
 - **Dependabot Review & Auto-Merge (`.github/workflows/dependabot-review-automerge.yml`)**:
-  - **Automated Security Review**: Evaluates dependency name, target ecosystem, lockfile status, and SemVer classification (`PATCH` / `MINOR` / `MAJOR`).
-  - **Safe Auto-Merge**: Auto-approves and enables squash auto-merging ONLY for `PATCH` and `MINOR` version updates upon passing all required CI checks.
-  - **Major Version Protection**: `MAJOR` version updates are strictly flagged for manual developer review and will NEVER auto-merge.
-- **Dependabot Validation CI (`.github/workflows/dependabot-ci.yml`)**:
-  - Runs dedicated validation checks for pull requests opened by `dependabot[bot]`.
-
-### 2. Dependabot Configuration (`.github/dependabot.yml`)
-- **Daily Update Schedules** (`04:00 IST`) across 3 update ecosystems:
-  1. `npm` (`/frontend`): Daily checks, limit 30 PRs, grouped patch & minor updates.
-  2. `gomod` (`/backend`): Daily checks, limit 30 PRs, grouped patch & minor updates.
-  3. `github-actions` (`/`): Daily checks, limit 30 PRs, grouped patch & minor updates.
+  - **Automated Security Review**: Evaluates dependency name, target ecosystem, lockfile status, and SemVer classification.
+  - **Safe Auto-Merge**: Auto-approves (`gh pr review --approve`) and enables squash auto-merge (`gh pr merge --auto --squash`) ONLY for `PATCH` and `MINOR` version updates upon passing all required CI checks.
 
 ---
 
-##  Strict Rules (Non-Negotiable)
+## 🚫 Non-Negotiable Core Rules
 
- - No mock data  
- - No fake analytics  
- - No static demo values  
- - No randomly generated numbers  
- - No authentication system  
-
----
-
-##  Final Goal
-
-Deliver a **REAL, WORKING, PRODUCTION-READY**  
-**WebMetrics platform** that provides:
-
-- Live website monitoring  
-- Real-time analytics every 5 seconds  
-- Professional SEO insights  
-- Enterprise-grade dashboard experience  
+- No mock data or fake analytics.
+- Real HTTP probing, DNS resolution, and SSL inspection only.
+- Additive Go backend layer preserving all existing PageSpeed Insights & SEO features.
+- Primary production URL (`https://webmetricsx.web.app/`) remains unchanged.
 
 ---
 
-## SEO Tags
-
-ai
-analytics
-seo
-seo-tool
-website-monitoring
-performance-monitoring
-uptime-monitoring
-core-web-vitals
-web-performance
-developer-tools
-dashboard
-saas
-react
-firebase
-tailwindcss
-monitoring-tool
-web-analytics
-site-audit
-lighthouse
-cloud
-devtools
-web-intelligence
-ai-dashboard
-productivity
-fullstack
-
----
-
-
-> **WebMetricsX — Measure the Web. In Real Time.**
+> **WebMetricsX 2.0 — Measure the Web. In Real Time.**

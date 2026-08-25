@@ -37,35 +37,28 @@ const productName = 'WebMetricsX';
 const productTagline = 'Enterprise-Grade Website Monitoring & SEO Analytics';
 
 const features = [
-  { icon: BellRing, title: 'Downtime Alerts', desc: 'Get instant notifications if your website goes down or experiences outages.' },
-  { icon: Activity, title: 'Website Status', desc: 'Instantly see whether a website is up, down, or degraded.' },
-  { icon: Server, title: 'HTTP Status Codes', desc: 'Track live HTTP response codes for each monitoring check.' },
-  { icon: Zap, title: 'Current Response Time', desc: 'Measure the latest response time in milliseconds.' },
-  { icon: Gauge, title: 'Average Response Time', desc: 'Understand response consistency across recent checks.' },
-  { icon: Clock3, title: 'Time To First Byte', desc: 'Monitor TTFB to catch backend and server delay early.' },
-  { icon: Globe, title: 'DNS Lookup Time', desc: 'See how long domain resolution takes before connection.' },
-  { icon: Server, title: 'TCP Connect Time', desc: 'Track network connection setup time for each request.' },
-  { icon: Lock, title: 'TLS Handshake Time', desc: 'Measure secure connection negotiation latency.' },
-  { icon: Shield, title: 'SSL Validity & Expiry', desc: 'Check certificate validity, issuer details, and expiry dates.' },
-  { icon: TrendingUp, title: 'Page Load Score', desc: 'Review a clear performance score for page loading quality.' },
-  { icon: CheckCircle2, title: '24-Hour Uptime', desc: 'Track uptime percentage over the last 24 hours.' },
-  { icon: LineChart, title: 'Response Timeline', desc: 'Visualize response time history across monitoring checks.' },
-  { icon: Bell, title: 'Error Rate Detection', desc: 'Spot repeated failed responses and reliability issues.' },
-  { icon: Activity, title: 'Latency Spike Detection', desc: 'Detect sudden response-time jumps before they become outages.' },
-  { icon: BarChart3, title: 'Performance Breakdown', desc: 'Break down DNS, connect, TTFB, and download timing.' },
-  { icon: Gauge, title: 'Core Web Vitals', desc: 'Track LCP, FID, and CLS for user experience quality.' },
-  { icon: Globe, title: 'Mobile Performance', desc: 'Review mobile-focused performance scoring and signals.' },
-  { icon: Server, title: 'Desktop Performance', desc: 'Measure desktop performance score for larger screens.' },
-  { icon: CheckCircle2, title: 'Accessibility Score', desc: 'Audit accessibility quality with an easy-to-read score.' },
-  { icon: Shield, title: 'Best Practices Score', desc: 'Check security, browser, and implementation best practices.' },
-  { icon: Clock3, title: 'Last Checked Timestamp', desc: 'Know exactly when the latest monitoring result was captured.' },
+  { icon: BellRing, title: 'Brevo Email & Push Alerts', desc: 'Instant transactional email alerts via Brevo API and Chrome Web Push notifications when downtime or >400ms latency is detected.' },
+  { icon: Server, title: '3-Second Go Probing Engine', desc: 'High-performance Go goroutine worker pool probes HTTP, DNS, TCP, and TLS network phases every 3 seconds.' },
+  { icon: Activity, title: 'Website Health & Status', desc: 'Instantly see whether a website is UP, DOWN, or DEGRADED with adaptive baseline thresholding.' },
+  { icon: Zap, title: 'Time To First Byte (TTFB)', desc: 'Measure server response speed in milliseconds to catch backend and network delays instantly.' },
+  { icon: Gauge, title: 'Average & Percentile Latency', desc: 'Analyze P50, P75, P95, and P99 latency stats across historical probes.' },
+  { icon: Globe, title: 'DNS Lookup Time', desc: 'See how long domain name resolution takes before TCP connection establishment.' },
+  { icon: Server, title: 'TCP Connect Time', desc: 'Track network socket connection setup time for each monitoring probe.' },
+  { icon: Lock, title: 'TLS Handshake Time', desc: 'Measure secure SSL connection negotiation latency and handshake overhead.' },
+  { icon: Shield, title: 'SSL Certificate Monitor', desc: 'Verify SSL certificate validity, issuer details, and exact expiration dates.' },
+  { icon: TrendingUp, title: 'Core Web Vitals', desc: 'Track real-time LCP, FID, and CLS performance scores via Google PageSpeed Insights.' },
+  { icon: CheckCircle2, title: '24-Hour Uptime & SLA', desc: 'Track 24-hour uptime percentage, availability budget, and incident timelines.' },
+  { icon: LineChart, title: 'Live SSE Stream Timeline', desc: 'Visualize real-time response time history via Server-Sent Events (SSE) data streams.' },
+  { icon: Bell, title: 'Automated RCA Diagnostics', desc: 'Identify likely root causes (DNS fail, TCP timeout, SSL error) automatically on outages.' },
+  { icon: BarChart3, title: 'Performance Waterfall', desc: 'Break down DNS, connect, TTFB, and download timing phases.' },
+  { icon: FileText, title: 'Client-Ready PDF Reports', desc: 'Export full live dashboard analytics as professional downloadable PDF reports.' },
 ];
 
 const stats = [
-  { value: '3s', label: 'Live polling interval' },
-  { value: '50+', label: 'Metrics tracked' },
-  { value: 'PDF', label: 'Instant reports' },
-  { value: '0', label: 'Setup friction' },
+  { value: '3s', label: 'Go probing interval' },
+  { value: 'Go 2.0', label: 'Concurrent engine' },
+  { value: 'Brevo', label: 'Instant email alerts' },
+  { value: 'SSE', label: 'Live telemetry stream' },
 ];
 
 const useCases = [
@@ -196,9 +189,9 @@ export function Landing({ onLaunch }: LandingProps) {
         <div className="container mx-auto px-4 py-16 lg:py-20">
           <div className="grid items-center gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:gap-14">
             <div className="animate-fade-in-up">
-              <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-foreground/30 bg-card py-1.5 pl-2 pr-4 text-xs font-semibold text-muted-foreground shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground/50 hover:shadow-md">
+              <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-chart-1/30 bg-chart-1/10 py-1.5 pl-2 pr-4 text-xs font-bold text-chart-1 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-chart-1/50 hover:shadow-md">
                 <img src="/favicon.png" alt="" className="h-7 w-7 object-contain drop-shadow-sm" />
-                Built for fast audits, uptime checks and client-ready reports
+                ⚡ Go 2.0 Engine · 3-Second High-Frequency Probes · Brevo Email Alerts
               </div>
               <h1 className="max-w-3xl text-4xl font-extrabold leading-[0.98] tracking-tight [text-wrap:balance] sm:text-5xl lg:text-7xl">
                 <span className="inline-flex items-center gap-3">
@@ -208,15 +201,14 @@ export function Landing({ onLaunch }: LandingProps) {
                 <br />
                 turns any URL into
                 <br />
-                <span className="text-chart-1">live website insights.</span>
+                <span className="text-chart-1">live website telemetry.</span>
               </h1>
               <p className="mt-6 max-w-2xl text-lg font-medium leading-8 text-muted-foreground">
-                Monitor uptime, response speed, SSL health, SEO readiness and Core Web Vitals from one
-                enterprise-grade monitoring dashboard. Move from quick check to shareable PDF report in minutes.
+                Powered by a high-concurrency Go 2.0 backend engine with 3-second continuous worker probes, Server-Sent Events (SSE) live chart telemetry, and instant Brevo transactional email & Web Push downtime alerts.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" onClick={onLaunch} className="group h-12 gap-2 px-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
-                  Start Monitoring Now
+                  Start Live Monitoring
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
                 <Button size="lg" variant="outline" className="h-12 px-6 font-semibold border-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-black hover:text-white" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -224,18 +216,18 @@ export function Landing({ onLaunch }: LandingProps) {
                 </Button>
               </div>
               <div className="mt-8 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
+                <span className="inline-flex items-center gap-1.5 font-bold text-foreground">
+                  <span className="relative flex h-2.5 w-2.5">
                     <span className="absolute inline-flex h-full w-full rounded-full bg-status-up opacity-60 animate-ping" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-status-up" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-status-up" />
                   </span>
-                  Live · 3s polling
+                  3s Go Probing Engine
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-chart-2" /> No signup required
+                  <Bell className="h-4 w-4 text-chart-1" /> Brevo Email & Web Push
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Lock className="h-4 w-4 text-chart-1" /> SSL aware
+                  <LineChart className="h-4 w-4 text-chart-2" /> Live SSE Telemetry
                 </span>
               </div>
             </div>
