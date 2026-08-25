@@ -451,6 +451,10 @@ func (h *MonitoringHandler) UpdateTargetThreshold(c *gin.Context) {
 		req.URL = parsed.String()
 	}
 
+	if h.scheduler != nil {
+		h.scheduler.SetTargetThreshold(req.URL, int64(req.ThresholdMs))
+	}
+
 	if h.repo != nil && h.repo.IsAvailable() {
 		// First upsert the target if it doesn't exist
 		_, err := h.repo.UpsertTarget(c.Request.Context(), req.URL, 30, false)

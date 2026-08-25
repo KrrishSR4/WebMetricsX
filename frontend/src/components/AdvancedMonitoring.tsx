@@ -587,6 +587,7 @@ export const AdvancedMonitoring: React.FC = () => {
       <div className="max-w-2xl mx-auto mb-6">
         <UrlInput
           onSubmit={handleStart}
+          onChange={setUrl}
           onStop={handleStop}
           isMonitoring={monitoringStatus !== 'STOPPED'}
           isLoading={loadingToggle}

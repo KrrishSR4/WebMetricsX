@@ -291,6 +291,13 @@ func (s *Scheduler) PauseWorker(ctx context.Context, rawURL string) error {
 	return nil
 }
 
+func (s *Scheduler) SetTargetThreshold(targetURL string, thresholdMs int64) {
+	targetID := database.GenerateID(targetURL)
+	if s.alertEngine != nil {
+		s.alertEngine.SetTargetThreshold(targetID, thresholdMs)
+	}
+}
+
 // ResumeWorker restores worker monitoring checks for a paused target URL
 func (s *Scheduler) ResumeWorker(ctx context.Context, rawURL string, intervalSec int) (string, error) {
 	parsedURL, err := monitoring.ValidateAndSanitizeURL(rawURL)

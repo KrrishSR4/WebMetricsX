@@ -31,6 +31,8 @@ type AlertEngine struct {
 	memFailures        map[string]int
 	memGlobalLimits    map[string]int
 	memMetrics         map[string]int64
+	memSubscriptions   map[string][]string
+	memThresholds      map[string]int64
 
 	recipientEmail string
 	cooldownDur    time.Duration
@@ -60,6 +62,8 @@ func NewAlertEngine(
 		memFailures:        make(map[string]int),
 		memGlobalLimits:    make(map[string]int),
 		memMetrics:         make(map[string]int64),
+		memSubscriptions:   make(map[string][]string),
+		memThresholds:      make(map[string]int64),
 		recipientEmail:     recipientEmail,
 		cooldownDur:        15 * time.Minute,
 	}
@@ -106,13 +110,8 @@ func (ae *AlertEngine) ProcessAlertsForCheck(ctx context.Context, check *monitor
 		ae.setConsecutiveFailures(ctx, check.TargetID, 0)
 		_ = ae.resolveAlert(ctx, check, "WEBSITE_DOWN")
 
-		// Load custom threshold from DB (fallback to 400ms)
-		thresholdMs := int64(400)
-		if ae.repo != nil && ae.repo.IsAvailable() {
-			if target, err := ae.repo.GetTargetByID(ctx, check.TargetID); err == nil && target != nil && target.LatencyThresholdMs > 0 {
-				thresholdMs = int64(target.LatencyThresholdMs)
-			}
-		}
+		// Load custom threshold (memory cache -> DB -> fallback 400ms)
+		thresholdMs := ae.GetTargetThreshold(ctx, check.TargetID)
 
 		// 2. Check HIGH_LATENCY state (TTFB > thresholdMs or ResponseTime > thresholdMs, 3 consecutive violations required)
 		isLatencyViolated := check.TTFBMs > thresholdMs || check.ResponseTimeMs > thresholdMs
@@ -243,11 +242,10 @@ func (ae *AlertEngine) triggerAlert(ctx context.Context, check *monitoring.Check
 			}
 
 			// Fetch subscribed emails
-			recipients := []string{ae.recipientEmail} // Always fall back to default ALERT_RECIPIENT
-			if ae.repo != nil && ae.repo.IsAvailable() {
-				if subs, err := ae.repo.GetEmailSubscriptions(nCtx, chk.TargetID); err == nil && len(subs) > 0 {
-					recipients = subs
-				}
+			recipients := ae.GetSubscriptions(nCtx, chk.TargetID)
+			if len(recipients) == 0 {
+				ae.logger.Info("No subscribed recipients for target; skipping email dispatch", slog.String("target_id", chk.TargetID), slog.String("url", chk.URL))
+				return
 			}
 
 			// Send to all recipients
@@ -324,11 +322,10 @@ func (ae *AlertEngine) resolveAlert(ctx context.Context, check *monitoring.Check
 		}
 
 		// Fetch subscribed emails
-		recipients := []string{ae.recipientEmail} // Always fall back to default ALERT_RECIPIENT
-		if ae.repo != nil && ae.repo.IsAvailable() {
-			if subs, err := ae.repo.GetEmailSubscriptions(nCtx, chk.TargetID); err == nil && len(subs) > 0 {
-				recipients = subs
-			}
+		recipients := ae.GetSubscriptions(nCtx, chk.TargetID)
+		if len(recipients) == 0 {
+			ae.logger.Info("No subscribed recipients for target; skipping recovery email dispatch", slog.String("target_id", chk.TargetID), slog.String("url", chk.URL))
+			return
 		}
 
 		// Send to all recipients
@@ -644,4 +641,86 @@ func (ae *AlertEngine) GetAlertStatusSummary(ctx context.Context, targetID strin
 	statusMap["cooldowns"] = cooldowns
 
 	return statusMap, nil
+}
+
+func (ae *AlertEngine) AddSubscription(targetID, email string) {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+	subs := ae.memSubscriptions[targetID]
+	for _, s := range subs {
+		if s == email {
+			return
+		}
+	}
+	ae.memSubscriptions[targetID] = append(subs, email)
+}
+
+func (ae *AlertEngine) RemoveSubscription(targetID, email string) {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+	subs := ae.memSubscriptions[targetID]
+	var updated []string
+	for _, s := range subs {
+		if s != email {
+			updated = append(updated, s)
+		}
+	}
+	ae.memSubscriptions[targetID] = updated
+}
+
+func (ae *AlertEngine) GetSubscriptions(ctx context.Context, targetID string) []string {
+	var subs []string
+	if ae.repo != nil && ae.repo.IsAvailable() {
+		if dbSubs, err := ae.repo.GetEmailSubscriptions(ctx, targetID); err == nil && len(dbSubs) > 0 {
+			subs = dbSubs
+		}
+	}
+
+	ae.mu.RLock()
+	memSubs := ae.memSubscriptions[targetID]
+	ae.mu.RUnlock()
+
+	seen := make(map[string]bool)
+	var finalSubs []string
+	for _, s := range subs {
+		if !seen[s] {
+			seen[s] = true
+			finalSubs = append(finalSubs, s)
+		}
+	}
+	for _, s := range memSubs {
+		if !seen[s] {
+			seen[s] = true
+			finalSubs = append(finalSubs, s)
+		}
+	}
+
+	return finalSubs
+}
+
+func (ae *AlertEngine) SetTargetThreshold(targetID string, thresholdMs int64) {
+	ae.mu.Lock()
+	defer ae.mu.Unlock()
+	ae.memThresholds[targetID] = thresholdMs
+}
+
+func (ae *AlertEngine) GetTargetThreshold(ctx context.Context, targetID string) int64 {
+	ae.mu.RLock()
+	thresh, ok := ae.memThresholds[targetID]
+	ae.mu.RUnlock()
+	if ok && thresh > 0 {
+		return thresh
+	}
+
+	if ae.repo != nil && ae.repo.IsAvailable() {
+		if target, err := ae.repo.GetTargetByID(ctx, targetID); err == nil && target != nil && target.LatencyThresholdMs > 0 {
+			tVal := int64(target.LatencyThresholdMs)
+			ae.mu.Lock()
+			ae.memThresholds[targetID] = tVal
+			ae.mu.Unlock()
+			return tVal
+		}
+	}
+
+	return 400 // Default fallback threshold 400ms
 }

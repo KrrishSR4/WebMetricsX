@@ -302,6 +302,10 @@ func (h *AlertHandler) SubscribeEmail(c *gin.Context) {
 	}
 	targetID := database.GenerateID(req.URL)
 
+	if h.alertEngine != nil {
+		h.alertEngine.AddSubscription(targetID, req.Email)
+	}
+
 	if h.repo != nil && h.repo.IsAvailable() {
 		// Auto-upsert target first to prevent foreign key violation
 		_, err := h.repo.UpsertTarget(c.Request.Context(), req.URL, 30, false)
@@ -363,6 +367,10 @@ func (h *AlertHandler) UnsubscribeEmail(c *gin.Context) {
 	}
 	targetID := database.GenerateID(req.URL)
 
+	if h.alertEngine != nil {
+		h.alertEngine.RemoveSubscription(targetID, req.Email)
+	}
+
 	if h.repo != nil && h.repo.IsAvailable() {
 		err := h.repo.RemoveEmailSubscription(c.Request.Context(), targetID, req.Email)
 		if err != nil {
@@ -403,8 +411,10 @@ func (h *AlertHandler) GetEmailSubscriptions(c *gin.Context) {
 	targetID := database.GenerateID(targetURL)
 
 	var list []string
-	var getErr error
-	if h.repo != nil && h.repo.IsAvailable() {
+	if h.alertEngine != nil {
+		list = h.alertEngine.GetSubscriptions(c.Request.Context(), targetID)
+	} else if h.repo != nil && h.repo.IsAvailable() {
+		var getErr error
 		list, getErr = h.repo.GetEmailSubscriptions(c.Request.Context(), targetID)
 		if getErr != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{

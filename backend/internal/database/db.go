@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type DB struct {
@@ -23,7 +23,7 @@ func NewDB(dbURL string, logger *slog.Logger) (*DB, error) {
 		return &DB{active: false, logger: logger}, nil
 	}
 
-	db, err := sql.Open("postgres", dbURL)
+	db, err := sql.Open("pgx", dbURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open postgres connection: %w", err)
 	}

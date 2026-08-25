@@ -1,4 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app';
+import { getAnalytics, isSupported as isAnalyticsSupported } from 'firebase/analytics';
 import {
   getMessaging,
   getToken,
@@ -9,6 +10,13 @@ import {
 import { firebaseConfig } from '@/lib/firebaseConfig';
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+
+// Initialize Analytics if supported in environment
+isAnalyticsSupported().then((supported) => {
+  if (supported) {
+    getAnalytics(app);
+  }
+});
 
 let messagingInstance: ReturnType<typeof getMessaging> | null = null;
 let serviceWorkerRegistration: ServiceWorkerRegistration | null = null;

@@ -18,6 +18,8 @@ interface UrlInputProps {
 
   onSubmit: (url: string) => void;
 
+  onChange?: (url: string) => void;
+
   onStop: () => void;
 
   isMonitoring: boolean;
@@ -41,6 +43,7 @@ interface UrlInputProps {
 
 export function UrlInput({
   onSubmit,
+  onChange,
   onStop,
   isMonitoring,
   isLoading,
@@ -80,6 +83,8 @@ export function UrlInput({
   const handleSelectFromHistory = (url: string) => {
 
     setInputValue(url);
+
+    if (onChange) onChange(url);
 
     setHistoryOpen(false);
 
@@ -159,7 +164,10 @@ export function UrlInput({
 
               value={inputValue}
 
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                if (onChange) onChange(e.target.value);
+              }}
 
               className="pl-12 pr-12 h-14 text-base border-2 border-black/10 bg-card focus:border-chart-1 transition-all"
 
