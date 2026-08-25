@@ -225,6 +225,12 @@ export const connectMonitoringSSE = (
     }
   });
 
+  eventSource.onerror = () => {
+    if (eventSource.readyState === EventSource.CLOSED) {
+      console.debug('[SSE] Connection closed');
+    }
+  };
+
   return () => {
     eventSource.close();
   };

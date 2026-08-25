@@ -266,23 +266,29 @@ export const AdvancedMonitoring: React.FC = () => {
     loadAnalytics(url, timeRange);
   }, [url, timeRange, loadAnalytics]);
 
+  const handleCheckReceivedRef = useRef(handleCheckReceived);
+  handleCheckReceivedRef.current = handleCheckReceived;
+
+  const loadAnalyticsRef = useRef(loadAnalytics);
+  loadAnalyticsRef.current = loadAnalytics;
+
+  const loadMonitorStatusRef = useRef(loadMonitorStatus);
+  loadMonitorStatusRef.current = loadMonitorStatus;
+
   // Connect Server-Sent Events (SSE) Live Telemetry Stream when Monitoring is Active
   useEffect(() => {
     if (!isMonitoringActive || !url) return;
 
-    console.log(`[SSE] Establishing live telemetry stream for ${url}`);
     const cleanupSSE = connectMonitoringSSE(url, (newCheck) => {
-      console.log('[SSE] Live probe tick received:', newCheck);
-      handleCheckReceived(newCheck);
-      loadAnalytics(url, timeRange);
-      loadMonitorStatus();
+      handleCheckReceivedRef.current(newCheck);
+      loadAnalyticsRef.current(url, timeRange);
+      loadMonitorStatusRef.current();
     });
 
     return () => {
-      console.log(`[SSE] Closing stream for ${url}`);
       cleanupSSE();
     };
-  }, [isMonitoringActive, url, timeRange, loadAnalytics, handleCheckReceived, loadMonitorStatus]);
+  }, [isMonitoringActive, url, timeRange]);
 
   const handleStart = async (targetUrl: string) => {
     if (!targetUrl || targetUrl.trim() === '') return;
