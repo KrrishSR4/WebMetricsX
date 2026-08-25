@@ -7,21 +7,21 @@ The platform delivers real-time website status tracking, deep HTTP timing metric
 
 ---
 
-## ⚡ Key Highlights (V2.0 Core Features)
+## Key Highlights (V2.0 Core Features)
 
-- 🚀 **Go 2.0 High-Concurrency Probing Engine**: Multithreaded Go worker pool executing background network probes.
-- ⚡ **3-Second High-Frequency Tickers**: Real-time HTTP, DNS, TCP, and TLS phase measurement every 3 seconds.
-- ✉️ **Brevo Transactional Email Alerts**: Instant HTML email notifications delivered to all subscribed recipients via Brevo API batching.
-- 🔔 **Chrome & Browser Web Push Alerts**: Firebase Cloud Messaging (FCM) background desktop notifications for instant downtime visibility.
-- 📡 **Server-Sent Events (SSE) Telemetry Stream**: Live event bus (`/api/v1/monitoring/stream`) broadcasting real-time metrics for dynamic D3.js & Recharts visualizations.
-- 💾 **Neon PostgreSQL & Redis Infrastructure**: Persistent target state, worker job synchronization, and anomaly cooldown management.
-- 📊 **Core Web Vitals & SEO Audits**: Real-time LCP, FID, CLS, and full HTML markup validation via Google PageSpeed Insights API.
-- 📄 **Client-Ready PDF Reports**: One-click professional dashboard export for client reporting.
-- 🐳 **Docker & Docker Compose Ready**: Multi-stage containerized deployment for local development and cloud production.
+- **Go 2.0 High-Concurrency Probing Engine**: Multithreaded Go worker pool executing background network probes.
+- **3-Second High-Frequency Tickers**: Real-time HTTP, DNS, TCP, and TLS phase measurement every 3 seconds.
+- **Brevo Transactional Email Alerts**: Instant HTML email notifications delivered to all subscribed recipients via Brevo API batching.
+- **Chrome & Browser Web Push Alerts**: Firebase Cloud Messaging (FCM) background desktop notifications for instant downtime visibility.
+- **Server-Sent Events (SSE) Telemetry Stream**: Live event bus (`/api/v1/monitoring/stream`) broadcasting real-time metrics for dynamic D3.js & Recharts visualizations.
+- **Neon PostgreSQL & Redis Infrastructure**: Persistent target state, worker job synchronization, and anomaly cooldown management.
+- **Core Web Vitals & SEO Audits**: Real-time LCP, FID, CLS, and full HTML markup validation via Google PageSpeed Insights API.
+- **Client-Ready PDF Reports**: One-click professional dashboard export for client reporting.
+- **Docker & Docker Compose Ready**: Multi-stage containerized deployment for local development and cloud production.
 
 ---
 
-## 🏗️ System Architecture Flow
+## System Architecture Flow
 
 ```mermaid
 graph TD
@@ -64,7 +64,7 @@ graph TD
 
 ---
 
-## 🔁 Real-Time Probing & Alerting Lifecycle
+## Real-Time Probing & Alerting Lifecycle
 
 ```mermaid
 graph TD
@@ -100,7 +100,7 @@ graph TD
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend Service
 - **Core**: React 18, TypeScript, Vite
@@ -121,7 +121,7 @@ graph TD
 
 ---
 
-## 🐳 Docker & Docker Compose Setup
+## Docker & Docker Compose Setup
 
 ### Prerequisites
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (v24+ with Docker Compose v2.20+)
@@ -156,7 +156,7 @@ docker compose down
 
 ---
 
-## 🛡️ CI/CD Pipeline & Security Hardening
+## CI/CD Pipeline & Security Hardening
 
 WebMetricsX incorporates a production-grade GitHub Actions CI/CD and security pipeline:
 
@@ -172,7 +172,7 @@ WebMetricsX incorporates a production-grade GitHub Actions CI/CD and security pi
 
 ---
 
-## 🚫 Non-Negotiable Core Rules
+## Non-Negotiable Core Rules
 
 - No mock data or fake analytics.
 - Real HTTP probing, DNS resolution, and SSL inspection only.
