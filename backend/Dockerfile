@@ -1,7 +1,9 @@
 # Build Stage
-FROM golang:1.24-alpine AS builder
+FROM golang:alpine AS builder
 
 WORKDIR /app
+
+ENV GOTOOLCHAIN=auto
 
 # Install git and ca-certificates
 RUN apk add --no-cache git ca-certificates
@@ -26,8 +28,8 @@ FROM alpine:3.20
 
 WORKDIR /app
 
-# Install ca-certificates and tzdata for TLS and timezone support
-RUN apk add --no-cache ca-certificates tzdata
+# Install ca-certificates, tzdata, and curl for healthcheck
+RUN apk add --no-cache ca-certificates tzdata curl
 
 # Create non-root app user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
@@ -37,6 +39,8 @@ COPY --from=builder /app/bin/webmetricsx-backend /app/webmetricsx-backend
 
 USER appuser
 
-EXPOSE 8080
+EXPOSE 8081
+
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 CMD curl -f http://localhost:8081/health || exit 1
 
 ENTRYPOINT ["/app/webmetricsx-backend"]

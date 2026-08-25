@@ -278,15 +278,64 @@ WebMetrics performs **real SEO analysis** using live APIs and crawls:
 # Clone the repository
 git clone https://github.com/your-username/webmetrics.git
 
-# Move into project directory
-cd webmetrics
-
-# Install dependencies
-npm install
-
 # Start development server
 npm run dev
 ```
+
+---
+
+## 🐳 Docker & Docker Compose Setup (WebMetricsX 2.0)
+
+WebMetricsX 2.0 provides multi-stage Docker containerization for both the **Go Backend Monitoring Engine** and **React Vite Frontend**, orchestrated with **Docker Compose** and **Redis**.
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (v24+ with Docker Compose v2.20+)
+- Environment file setup (`.env`)
+
+### Environment Setup
+Create a `.env` file in the project root (or copy `.env.example`):
+```bash
+cp .env.example .env
+```
+Ensure `DATABASE_URL` (Neon PostgreSQL) and `BREVO_API_KEY` are configured properly.
+
+### Docker Compose Commands
+
+#### 1. Build and Start All Containers
+```bash
+docker compose up --build -d
+```
+
+#### 2. View Service Logs
+```bash
+# All services
+docker compose logs -f
+
+# Backend logs only
+docker compose logs -f backend
+
+# Frontend logs only
+docker compose logs -f frontend
+```
+
+#### 3. Service Status & Health
+```bash
+docker compose ps
+```
+
+#### 4. Stop & Remove Containers
+```bash
+docker compose down
+```
+
+### Exposed Endpoints
+- **Frontend Dashboard**: `http://localhost:8080`
+- **Go Backend API**: `http://localhost:8081`
+- **Backend Health Check**: `http://localhost:8081/health`
+- **SSE Monitoring Stream**: `http://localhost:8081/api/v1/monitoring/stream`
+- **Redis Cache**: `localhost:6379`
+
+---
 
 ##  Strict Rules (Non-Negotiable)
 
