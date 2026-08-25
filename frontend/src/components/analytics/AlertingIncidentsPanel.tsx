@@ -18,12 +18,8 @@ import {
   fetchActiveIncidents, 
   fetchAlertHistory, 
   subscribeBrowserPush,
-  getApiBaseUrl,
   fetchAlertStatus,
   AlertStatusSummary,
-  subscribeEmailAlerts,
-  unsubscribeEmailAlerts,
-  fetchEmailSubscriptions
 } from '@/services/monitoringApi';
 import { toast } from 'sonner';
 
@@ -149,115 +145,6 @@ export const AlertingIncidentsPanel: React.FC<AlertingIncidentsPanelProps> = ({
     } catch (err) {
       console.error(err);
       toast.error('An error occurred while enabling push notifications');
-    }
-  };
-
-  const handleSendTestAlert = async () => {
-    const trimmed = testEmail.trim();
-    if (!trimmed) {
-      setEmailError('Please enter a valid email address.');
-      return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmed)) {
-      setEmailError('Please enter a valid email address.');
-      return;
-    }
-
-    setEmailError('');
-    setSendingTest(true);
-    setTestStatus('idle');
-
-    const baseUrl = getApiBaseUrl();
-    try {
-      const response = await fetch(`${baseUrl}/api/alerts/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: trimmed }),
-      });
-
-      let data = { success: false, message: '' };
-      if (response.status === 404) {
-        const fallbackResponse = await fetch(`${baseUrl}/api/v1/alerts/test`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email: trimmed }),
-        });
-        data = await fallbackResponse.json();
-      } else {
-        data = await response.json();
-      }
-
-      if (data.success) {
-        setTestStatus('success');
-        setShowSuccessDialog(true);
-        setTimeout(() => setTestStatus('idle'), 3000);
-
-        if ('Notification' in window && Notification.permission === 'granted') {
-          setTimeout(() => {
-            new Notification('WebMetricsX Alert', {
-              body: 'Test notification received successfully. Email + browser notifications are working.',
-              icon: '/favicon.ico',
-            });
-          }, 1500);
-        }
-      } else {
-        setTestStatus('error');
-        setAlertErrorMessage(data.message || 'Please check your email configuration and try again.');
-        setShowErrorDialog(true);
-        setTimeout(() => setTestStatus('idle'), 3000);
-      }
-    } catch (err) {
-      console.error('Error sending test alert:', err);
-      setTestStatus('error');
-      setAlertErrorMessage(err instanceof Error ? err.message : 'An unexpected network error occurred.');
-      setShowErrorDialog(true);
-      setTimeout(() => setTestStatus('idle'), 3000);
-    } finally {
-      setSendingTest(false);
-    }
-  };
-
-  const handleSubscribeEmail = async () => {
-    const trimmed = testEmail.trim();
-    if (!trimmed || !trimmed.includes('@') || !trimmed.includes('.')) {
-      setEmailError('Please enter a valid email address');
-      return;
-    }
-
-    try {
-      const success = await subscribeEmailAlerts(targetUrl, trimmed);
-      if (success) {
-        toast.success(`Subscribed ${trimmed} to email alerts successfully!`);
-        setTestEmail('');
-        // Reload list
-        const subs = await fetchEmailSubscriptions(targetUrl);
-        setSubscribedEmails(subs);
-      } else {
-        toast.error('Failed to subscribe email to alerts.');
-      }
-    } catch {
-      toast.error('Error subscribing email.');
-    }
-  };
-
-  const handleUnsubscribeEmail = async (emailToUnsub: string) => {
-    try {
-      const success = await unsubscribeEmailAlerts(targetUrl, emailToUnsub);
-      if (success) {
-        toast.success(`Unsubscribed ${emailToUnsub} successfully.`);
-        // Reload list
-        const subs = await fetchEmailSubscriptions(targetUrl);
-        setSubscribedEmails(subs);
-      } else {
-        toast.error('Failed to unsubscribe.');
-      }
-    } catch {
-      toast.error('Error unsubscribing.');
     }
   };
 

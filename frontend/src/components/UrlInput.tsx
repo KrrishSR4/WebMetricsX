@@ -254,8 +254,15 @@ export function UrlInput({
                         <div className={`w-2 h-2 rounded-full ${getStatusColor(item.status)} bg-current`} />
 
                         <div className="flex-1 min-w-0">
-
-                          <p className="text-sm font-medium truncate">{new URL(item.url).hostname}</p>
+                          <p className="text-sm font-medium truncate">
+                            {(() => {
+                              try {
+                                return new URL(item.url.startsWith('http') ? item.url : 'https://' + item.url).hostname;
+                              } catch {
+                                return item.url || 'Unknown Target';
+                              }
+                            })()}
+                          </p>
 
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
 
@@ -394,7 +401,7 @@ export function UrlInput({
 
             <>
 
-              📊 Monitoring active • Click <span className="font-medium text-destructive">Stop Monitoring</span> to analyze a different URL
+               Monitoring active • Click <span className="font-medium text-destructive">Stop Monitoring</span> to analyze a different URL
 
             </>
 
@@ -402,7 +409,7 @@ export function UrlInput({
 
             <>
 
-              💡 Enter any URL to start • Metrics update every 5s • Click <History className="inline h-3 w-3" /> for recent URLs
+               Enter any URL to start • Metrics update every 3s • Click <History className="inline h-3 w-3" /> for recent URLs
 
             </>
 
