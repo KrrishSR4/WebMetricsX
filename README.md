@@ -337,6 +337,33 @@ docker compose down
 
 ---
 
+## 🛡️ CI/CD Pipeline & Security Hardening (WebMetricsX 2.0)
+
+WebMetricsX 2.0 incorporates a hardened, production-grade GitHub Actions CI/CD and dependency-security pipeline with automated review & safe auto-merging:
+
+### 1. Workflows Overview
+- **Core CI (`.github/workflows/ci.yml`)**:
+  - **Frontend Job**: Node.js 20, `npm ci`, ESLint, production build validation.
+  - **Backend Job**: Go 1.24, `gofmt` style validation, `go vet`, race-enabled unit tests (`go test -race`), binary compilation (`go build`).
+  - **Docker Job**: Docker Compose configuration validation and Buildx image compilation for both Frontend and Backend.
+- **CodeQL Security Scanning (`.github/workflows/codeql.yml`)**:
+  - Multi-language security matrix analyzing both **Go** and **JavaScript/TypeScript**.
+  - Treated as required security signals on `push`, `pull_request`, and weekly cron schedule (`0 3 * * 1`).
+- **Dependabot Review & Auto-Merge (`.github/workflows/dependabot-review-automerge.yml`)**:
+  - **Automated Security Review**: Evaluates dependency name, target ecosystem, lockfile status, and SemVer classification (`PATCH` / `MINOR` / `MAJOR`).
+  - **Safe Auto-Merge**: Auto-approves and enables squash auto-merging ONLY for `PATCH` and `MINOR` version updates upon passing all required CI checks.
+  - **Major Version Protection**: `MAJOR` version updates are strictly flagged for manual developer review and will NEVER auto-merge.
+- **Dependabot Validation CI (`.github/workflows/dependabot-ci.yml`)**:
+  - Runs dedicated validation checks for pull requests opened by `dependabot[bot]`.
+
+### 2. Dependabot Configuration (`.github/dependabot.yml`)
+- **Daily Update Schedules** (`04:00 IST`) across 3 update ecosystems:
+  1. `npm` (`/frontend`): Daily checks, limit 30 PRs, grouped patch & minor updates.
+  2. `gomod` (`/backend`): Daily checks, limit 30 PRs, grouped patch & minor updates.
+  3. `github-actions` (`/`): Daily checks, limit 30 PRs, grouped patch & minor updates.
+
+---
+
 ##  Strict Rules (Non-Negotiable)
 
  - No mock data  

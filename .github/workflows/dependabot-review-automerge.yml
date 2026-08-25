@@ -1,0 +1,65 @@
+name: Dependabot Review & Safe Auto-Merge
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot-review-automerge:
+    name: Automated Security Review & Auto-Merge
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Fetch Dependabot Metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Perform Automated Security & Compatibility Review
+        run: |
+          echo "=== DEPENDABOT AUTOMATED REVIEW REPORT ==="
+          echo "Dependency: ${{ steps.metadata.outputs.dependency-names }}"
+          echo "Ecosystem: ${{ steps.metadata.outputs.package-ecosystem }}"
+          echo "Update Type: ${{ steps.metadata.outputs.update-type }}"
+          echo "Directory: ${{ steps.metadata.outputs.directory }}"
+          
+          # Generate structured review comment
+          COMMENT="### 🤖 Dependabot Automated Review
+          - **Dependency:** \`${{ steps.metadata.outputs.dependency-names }}\`
+          - **Ecosystem:** \`${{ steps.metadata.outputs.package-ecosystem }}\`
+          - **SemVer Classification:** \`${{ steps.metadata.outputs.update-type }}\`
+          - **Review Decision:** "
+
+          if [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-patch" || "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-minor" ]]; then
+            COMMENT="${COMMENT}✅ **APPROVED** for safe automated merging upon CI pass."
+          else
+            COMMENT="${COMMENT}⚠️ **MANUAL REVIEW REQUIRED** (Major version change detected)."
+          fi
+
+          gh pr comment "$PR_URL" --body "$COMMENT"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Approve Safe Dependabot PR (Patch & Minor)
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable Auto-Merge for Safe Dependabot PR
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,19 +1,20 @@
 version: 2
 
 updates:
+  # 1. React Vite Frontend npm Dependencies
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
       time: "04:00"
       timezone: "Asia/Kolkata"
     open-pull-requests-limit: 30
     commit-message:
-      prefix: "deps"
+      prefix: "deps(frontend)"
       include: "scope"
     labels:
       - "dependencies"
+      - "frontend"
       - "automated"
     assignees:
       - "KrrishSR4"
@@ -21,44 +22,61 @@ updates:
       - "KrrishSR4"
     versioning-strategy: increase
     groups:
-      react:
-        patterns:
-          - "react"
-          - "react-dom"
-          - "@types/react*"
-      vite:
-        patterns:
-          - "vite"
-          - "@vitejs/*"
-      testing:
-        patterns:
-          - "vitest"
-          - "@testing-library/*"
-          - "jsdom"
-      radix:
-        patterns:
-          - "@radix-ui/*"
-      backend:
-        patterns:
-          - "firebase"
-          - "@supabase/*"
-          - "@tanstack/*"
-    ignore:
-      - dependency-name: "*"
+      frontend-patch-minor:
+        applies-to: version-updates
         update-types:
-          - "version-update:semver-major"
+          - "patch"
+          - "minor"
 
-  - package-ecosystem: "gofmt"
+  # 2. Go Backend Modules
+  - package-ecosystem: "gomod"
     directory: "/backend"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
       time: "04:00"
       timezone: "Asia/Kolkata"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 30
     commit-message:
-      prefix: "deps(go)"
+      prefix: "deps(backend)"
       include: "scope"
     labels:
       - "dependencies"
       - "backend"
+      - "automated"
+    assignees:
+      - "KrrishSR4"
+    reviewers:
+      - "KrrishSR4"
+    versioning-strategy: increase
+    groups:
+      backend-patch-minor:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+          - "minor"
+
+  # 3. GitHub Actions Workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "04:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 30
+    commit-message:
+      prefix: "deps(ci)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "ci"
+      - "automated"
+    assignees:
+      - "KrrishSR4"
+    reviewers:
+      - "KrrishSR4"
+    groups:
+      actions-patch-minor:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+          - "minor"
