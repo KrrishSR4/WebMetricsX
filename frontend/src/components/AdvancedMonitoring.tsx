@@ -681,11 +681,12 @@ export const AdvancedMonitoring: React.FC = () => {
             {/* Web Push Notifications Toggle Button */}
             <Button
               type="button"
+              variant="outline"
               onClick={() => toggleNotificationForUrl(url)}
               className={`h-9 px-3 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 shadow-sm ${
                 isNotificationEnabledForUrl(url)
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
-                  : 'bg-background border-black/10 text-muted-foreground hover:text-foreground'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-700'
+                  : 'bg-background border-black/10 text-muted-foreground hover:bg-black/5 hover:text-foreground'
               }`}
               title="Toggle Web Push / Chrome Notifications for this URL"
             >
