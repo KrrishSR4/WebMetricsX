@@ -104,7 +104,6 @@ func TestEngine_BatchCheck(t *testing.T) {
 	engine := NewEngine(discardLogger, 2)
 	engine.SetAllowPrivateTargets(true)
 
-
 	ctx := context.Background()
 	results := engine.BatchCheck(ctx, []string{ts1.URL, ts2.URL}, DefaultCheckOptions())
 

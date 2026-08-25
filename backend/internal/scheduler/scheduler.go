@@ -73,6 +73,7 @@ func (eb *EventBus) Publish(targetURL string, res *monitoring.CheckResult) {
 		}
 	}
 }
+
 type Scheduler struct {
 	engine          *monitoring.Engine
 	repo            *database.Repository

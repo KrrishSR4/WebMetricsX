@@ -15,7 +15,6 @@ import (
 	"github.com/KrrishSR4/WebMetricsX/backend/internal/monitoring"
 )
 
-
 type AlertEngine struct {
 	repo          *database.Repository
 	cacheService  cache.CacheService
@@ -559,14 +558,14 @@ func (ae *AlertEngine) checkAndIncrementGlobalRateLimit(ctx context.Context) (bo
 
 	ae.mu.Lock()
 	defer ae.mu.Unlock()
-	
+
 	// Clean up old memory keys to prevent leak
 	for k := range ae.memGlobalLimits {
 		if k != redisKey {
 			delete(ae.memGlobalLimits, k)
 		}
 	}
-	
+
 	count := ae.memGlobalLimits[redisKey]
 	if count >= 20 {
 		return false, nil

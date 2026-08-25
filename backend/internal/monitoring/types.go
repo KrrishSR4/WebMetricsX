@@ -4,10 +4,10 @@ import "time"
 
 // CheckOptions configures monitoring parameters for a check run
 type CheckOptions struct {
-	Timeout       time.Duration `json:"timeout"`
-	MaxRetries    int           `json:"max_retries"`
-	RetryDelay    time.Duration `json:"retry_delay"`
-	FollowRedirects bool        `json:"follow_redirects"`
+	Timeout         time.Duration `json:"timeout"`
+	MaxRetries      int           `json:"max_retries"`
+	RetryDelay      time.Duration `json:"retry_delay"`
+	FollowRedirects bool          `json:"follow_redirects"`
 }
 
 func DefaultCheckOptions() CheckOptions {

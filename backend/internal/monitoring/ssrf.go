@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	ErrInvalidURL       = errors.New("monitoring: invalid or malformed URL")
+	ErrInvalidURL        = errors.New("monitoring: invalid or malformed URL")
 	ErrUnsupportedScheme = errors.New("monitoring: only http and https protocols are allowed")
-	ErrRestrictedTarget = errors.New("monitoring SSRF protection: target resolves to restricted private or loopback IP")
+	ErrRestrictedTarget  = errors.New("monitoring SSRF protection: target resolves to restricted private or loopback IP")
 )
 
 var privateIPBlocks []*net.IPNet
@@ -61,7 +61,6 @@ func ValidateAndSanitizeURL(rawURL string) (*url.URL, error) {
 
 	return parsed, nil
 }
-
 
 // IsRestrictedIP checks if an IP is private, loopback, or cloud metadata target
 func IsRestrictedIP(ip net.IP) bool {

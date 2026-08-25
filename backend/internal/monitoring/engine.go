@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 type Engine struct {
 	logger              *slog.Logger
 	concurrency         int
@@ -53,7 +52,6 @@ func (e *Engine) ExecuteCheck(ctx context.Context, targetURL string, opts CheckO
 	// 3. Prepare probe execution context with timeout
 	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
 	defer cancel()
-
 
 	var finalResult *CheckResult
 	var lastErr error

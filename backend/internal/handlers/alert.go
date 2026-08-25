@@ -433,4 +433,3 @@ func (h *AlertHandler) GetEmailSubscriptions(c *gin.Context) {
 		"data":    list,
 	})
 }
-
