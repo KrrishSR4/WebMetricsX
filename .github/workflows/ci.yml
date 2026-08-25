@@ -89,6 +89,12 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Prepare Environment Files for Docker Compose
+        run: |
+          cp .env.example .env 2>/dev/null || touch .env
+          mkdir -p backend frontend
+          touch backend/.env frontend/.env
+
       - name: Validate Docker Compose Configuration
         run: docker compose config
 

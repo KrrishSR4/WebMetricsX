@@ -24,7 +24,10 @@ services:
     ports:
       - "8081:8081"
     env_file:
-      - ./backend/.env
+      - path: ./backend/.env
+        required: false
+      - path: .env
+        required: false
     environment:
       - PORT=8081
       - REDIS_URL=redis://redis:6379/0
@@ -52,7 +55,10 @@ services:
     ports:
       - "8080:80"
     env_file:
-      - ./frontend/.env
+      - path: ./frontend/.env
+        required: false
+      - path: .env
+        required: false
     networks:
       - webmetricsx-net
     depends_on:
