@@ -81,7 +81,7 @@ export interface AnalyticsSummary {
   history: GoMonitoringResult[];
 }
 
-export interface GoApiResponse<T = any> {
+export interface GoApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: {
@@ -125,8 +125,9 @@ export const runGoMonitoringCheck = async (
     }
 
     return data.data;
-  } catch (err: any) {
-    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+  } catch (err: unknown) {
+    const error = err as { name?: string; message?: string };
+    if (error.name === 'TypeError' && error.message?.includes('fetch')) {
       throw new Error(
         `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
       );
@@ -162,8 +163,9 @@ export const startContinuousMonitoring = async (
     }
 
     return data.data;
-  } catch (err: any) {
-    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+  } catch (err: unknown) {
+    const error = err as { name?: string; message?: string };
+    if (error.name === 'TypeError' && error.message?.includes('fetch')) {
       throw new Error(
         `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
       );
@@ -197,8 +199,9 @@ export const stopContinuousMonitoring = async (
     }
 
     return data.data;
-  } catch (err: any) {
-    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+  } catch (err: unknown) {
+    const error = err as { name?: string; message?: string };
+    if (error.name === 'TypeError' && error.message?.includes('fetch')) {
       throw new Error(
         `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
       );
@@ -253,8 +256,9 @@ export const fetchAnalyticsSummary = async (
     }
 
     return data.data;
-  } catch (err: any) {
-    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+  } catch (err: unknown) {
+    const error = err as { name?: string; message?: string };
+    if (error.name === 'TypeError' && error.message?.includes('fetch')) {
       throw new Error(
         `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
       );
@@ -306,8 +310,9 @@ export const pauseContinuousMonitoring = async (
     }
 
     return data.data;
-  } catch (err: any) {
-    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+  } catch (err: unknown) {
+    const error = err as { name?: string; message?: string };
+    if (error.name === 'TypeError' && error.message?.includes('fetch')) {
       throw new Error(
         `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
       );
@@ -343,8 +348,9 @@ export const resumeContinuousMonitoring = async (
     }
 
     return data.data;
-  } catch (err: any) {
-    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+  } catch (err: unknown) {
+    const error = err as { name?: string; message?: string };
+    if (error.name === 'TypeError' && error.message?.includes('fetch')) {
       throw new Error(
         `Backend service unreachable at ${baseUrl}. Ensure the Go backend server is running.`
       );
