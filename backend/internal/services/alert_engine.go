@@ -604,9 +604,15 @@ func (ae *AlertEngine) getMetricVal(ctx context.Context, metricName string) int6
 func (ae *AlertEngine) GetAlertStatusSummary(ctx context.Context, targetID string) (map[string]interface{}, error) {
 	active, _ := ae.GetActiveIncidents(ctx, targetID)
 
-	triggered := ae.getMetricVal(ctx, "alerts_triggered_total")
-	sent := ae.getMetricVal(ctx, "alerts_sent_total")
-	suppressed := ae.getMetricVal(ctx, "alerts_suppressed_total") + ae.getMetricVal(ctx, "alerts_rate_limited_total")
+	var triggered, sent, suppressed int64
+	if ae.repo != nil {
+		sent, suppressed, _ = ae.repo.GetAlertStats(ctx, targetID)
+		triggered = ae.getMetricVal(ctx, "alerts_triggered_total") // triggered remains global or can be omitted if not used strictly per target
+	} else {
+		triggered = ae.getMetricVal(ctx, "alerts_triggered_total")
+		sent = ae.getMetricVal(ctx, "alerts_sent_total")
+		suppressed = ae.getMetricVal(ctx, "alerts_suppressed_total") + ae.getMetricVal(ctx, "alerts_rate_limited_total")
+	}
 
 	var lastSent time.Time
 	recent, _ := ae.GetRecentAlerts(ctx, targetID, 1)

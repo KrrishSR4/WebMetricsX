@@ -6,5 +6,9 @@ terraform {
       source  = "kislerdm/neon"
       version = "~> 0.6.3"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
 }

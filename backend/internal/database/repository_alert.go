@@ -125,6 +125,24 @@ func (r *Repository) GetRecentAlerts(ctx context.Context, targetID string, limit
 	return list, nil
 }
 
+// GetAlertStats returns the total number of sent and suppressed alerts for a target
+func (r *Repository) GetAlertStats(ctx context.Context, targetID string) (sent int64, suppressed int64, err error) {
+	if r.db == nil || !r.db.IsAvailable() {
+		return 0, 0, nil
+	}
+
+	query := `
+		SELECT 
+			COALESCE(SUM(CASE WHEN notification_status = 'SENT' THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN notification_status = 'SKIPPED' OR notification_status = 'FAILED' THEN 1 ELSE 0 END), 0)
+		FROM alert_events 
+		WHERE target_id = $1
+	`
+	
+	err = r.db.Pool().QueryRowContext(ctx, query, targetID).Scan(&sent, &suppressed)
+	return sent, suppressed, err
+}
+
 // GetUnresolvedAlert finds a target's active/triggered alert by alert_type for resolution logic
 func (r *Repository) GetUnresolvedAlert(ctx context.Context, targetID, alertType string) (*AlertEventRecord, error) {
 	if r.db == nil || !r.db.IsAvailable() {

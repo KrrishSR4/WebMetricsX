@@ -40,4 +40,9 @@ AGENTS.md
 !.tfvars.example
 .terraform.lock.hcl
 crash.log
+*credentials.json
+gcp-key.json
+infrastructure/terraform/*.json
+
+
 

@@ -8,18 +8,10 @@ import {
 resource "neon_project" "webmetricsx" {
   name                      = var.neon_project_name
   history_retention_seconds = var.history_retention_days
+
+  lifecycle {
+    ignore_changes = [org_id, history_retention_seconds]
+  }
 }
 
-# Branch resource representing the project main branch
-resource "neon_branch" "main" {
-  project_id = neon_project.webmetricsx.id
-  name       = "main"
-}
-
-# Database definition inside the main branch of the project
-resource "neon_database" "webmetricsx" {
-  project_id = neon_project.webmetricsx.id
-  branch_id  = neon_branch.main.id
-  name       = var.pg_database_name
-  owner_name = "neondb_owner"
-}
+# Neon branch and database are managed directly on the Neon Console to avoid compute auto-suspension errors
