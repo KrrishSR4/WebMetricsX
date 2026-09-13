@@ -138,7 +138,7 @@ func (r *Repository) GetAlertStats(ctx context.Context, targetID string) (sent i
 		FROM alert_events 
 		WHERE target_id = $1
 	`
-	
+
 	err = r.db.Pool().QueryRowContext(ctx, query, targetID).Scan(&sent, &suppressed)
 	return sent, suppressed, err
 }
